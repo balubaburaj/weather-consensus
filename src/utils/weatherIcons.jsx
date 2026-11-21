@@ -14,10 +14,11 @@ import {
 } from 'lucide-react';
 import { getWeatherInfo } from '../constants/providers';
 
-export function WeatherIcon({ code, className = 'w-6 h-6', ...props }) {
-  const info = getWeatherInfo(code);
+export function WeatherIcon({ code, iconName, className = 'w-6 h-6', ...props }) {
+  // If iconName is passed directly (e.g. 'CloudRain')
+  const icon = iconName || (code !== undefined ? getWeatherInfo(code).icon : 'CloudSun');
 
-  switch (info.icon) {
+  switch (icon) {
     case 'Sun':
       return <Sun className={`text-amber-400 ${className}`} {...props} />;
     case 'SunDim':

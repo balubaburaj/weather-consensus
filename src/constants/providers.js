@@ -25,7 +25,7 @@ export const WEATHER_PROVIDERS = {
     color: '#38bdf8', // Sky Blue
     bgLight: 'rgba(56, 189, 248, 0.15)',
     border: 'border-sky-400',
-    description: 'Powers the beloved Yr.no service. Famous in Ireland for accurate North Atlantic front precipitation and cloud modeling.',
+    description: 'Powers the beloved Yr.no service. Renowned in Ireland for accurate North Atlantic precipitation and cloud cover modeling.',
     resolution: '~2.5-10 km',
     updateFrequency: 'Every 3-6 hours',
     baseWeight: 1.35,
@@ -127,40 +127,89 @@ export const PROVIDER_KEYS = Object.keys(WEATHER_PROVIDERS);
 
 // Weather condition codes (WMO code mapping)
 export const WMO_WEATHER_CODES = {
-  0: { label: 'Clear sky', icon: 'Sun', category: 'clear', isRain: false },
-  1: { label: 'Mainly clear', icon: 'SunDim', category: 'clear', isRain: false },
-  2: { label: 'Partly cloudy', icon: 'CloudSun', category: 'cloudy', isRain: false },
-  3: { label: 'Overcast', icon: 'Cloud', category: 'cloudy', isRain: false },
-  45: { label: 'Fog', icon: 'CloudFog', category: 'fog', isRain: false },
-  48: { label: 'Depositing rime fog', icon: 'CloudFog', category: 'fog', isRain: false },
-  51: { label: 'Light drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true },
-  53: { label: 'Moderate drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true },
-  55: { label: 'Dense drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true },
-  56: { label: 'Light freezing drizzle', icon: 'CloudSnow', category: 'snow', isRain: true },
-  57: { label: 'Dense freezing drizzle', icon: 'CloudSnow', category: 'snow', isRain: true },
-  61: { label: 'Slight rain', icon: 'CloudRain', category: 'rain', isRain: true },
-  62: { label: 'Moderate rain', icon: 'CloudRain', category: 'rain', isRain: true },
-  63: { label: 'Heavy rain', icon: 'CloudRain', category: 'rain', isRain: true },
-  65: { label: 'Violent rain', icon: 'CloudRain', category: 'rain', isRain: true },
-  66: { label: 'Light freezing rain', icon: 'CloudSnow', category: 'snow', isRain: true },
-  67: { label: 'Heavy freezing rain', icon: 'CloudSnow', category: 'snow', isRain: true },
-  71: { label: 'Slight snow fall', icon: 'Snowflake', category: 'snow', isRain: false },
-  73: { label: 'Moderate snow fall', icon: 'Snowflake', category: 'snow', isRain: false },
-  75: { label: 'Heavy snow fall', icon: 'Snowflake', category: 'snow', isRain: false },
-  77: { label: 'Snow grains', icon: 'Snowflake', category: 'snow', isRain: false },
-  80: { label: 'Slight rain showers', icon: 'CloudRain', category: 'rain', isRain: true },
-  81: { label: 'Moderate rain showers', icon: 'CloudRain', category: 'rain', isRain: true },
-  82: { label: 'Violent rain showers', icon: 'CloudRain', category: 'rain', isRain: true },
-  85: { label: 'Slight snow showers', icon: 'Snowflake', category: 'snow', isRain: false },
-  86: { label: 'Heavy snow showers', icon: 'Snowflake', category: 'snow', isRain: false },
-  95: { label: 'Thunderstorm', icon: 'CloudLightning', category: 'storm', isRain: true },
-  96: { label: 'Thunderstorm with slight hail', icon: 'CloudLightning', category: 'storm', isRain: true },
-  99: { label: 'Thunderstorm with heavy hail', icon: 'CloudLightning', category: 'storm', isRain: true },
+  0: { label: 'Clear sky', icon: 'Sun', category: 'clear', isRain: false, emoji: '☀️' },
+  1: { label: 'Mainly clear', icon: 'SunDim', category: 'clear', isRain: false, emoji: '🌤️' },
+  2: { label: 'Partly cloudy', icon: 'CloudSun', category: 'cloudy', isRain: false, emoji: '⛅' },
+  3: { label: 'Overcast', icon: 'Cloud', category: 'cloudy', isRain: false, emoji: '☁️' },
+  45: { label: 'Fog', icon: 'CloudFog', category: 'fog', isRain: false, emoji: '🌫️' },
+  48: { label: 'Depositing rime fog', icon: 'CloudFog', category: 'fog', isRain: false, emoji: '🌫️' },
+  51: { label: 'Light drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true, emoji: '🌦️' },
+  53: { label: 'Moderate drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true, emoji: '🌧️' },
+  55: { label: 'Dense drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true, emoji: '🌧️' },
+  56: { label: 'Freezing drizzle', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
+  57: { label: 'Dense freezing drizzle', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
+  61: { label: 'Light rain', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
+  62: { label: 'Moderate rain', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
+  63: { label: 'Heavy rain', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
+  65: { label: 'Violent rain downpours', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '⛈️' },
+  66: { label: 'Light freezing rain', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
+  67: { label: 'Heavy freezing rain', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
+  71: { label: 'Slight snow fall', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '🌨️' },
+  73: { label: 'Moderate snow fall', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
+  75: { label: 'Heavy snow fall', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
+  77: { label: 'Snow grains', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
+  80: { label: 'Slight rain showers', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌦️' },
+  81: { label: 'Moderate rain showers', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
+  82: { label: 'Violent rain showers', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '⛈️' },
+  85: { label: 'Slight snow showers', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '🌨️' },
+  86: { label: 'Heavy snow showers', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
+  95: { label: 'Thunderstorm', icon: 'CloudLightning', category: 'storm', isRain: true, emoji: '⛈️' },
+  96: { label: 'Thunderstorm with hail', icon: 'CloudLightning', category: 'storm', isRain: true, emoji: '⛈️' },
+  99: { label: 'Thunderstorm with heavy hail', icon: 'CloudLightning', category: 'storm', isRain: true, emoji: '⛈️' },
 };
 
 export function getWeatherInfo(code) {
   if (code === undefined || code === null) {
-    return { label: 'Unknown', icon: 'Cloud', category: 'cloudy', isRain: false };
+    return { label: 'Unknown', icon: 'Cloud', category: 'cloudy', isRain: false, emoji: '☁️' };
   }
-  return WMO_WEATHER_CODES[code] || { label: 'Partly cloudy', icon: 'CloudSun', category: 'cloudy', isRain: false };
+  return WMO_WEATHER_CODES[code] || { label: 'Partly cloudy', icon: 'CloudSun', category: 'cloudy', isRain: false, emoji: '⛅' };
+}
+
+/**
+ * Intelligent Weather Resolver: Ensures icons and labels always match rain reality.
+ * Prevents misleading "Sunny / Cloud" icons when rain probability is 70%+ or when precipitation is actively falling!
+ */
+export function resolveSmartWeatherInfo(code, rainProb = 0, rainAmount = 0) {
+  const base = getWeatherInfo(code);
+
+  // If model marked overcast or cloudy, but significant rain probability or volume is forecasted:
+  if (!base.isRain && (rainProb >= 40 || rainAmount >= 0.15)) {
+    if (rainAmount >= 2.0 || rainProb >= 80) {
+      return {
+        label: 'Heavy Rain',
+        icon: 'CloudRain',
+        category: 'rain',
+        isRain: true,
+        emoji: '🌧️',
+      };
+    }
+    if (rainAmount >= 0.4 || rainProb >= 55) {
+      return {
+        label: 'Rain Showers',
+        icon: 'CloudRain',
+        category: 'rain',
+        isRain: true,
+        emoji: '🌦️',
+      };
+    }
+    return {
+      label: 'Light Rain / Drizzle',
+      icon: 'CloudDrizzle',
+      category: 'rain',
+      isRain: true,
+      emoji: '🌦️',
+    };
+  }
+
+  // If already a rain code, adjust intensity wording if rain is heavy
+  if (base.isRain && (rainAmount >= 2.5 || (code >= 63 && code <= 65))) {
+    return {
+      ...base,
+      label: 'Heavy Rain Downpours',
+      icon: 'CloudRain',
+      emoji: '⛈️',
+    };
+  }
+
+  return base;
 }

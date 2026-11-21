@@ -69,13 +69,9 @@ export default function App() {
       setRawWeatherData(data);
       setLastUpdated(new Date());
 
-      // Auto-select today
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (data.dates.includes(todayStr)) {
-        setSelectedDate(todayStr);
-      } else if (data.dates.length > 0) {
-        setSelectedDate(data.dates[0]);
-      }
+      // Auto-select today from current observation time
+      const todayDate = data.current?.time ? data.current.time.split('T')[0] : new Date().toISOString().split('T')[0];
+      setSelectedDate(todayDate);
     } catch (err) {
       console.error(err);
       setError('Unable to load weather forecast models. Please check your network connection.');
@@ -148,11 +144,32 @@ export default function App() {
     return map;
   }, [processedWeatherData]);
 
-  // Filter dates to show (past 1 day + next 5 days)
-  const availableDates = useMemo(() => {
-    if (!processedWeatherData) return [];
-    return processedWeatherData.dates.slice(1, 7); // keep tidy 6-day window
+  // Current local date in target location
+  const todayDateStr = useMemo(() => {
+    if (processedWeatherData?.current?.time) {
+      return processedWeatherData.current.time.split('T')[0];
+    }
+    return new Date().toISOString().split('T')[0];
   }, [processedWeatherData]);
+
+  // Forward forecast dates: strictly starting from TODAY (todayDateStr) for 7 days!
+  // Past days (yesterday, day -2) are kept exclusively for Truth Verification & Past Audit!
+  const forecastDates = useMemo(() => {
+    if (!processedWeatherData) return [];
+    const allDates = processedWeatherData.dates;
+    const todayIdx = allDates.indexOf(todayDateStr);
+    if (todayIdx >= 0) {
+      return allDates.slice(todayIdx, todayIdx + 7);
+    }
+    return allDates.slice(2, 9);
+  }, [processedWeatherData, todayDateStr]);
+
+  // Make sure selectedDate matches today if not already set or invalid
+  useEffect(() => {
+    if (todayDateStr && (!selectedDate || !forecastDates.includes(selectedDate))) {
+      setSelectedDate(todayDateStr);
+    }
+  }, [todayDateStr, forecastDates, selectedDate]);
 
   // Hours for currently selected day
   const currentDayHours = useMemo(() => {
@@ -215,7 +232,7 @@ export default function App() {
         {/* Content */}
         {processedWeatherData && (
           <>
-            {/* Live Observation & TrueCast Consensus Card */}
+            {/* Live Observation & 4 Pillars & TrueCast Consensus Card */}
             <CurrentOverview
               weatherData={processedWeatherData}
               selectedCity={selectedCity}
@@ -225,9 +242,9 @@ export default function App() {
               onOpenExplainer={() => setShowExplainer(true)}
             />
 
-            {/* Day Selector Pills */}
+            {/* Day Selector Pills (Strictly starts with Today!) */}
             <DaySelector
-              dates={availableDates}
+              dates={forecastDates}
               selectedDate={selectedDate}
               onSelectDate={(date) => {
                 setSelectedDate(date);
