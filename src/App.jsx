@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Header from './components/Header';
 import CurrentOverview from './components/CurrentOverview';
+import WhatToWearCard from './components/WhatToWearCard';
 import DaySelector from './components/DaySelector';
 import HourlyMatrix from './components/HourlyMatrix';
 import HourlyChart from './components/HourlyChart';
@@ -152,24 +153,19 @@ export default function App() {
     return new Date().toISOString().split('T')[0];
   }, [processedWeatherData]);
 
-  // Forward forecast dates: strictly starting from TODAY (todayDateStr) for 7 days!
-  // Past days (yesterday, day -2) are kept exclusively for Truth Verification & Past Audit!
-  const forecastDates = useMemo(() => {
+  // Comprehensive Timeline Dates: Past 2 Days (Thu 19, Fri 20) + Today + Next 6 Days
+  // Allows user to inspect yesterday's sunny/chilly weather alongside the forward forecast!
+  const allTimelineDates = useMemo(() => {
     if (!processedWeatherData) return [];
-    const allDates = processedWeatherData.dates;
-    const todayIdx = allDates.indexOf(todayDateStr);
-    if (todayIdx >= 0) {
-      return allDates.slice(todayIdx, todayIdx + 7);
-    }
-    return allDates.slice(2, 9);
-  }, [processedWeatherData, todayDateStr]);
+    return processedWeatherData.dates.slice(0, 9);
+  }, [processedWeatherData]);
 
-  // Make sure selectedDate matches today if not already set or invalid
+  // Make sure selectedDate matches today by default
   useEffect(() => {
-    if (todayDateStr && (!selectedDate || !forecastDates.includes(selectedDate))) {
+    if (todayDateStr && !selectedDate) {
       setSelectedDate(todayDateStr);
     }
-  }, [todayDateStr, forecastDates, selectedDate]);
+  }, [todayDateStr, selectedDate]);
 
   // Hours for currently selected day
   const currentDayHours = useMemo(() => {
@@ -206,7 +202,7 @@ export default function App() {
             <div className="inline-flex p-4 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-4 animate-pulse">
               <RefreshCw className="w-8 h-8 animate-spin" />
             </div>
-            <h2 className="text-xl font-bold text-white">Aggregating Ireland & Global Meteorological Models...</h2>
+            <h2 className="text-xl font-bold text-white">Aggregating Ireland &amp; Global Meteorological Models...</h2>
             <p className="text-xs text-slate-400 mt-1">
               Synchronizing UK Met Office, MET Norway (Yr.no), ECMWF, DWD ICON, Météo-France, NOAA GFS, GEM, and JMA.
             </p>
@@ -232,7 +228,7 @@ export default function App() {
         {/* Content */}
         {processedWeatherData && (
           <>
-            {/* Live Observation & 4 Pillars & TrueCast Consensus Card */}
+            {/* Live Observation & 4 Core Pillars Hero Bar */}
             <CurrentOverview
               weatherData={processedWeatherData}
               selectedCity={selectedCity}
@@ -242,9 +238,17 @@ export default function App() {
               onOpenExplainer={() => setShowExplainer(true)}
             />
 
-            {/* Day Selector Pills (Strictly starts with Today!) */}
+            {/* Smart Clothing & Thermal Comfort Stylist Guide */}
+            <WhatToWearCard
+              current={processedWeatherData.current}
+              dailySummary={dailySummary}
+              selectedDayHours={currentDayHours}
+              unit={unit}
+            />
+
+            {/* Day Selector Timeline (Includes Past 2 Days + Today + Next 6 Days) */}
             <DaySelector
-              dates={forecastDates}
+              dates={allTimelineDates}
               selectedDate={selectedDate}
               onSelectDate={(date) => {
                 setSelectedDate(date);
@@ -299,7 +303,7 @@ export default function App() {
               {/* Status info */}
               <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>8 Operational Models Live • Cork Ground Truth Verified</span>
+                <span>8 Operational Models Live • Thermal Comfort Active</span>
               </div>
             </div>
 
@@ -344,7 +348,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-300">WeatherConsensus</span>
-            <span>• Tailored for Ireland • Powered by TrueCast AI & Open-Meteo NWP Feeds</span>
+            <span>• Tailored for Ireland • Powered by TrueCast AI &amp; Open-Meteo NWP Feeds</span>
           </div>
           <div className="flex items-center gap-3 text-slate-400 text-[11px]">
             <span>UK Met Office</span>
