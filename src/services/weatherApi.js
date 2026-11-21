@@ -101,13 +101,18 @@ function parseWeatherData(modelsPayload, actualPayload) {
 
   const currentHourDate = new Date();
   currentHourDate.setMinutes(0, 0, 0);
+  const currentHourPrefix = current.time ? current.time.substring(0, 13) : null;
 
   const hours = hourlyTimeList.map((timeIso, idx) => {
     const timeDate = new Date(timeIso);
     const dateStr = timeIso.split('T')[0];
     const hourLabel = timeIso.split('T')[1].substring(0, 5);
-    const isPast = timeDate < currentHourDate;
-    const isCurrent = Math.abs(timeDate.getTime() - currentHourDate.getTime()) < 30 * 60 * 1000;
+    const isPast = currentHourPrefix
+      ? timeIso.substring(0, 13) < currentHourPrefix
+      : timeDate < currentHourDate;
+    const isCurrent = currentHourPrefix
+      ? timeIso.substring(0, 13) === currentHourPrefix
+      : Math.abs(timeDate.getTime() - currentHourDate.getTime()) < 30 * 60 * 1000;
 
     const actualTemp = actualHourly.temperature_2m ? actualHourly.temperature_2m[idx] : null;
     const actualWind = actualHourly.wind_speed_10m ? actualHourly.wind_speed_10m[idx] : null;

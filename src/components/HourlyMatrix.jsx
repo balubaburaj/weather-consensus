@@ -1,117 +1,563 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { WEATHER_PROVIDERS, PROVIDER_KEYS, resolveSmartWeatherInfo } from '../constants/providers';
 import { WeatherIcon } from '../utils/weatherIcons';
-import { formatTemp, formatPrecip } from '../utils/units';
-import { Sparkles, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { formatTemp } from '../utils/units';
+import {
+  Sparkles,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Calendar,
+  Sun,
+  Sunrise,
+  Sunset,
+  ArrowRight,
+  RotateCcw,
+  Zap,
+} from 'lucide-react';
 
 export default function HourlyMatrix({
-  hours,
+  allHours = [],
+  hours = [],
   unit,
   onSelectHour,
   selectedHour,
-  activeProviders,
+  activeProviders = {},
+  selectedDate,
+  todayDateStr,
+  onDateChange,
+  jumpNowTrigger = 0,
 }) {
-  const scrollRef = useRef(null);
+  // Gracefully accept either allHours or hours
+  const hourlyData = useMemo(() => {
+    return allHours && allHours.length > 0 ? allHours : hours || [];
+  }, [allHours, hours]);
 
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const offset = direction === 'left' ? -380 : 380;
-      scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+  const scrollRef = useRef(null);
+  const hourColRefs = useRef({});
+  const dateColRefs = useRef({});
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftStart = useRef(0);
+  const hasAutoScrolled = useRef(false);
+
+  const [seekIndex, setSeekIndex] = useState(0);
+  const [activeViewingDate, setActiveViewingDate] = useState(selectedDate || todayDateStr);
+  const [activeViewingHour, setActiveViewingHour] = useState(null);
+
+  // Find current hour index in the continuous timeline
+  const currentHourIndex = useMemo(() => {
+    if (!hourlyData || hourlyData.length === 0) return -1;
+    const idx = hourlyData.findIndex((h) => h.isCurrent);
+    if (idx >= 0) return idx;
+
+    // Fallback: match by today's date and approximate hour
+    const nowHour = new Date().getHours();
+    const fallbackDate = todayDateStr || new Date().toISOString().split('T')[0];
+    const matchIdx = hourlyData.findIndex(
+      (h) => h.date === fallbackDate && parseInt(h.hourLabel.split(':')[0], 10) === nowHour
+    );
+    if (matchIdx >= 0) return matchIdx;
+
+    return hourlyData.findIndex((h) => h.date === fallbackDate);
+  }, [hourlyData, todayDateStr]);
+
+  // Smoothly center a specific hour column in the scroll container
+  const scrollToHourIndex = useCallback(
+    (index, behavior = 'smooth') => {
+      if (index < 0 || index >= hourlyData.length) return;
+      const hour = hourlyData[index];
+      if (!hour) return;
+
+      const el = hourColRefs.current[hour.timeIso];
+      if (el && scrollRef.current) {
+        const container = scrollRef.current;
+        const elOffset = el.offsetLeft;
+        const elWidth = el.offsetWidth;
+        const containerWidth = container.offsetWidth;
+
+        // Center element in viewport
+        const targetScroll = elOffset - containerWidth / 2 + elWidth / 2;
+        container.scrollTo({ left: Math.max(0, targetScroll), behavior });
+      }
+    },
+    [hourlyData]
+  );
+
+  // Jump to Current Hour (NOW)
+  const jumpToNow = useCallback(() => {
+    const targetIdx = currentHourIndex >= 0 ? currentHourIndex : 0;
+    setSeekIndex(targetIdx);
+    scrollToHourIndex(targetIdx, 'smooth');
+
+    const targetHour = hourlyData[targetIdx];
+    if (targetHour) {
+      setActiveViewingDate(targetHour.date);
+      setActiveViewingHour(targetHour);
+      if (onDateChange && targetHour.date !== selectedDate) {
+        onDateChange(targetHour.date);
+      }
+    }
+  }, [currentHourIndex, hourlyData, scrollToHourIndex, onDateChange, selectedDate]);
+
+  // AUTO-SCROLL ON INITIAL LOAD OR PAGE REFRESH -> Always land on CURRENT DATE & TIME (NOW)!
+  useEffect(() => {
+    if (!hasAutoScrolled.current && hourlyData.length > 0 && currentHourIndex >= 0) {
+      // Delay slightly so DOM layout and column offsets are measured accurately
+      const timer = setTimeout(() => {
+        scrollToHourIndex(currentHourIndex, 'instant');
+        hasAutoScrolled.current = true;
+        setSeekIndex(currentHourIndex);
+        setActiveViewingHour(hourlyData[currentHourIndex]);
+        setActiveViewingDate(hourlyData[currentHourIndex]?.date);
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [hourlyData, currentHourIndex, scrollToHourIndex]);
+
+  // React to jumpNowTrigger (e.g. user clicked "Today" pill in DaySelector)
+  useEffect(() => {
+    if (jumpNowTrigger > 0 && currentHourIndex >= 0) {
+      jumpToNow();
+    }
+  }, [jumpNowTrigger, currentHourIndex, jumpToNow]);
+
+  // When selectedDate changes externally (e.g. user clicked a different day pill in DaySelector)
+  useEffect(() => {
+    if (!hasAutoScrolled.current || !selectedDate) return;
+
+    if (selectedDate === todayDateStr && currentHourIndex >= 0) {
+      // If user selected Today, land on the current hour (NOW), not midnight!
+      scrollToHourIndex(currentHourIndex, 'smooth');
+      setSeekIndex(currentHourIndex);
+    } else if (dateColRefs.current[selectedDate] && scrollRef.current) {
+      // For any other day, scroll to that day's morning (08:00) or start (00:00)
+      const morningHour = hourlyData.find((h) => h.date === selectedDate && h.hourLabel.startsWith('08'));
+      const targetHour = morningHour || hourlyData.find((h) => h.date === selectedDate);
+      if (targetHour) {
+        const idx = hourlyData.indexOf(targetHour);
+        if (idx >= 0) {
+          setSeekIndex(idx);
+          scrollToHourIndex(idx, 'smooth');
+        }
+      } else {
+        const el = dateColRefs.current[selectedDate];
+        const container = scrollRef.current;
+        container.scrollTo({ left: Math.max(0, el.offsetLeft - 240), behavior: 'smooth' });
+      }
+    }
+  }, [selectedDate, todayDateStr, currentHourIndex, hourlyData, scrollToHourIndex]);
+
+  // Handle Seek Scrubber slider change
+  const handleSeekChange = (newIndex) => {
+    setSeekIndex(newIndex);
+    scrollToHourIndex(newIndex, 'smooth');
+    const hour = hourlyData[newIndex];
+    if (hour) {
+      setActiveViewingDate(hour.date);
+      setActiveViewingHour(hour);
+      if (hour.date !== selectedDate && onDateChange) {
+        onDateChange(hour.date);
+      }
     }
   };
 
-  if (!hours || hours.length === 0) {
+  // Quick preset seek button click handler
+  const handlePresetSeek = (matcher) => {
+    const idx = hourlyData.findIndex(matcher);
+    if (idx >= 0) {
+      handleSeekChange(idx);
+    }
+  };
+
+  // Nudge left or right by hours
+  const handleNudge = (hoursDelta) => {
+    const targetIdx = Math.max(0, Math.min(hourlyData.length - 1, seekIndex + hoursDelta));
+    handleSeekChange(targetIdx);
+  };
+
+  // Mouse Drag-to-Scroll handlers (Trackpad & Desktop Touch Ergonomics)
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // Only left-click
+    isDragging.current = true;
+    startX.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeftStart.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging.current || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.6;
+    scrollRef.current.scrollLeft = scrollLeftStart.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDragging.current = false;
+  };
+
+  // Track active date and hour in view while scrolling (Dynamic Live Date Indicator)
+  const handleScroll = () => {
+    if (!scrollRef.current || hourlyData.length === 0) return;
+    const scrollPos = scrollRef.current.scrollLeft + scrollRef.current.offsetWidth / 2;
+
+    // Binary / sampled search for closest hour to viewport center
+    let closestHour = hourlyData[0];
+    let minDiff = Infinity;
+    let closestIdx = 0;
+
+    for (let i = 0; i < hourlyData.length; i += 2) {
+      const h = hourlyData[i];
+      const el = hourColRefs.current[h.timeIso];
+      if (el) {
+        const center = el.offsetLeft + el.offsetWidth / 2;
+        const diff = Math.abs(scrollPos - center);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestHour = h;
+          closestIdx = i;
+        }
+      }
+    }
+
+    if (closestHour) {
+      setActiveViewingHour(closestHour);
+      if (closestHour.date !== activeViewingDate) {
+        setActiveViewingDate(closestHour.date);
+        if (onDateChange && closestHour.date !== selectedDate) {
+          onDateChange(closestHour.date);
+        }
+      }
+      setSeekIndex(closestIdx);
+    }
+  };
+
+  if (!hourlyData || hourlyData.length === 0) {
     return (
       <div className="p-8 text-center text-slate-400 bg-slate-900/50 rounded-2xl border border-slate-800">
-        No hourly data available for this date.
+        No hourly data available.
       </div>
     );
   }
 
-  // Filter keys based on active providers
   const visibleProviderKeys = PROVIDER_KEYS.filter((k) => activeProviders[k] !== false);
+  const seekHour = hourlyData[seekIndex] || hourlyData[0];
+
+  // Helper for human day title
+  const getHumanDayTitle = (dateStr) => {
+    const today = todayDateStr || new Date().toISOString().split('T')[0];
+    const d = new Date(dateStr + 'T12:00:00');
+    const t = new Date(today + 'T12:00:00');
+    const diff = Math.round((d.getTime() - t.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    if (diff === 2) return d.toLocaleDateString('en-US', { weekday: 'long' });
+    if (diff === -1) return 'Yesterday';
+    if (diff === -2) return '2 Days Ago';
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   return (
-    <div className="rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl overflow-hidden backdrop-blur-sm mb-8">
-      
-      {/* Header controls */}
-      <div className="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/70">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Side-by-Side Hourly Matrix
-            </h3>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-mono font-semibold">
-              Temp • Feels Like • Specific Weather • Rain
-            </span>
+    <div className="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-hidden backdrop-blur-md mb-8">
+      {/* =========================================================================
+          TOP CONTROLS & TOUCH-SEEK TIMELINE CONTROL CENTER
+          ========================================================================= */}
+      <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/90 space-y-3.5">
+        
+        {/* Title, Viewing Status & Navigation Actions */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <span>Continuous Multi-Day Hourly Matrix</span>
+              </h3>
+              <span className="text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                Endless Horizontal Seek
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Swipe across all 9 days continuously. Auto-lands on current time. Click any column for the showdown modal.
+            </p>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Compare all models at a glance. Icons and badges tell the story: from fine misting drizzle to heavy lashing rain. Click any column for the deep showdown.
-          </p>
+
+          {/* Real-time Viewing Indicator Badge & Jump to Now */}
+          <div className="flex flex-wrap items-center gap-2">
+            
+            {/* Live Center-View Date & Time Pill */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-cyan-500/30 text-xs shadow-inner">
+              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-slate-400">Viewing:</span>
+              <span className="font-bold text-white">
+                {getHumanDayTitle(activeViewingDate)} ({activeViewingDate})
+              </span>
+              <span className="font-mono font-bold text-cyan-300">
+                • {activeViewingHour?.hourLabel || seekHour?.hourLabel}{' '}
+                {activeViewingHour?.isCurrent && '(NOW)'}
+              </span>
+            </div>
+
+            {/* Jump to Now Button */}
+            <button
+              onClick={jumpToNow}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95"
+              title="Jump directly to Current Time (NOW)"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Jump to Now</span>
+            </button>
+
+            {/* Nudge Arrows (Quick ±6h skip) */}
+            <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-xl border border-slate-800">
+              <button
+                onClick={() => handleNudge(-6)}
+                className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+                title="Back 6 hours"
+              >
+                -6h
+              </button>
+              <button
+                onClick={() => handleNudge(6)}
+                className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+                title="Forward 6 hours"
+              >
+                +6h
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Scroll Arrows */}
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
-          <button
-            onClick={() => scroll('left')}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            title="Scroll Left"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            title="Scroll Right"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+        {/* 🖐️ TOUCH & SEEK INTERACTIVE SCRUBBER BAR */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-inner space-y-2.5">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+              <span className="text-base">👆</span>
+              <span>Touch &amp; Seek Timeline Scrubber:</span>
+            </div>
+
+            {/* Live Hover/Scrub Info Chip */}
+            <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 font-mono font-bold">
+                <WeatherIcon iconName={seekHour?.consensus?.weatherIcon || 'Sun'} className="w-4 h-4" />
+                <span>
+                  {getHumanDayTitle(seekHour?.date)} • {seekHour?.hourLabel}{' '}
+                  {seekHour?.isCurrent && '(NOW)'}
+                </span>
+              </div>
+              <span className="text-white font-bold font-mono">
+                {seekHour?.consensus?.temperature !== undefined && formatTemp(seekHour.consensus.temperature, unit)}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                (Feels {seekHour?.consensus?.apparentTemperature !== undefined && formatTemp(seekHour.consensus.apparentTemperature, unit)})
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                seekHour?.consensus?.rainTypeInfo?.badgeBg || 'bg-slate-800 text-slate-300'
+              }`}>
+                {seekHour?.consensus?.precipitationProbability}% {seekHour?.consensus?.precipitation > 0 && `(${seekHour.consensus.precipitation}mm)`}
+              </span>
+            </div>
+          </div>
+
+          {/* The Range Slider */}
+          <div className="relative py-1">
+            <input
+              type="range"
+              min={0}
+              max={hourlyData.length - 1}
+              value={seekIndex}
+              onChange={(e) => handleSeekChange(Number(e.target.value))}
+              className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
+            />
+          </div>
+
+          {/* Quick-Seek Touch Preset Pills (Instant Jump Targets) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs touch-pan-x scrollbar-none">
+            <span className="text-[10px] uppercase font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+              <Zap className="w-3 h-3 text-cyan-400" />
+              Quick Seek:
+            </span>
+
+            {/* Current NOW Preset */}
+            <button
+              onClick={jumpToNow}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-bold shrink-0 transition-all active:scale-95"
+            >
+              <Clock className="w-3 h-3" />
+              <span>Current Time (NOW)</span>
+            </button>
+
+            {/* Yesterday Morning */}
+            <button
+              onClick={() => {
+                const today = todayDateStr || new Date().toISOString().split('T')[0];
+                const d = new Date(today + 'T12:00:00');
+                d.setDate(d.getDate() - 1);
+                const yestStr = d.toISOString().split('T')[0];
+                handlePresetSeek((h) => h.date === yestStr && h.hourLabel.startsWith('12'));
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Yesterday Midday</span>
+            </button>
+
+            {/* Today Morning */}
+            <button
+              onClick={() => {
+                const today = todayDateStr || new Date().toISOString().split('T')[0];
+                handlePresetSeek((h) => h.date === today && h.hourLabel.startsWith('08'));
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+            >
+              <Sunrise className="w-3 h-3 text-amber-400" />
+              <span>Today 08:00</span>
+            </button>
+
+            {/* Today Afternoon */}
+            <button
+              onClick={() => {
+                const today = todayDateStr || new Date().toISOString().split('T')[0];
+                handlePresetSeek((h) => h.date === today && h.hourLabel.startsWith('14'));
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+            >
+              <Sun className="w-3 h-3 text-amber-400" />
+              <span>Today 14:00</span>
+            </button>
+
+            {/* Today Evening */}
+            <button
+              onClick={() => {
+                const today = todayDateStr || new Date().toISOString().split('T')[0];
+                handlePresetSeek((h) => h.date === today && h.hourLabel.startsWith('20'));
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+            >
+              <Sunset className="w-3 h-3 text-purple-400" />
+              <span>Today 20:00</span>
+            </button>
+
+            {/* Tomorrow Morning */}
+            <button
+              onClick={() => {
+                const today = todayDateStr || new Date().toISOString().split('T')[0];
+                const d = new Date(today + 'T12:00:00');
+                d.setDate(d.getDate() + 1);
+                const tomStr = d.toISOString().split('T')[0];
+                handlePresetSeek((h) => h.date === tomStr && h.hourLabel.startsWith('09'));
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-300 hover:text-white shrink-0 transition-all active:scale-95 border border-cyan-500/20"
+            >
+              <ArrowRight className="w-3 h-3" />
+              <span>Tomorrow 09:00</span>
+            </button>
+
+            {/* Day +2 */}
+            <button
+              onClick={() => {
+                const today = todayDateStr || new Date().toISOString().split('T')[0];
+                const d = new Date(today + 'T12:00:00');
+                d.setDate(d.getDate() + 2);
+                const plus2Str = d.toISOString().split('T')[0];
+                handlePresetSeek((h) => h.date === plus2Str && h.hourLabel.startsWith('12'));
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+            >
+              <Calendar className="w-3 h-3 text-blue-400" />
+              <span>+2 Days Midday</span>
+            </button>
+          </div>
         </div>
+
       </div>
 
-      {/* Matrix Table with fixed row headers and horizontally scrolling hours */}
-      <div className="relative overflow-x-auto" ref={scrollRef}>
+      {/* =========================================================================
+          MAIN ENDLESS HORIZONTALLY SCROLLABLE TABLE
+          ========================================================================= */}
+      <div
+        className="relative overflow-x-auto touch-pan-x cursor-grab active:cursor-grabbing select-none"
+        ref={scrollRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUpOrLeave}
+        onMouseLeave={handleMouseUpOrLeave}
+        onScroll={handleScroll}
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <table className="w-full text-left border-collapse min-w-[1200px]">
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-950/85">
+            {/* Header Row: Sticky Provider Label + Continuous Hourly Columns */}
+            <tr className="border-b border-slate-800 bg-slate-950/95 text-xs">
               
-              {/* Sticky provider label column */}
-              <th className="sticky left-0 z-20 bg-slate-950/95 p-3.5 text-xs font-bold uppercase tracking-wider text-slate-400 border-r border-slate-800 min-w-[210px] backdrop-blur-md">
-                Model / Provider
+              {/* Sticky Provider Name Column */}
+              <th className="sticky left-0 z-30 bg-slate-950/95 p-3.5 font-black uppercase tracking-wider text-slate-400 border-r border-slate-800 min-w-[210px] backdrop-blur-md shadow-md">
+                <div className="flex items-center justify-between">
+                  <span>Model / Provider</span>
+                  <span className="text-[10px] text-cyan-400/80 font-mono font-normal">8 Live</span>
+                </div>
               </th>
 
-              {/* Hourly Columns */}
-              {hours.map((hour) => {
+              {/* Endless Hourly Columns with Day Separator Badges */}
+              {hourlyData.map((hour, idx) => {
+                const isNewDay = idx === 0 || hour.date !== hourlyData[idx - 1].date;
                 const c = hour.consensus;
                 const isSelected = selectedHour?.timeIso === hour.timeIso;
                 const isCurrent = hour.isCurrent;
 
+                // Human day label
+                const dayLabel = getHumanDayTitle(hour.date);
+                const dObj = new Date(hour.date + 'T12:00:00');
+                const formattedDate = dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
                 return (
                   <th
                     key={hour.timeIso}
+                    ref={(el) => {
+                      hourColRefs.current[hour.timeIso] = el;
+                      if (isNewDay) dateColRefs.current[hour.date] = el;
+                    }}
                     onClick={() => onSelectHour(hour)}
-                    className={`p-2.5 text-center min-w-[115px] max-w-[125px] cursor-pointer transition-colors border-r border-slate-800/40 group ${
-                      isSelected
-                        ? 'bg-cyan-500/20 ring-1 ring-cyan-500'
-                        : isCurrent
-                        ? 'bg-blue-500/15'
+                    className={`p-2.5 text-center min-w-[110px] max-w-[120px] cursor-pointer transition-colors relative group ${
+                      isNewDay
+                        ? 'border-l-4 border-l-cyan-400 bg-slate-900/60'
+                        : 'border-r border-slate-800/40'
+                    } ${
+                      isCurrent
+                        ? 'bg-blue-600/20 ring-2 ring-cyan-400 rounded-t-xl z-10'
+                        : isSelected
+                        ? 'bg-cyan-500/20'
                         : 'hover:bg-slate-800/50'
                     }`}
                   >
-                    <div className="flex flex-col items-center gap-1">
+                    {/* Day Separator Header Pill on the 00:00 hour of each day */}
+                    {isNewDay && (
+                      <div className="absolute -top-3 left-0 z-20 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-md whitespace-nowrap border border-cyan-300/40">
+                        📅 {dayLabel} ({formattedDate})
+                      </div>
+                    )}
+
+                    <div className="flex flex-col items-center gap-1 mt-1">
                       <div className="flex items-center gap-1">
-                        <span className={`text-xs font-mono font-bold ${isCurrent ? 'text-cyan-400' : 'text-slate-200'}`}>
+                        <span
+                          className={`text-xs font-mono font-bold ${
+                            isCurrent ? 'text-cyan-300 font-black scale-105' : 'text-slate-200'
+                          }`}
+                        >
                           {hour.hourLabel}
                         </span>
                         {isCurrent && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                          <span className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 shadow animate-pulse">
+                            NOW
+                          </span>
                         )}
                       </div>
 
                       {/* Agreement Pill */}
                       {c && (
                         <div
-                          className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-full inline-flex items-center gap-0.5 ${
+                          className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-flex items-center gap-0.5 ${
                             c.isDivergent
                               ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
                               : c.agreementScore >= 80
@@ -119,7 +565,7 @@ export default function HourlyMatrix({
                               : 'bg-amber-500/15 text-amber-300 border border-amber-500/20'
                           }`}
                         >
-                          {c.isDivergent ? '⚠️ Split' : `${c.agreementScore}%`}
+                          {c.isDivergent ? '⚠️ Split' : `${c.agreementScore}% Match`}
                         </div>
                       )}
                     </div>
@@ -131,11 +577,13 @@ export default function HourlyMatrix({
 
           <tbody className="divide-y divide-slate-800/60 text-xs">
             
-            {/* ROW 1: TrueCast AI Consensus (Highlighted) */}
-            <tr className="bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-slate-900/60 border-b-2 border-cyan-500/30 font-medium">
-              <td className="sticky left-0 z-10 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md">
+            {/* ===================================================================
+                ROW 1: TrueCast AI Consensus (Highlighted Ensembled Ensemble)
+                =================================================================== */}
+            <tr className="bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-slate-900/60 border-b-2 border-cyan-500/40 font-medium">
+              <td className="sticky left-0 z-20 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md shadow-md">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                  <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
@@ -147,28 +595,41 @@ export default function HourlyMatrix({
                 </div>
               </td>
 
-              {hours.map((hour) => {
+              {hourlyData.map((hour, idx) => {
+                const isNewDay = idx === 0 || hour.date !== hourlyData[idx - 1].date;
                 const c = hour.consensus;
-                if (!c) return <td key={hour.timeIso} className="p-2 text-center text-slate-400">--</td>;
+                if (!c) {
+                  return (
+                    <td
+                      key={hour.timeIso}
+                      className={`p-2 text-center text-slate-400 ${
+                        isNewDay ? 'border-l-4 border-l-cyan-400 bg-cyan-950/20' : 'border-r border-slate-800/40'
+                      }`}
+                    >
+                      --
+                    </td>
+                  );
+                }
 
                 return (
                   <td
                     key={hour.timeIso}
                     onClick={() => onSelectHour(hour)}
-                    className="p-2 text-center cursor-pointer hover:bg-cyan-500/15 transition-colors border-r border-slate-800/40"
+                    className={`p-2 text-center cursor-pointer hover:bg-cyan-500/20 transition-colors ${
+                      isNewDay ? 'border-l-4 border-l-cyan-400 bg-cyan-950/20' : 'border-r border-slate-800/40'
+                    } ${hour.isCurrent ? 'bg-blue-600/15 ring-1 ring-cyan-400' : ''}`}
                   >
                     <div className="flex flex-col items-center gap-1">
-                      {/* Specific Weather Icon */}
                       <WeatherIcon iconName={c.weatherIcon} className="w-5 h-5" />
-                      
-                      {/* Weather label badge so it's clear at a single glance */}
-                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold truncate max-w-[100px] ${
-                        c.rainTypeInfo?.badgeBg || 'bg-slate-800 text-slate-300'
-                      }`}>
+
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[10px] font-bold truncate max-w-[95px] ${
+                          c.rainTypeInfo?.badgeBg || 'bg-slate-800 text-slate-300'
+                        }`}
+                      >
                         {c.shortLabel || 'Partly Cloudy'}
                       </span>
 
-                      {/* Temp & Feels Like */}
                       <div className="font-black text-white text-xs font-mono">
                         {formatTemp(c.temperature, unit)}
                       </div>
@@ -176,14 +637,15 @@ export default function HourlyMatrix({
                         Feels {formatTemp(c.apparentTemperature, unit)}
                       </div>
 
-                      {/* Rain Probability & Volume */}
-                      <div className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                        c.precipitationProbability >= 60
-                          ? 'bg-blue-500/30 text-blue-200 border border-blue-500/30'
-                          : c.precipitationProbability >= 30
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20'
-                          : 'bg-slate-800/80 text-slate-400'
-                      }`}>
+                      <div
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          c.precipitationProbability >= 60
+                            ? 'bg-blue-500/30 text-blue-200 border border-blue-500/30'
+                            : c.precipitationProbability >= 30
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20'
+                            : 'bg-slate-800/80 text-slate-400'
+                        }`}
+                      >
                         {c.precipitationProbability}% {c.precipitation > 0 && `(${c.precipitation}mm)`}
                       </div>
                     </div>
@@ -192,15 +654,16 @@ export default function HourlyMatrix({
               })}
             </tr>
 
-            {/* Individual Weather Providers Rows */}
+            {/* ===================================================================
+                INDIVIDUAL WEATHER PROVIDER ROWS (UK Met, Yr.no, ECMWF, etc.)
+                =================================================================== */}
             {visibleProviderKeys.map((key) => {
               const provider = WEATHER_PROVIDERS[key];
 
               return (
                 <tr key={key} className="hover:bg-slate-850/50 transition-colors">
-                  
-                  {/* Provider label cell */}
-                  <td className="sticky left-0 z-10 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md">
+                  {/* Provider sticky label cell */}
+                  <td className="sticky left-0 z-20 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md shadow-md">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span
@@ -222,12 +685,18 @@ export default function HourlyMatrix({
                     </div>
                   </td>
 
-                  {/* Hourly Cells for this provider */}
-                  {hours.map((hour) => {
+                  {/* Hourly cells across all days */}
+                  {hourlyData.map((hour, idx) => {
+                    const isNewDay = idx === 0 || hour.date !== hourlyData[idx - 1].date;
                     const data = hour.providers[key];
                     if (!data || data.temperature === null) {
                       return (
-                        <td key={hour.timeIso} className="p-2 text-center text-slate-400 border-r border-slate-800/40">
+                        <td
+                          key={hour.timeIso}
+                          className={`p-2 text-center text-slate-400 ${
+                            isNewDay ? 'border-l-4 border-l-cyan-400/60 bg-cyan-950/10' : 'border-r border-slate-800/40'
+                          }`}
+                        >
                           --
                         </td>
                       );
@@ -241,20 +710,21 @@ export default function HourlyMatrix({
                       <td
                         key={hour.timeIso}
                         onClick={() => onSelectHour(hour)}
-                        className="p-2 text-center cursor-pointer hover:bg-slate-800/60 transition-colors border-r border-slate-800/40"
+                        className={`p-2 text-center cursor-pointer hover:bg-slate-800/60 transition-colors ${
+                          isNewDay ? 'border-l-4 border-l-cyan-400/60 bg-cyan-950/10' : 'border-r border-slate-800/40'
+                        } ${hour.isCurrent ? 'bg-blue-600/5' : ''}`}
                       >
                         <div className="flex flex-col items-center gap-1">
-                          {/* Specific Weather Icon */}
                           <WeatherIcon iconName={smartInfo.icon} className="w-4 h-4 opacity-90" />
-                          
-                          {/* Specific Condition text badge */}
-                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-semibold truncate max-w-[95px] ${
-                            smartInfo.rainInfo?.badgeBg || 'bg-slate-800/60 text-slate-300'
-                          }`}>
+
+                          <span
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-semibold truncate max-w-[90px] ${
+                              smartInfo.rainInfo?.badgeBg || 'bg-slate-800/60 text-slate-300'
+                            }`}
+                          >
                             {smartInfo.shortLabel}
                           </span>
 
-                          {/* Temp & Feels Like */}
                           <div className="font-bold text-slate-200 text-xs font-mono">
                             {formatTemp(data.temperature, unit)}
                           </div>
@@ -262,7 +732,6 @@ export default function HourlyMatrix({
                             Feels {formatTemp(data.apparentTemperature, unit)}
                           </div>
 
-                          {/* Rain Probability Badge */}
                           <div
                             className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all ${
                               prob >= 70
@@ -285,71 +754,85 @@ export default function HourlyMatrix({
               );
             })}
 
-            {/* Ground Truth Actual Observed row (for past or current hours) */}
-            {hours.some((h) => h.isPast && h.actual?.temperature !== null) && (
-              <tr className="bg-emerald-950/20 border-t-2 border-emerald-500/30">
-                <td className="sticky left-0 z-10 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      <CheckCircle className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-extrabold text-emerald-300 text-xs">
-                        Ground Truth (Actuals)
-                      </div>
-                      <div className="text-[10px] text-slate-400">Observed weather readings</div>
-                    </div>
+            {/* ===================================================================
+                GROUND TRUTH ACTUAL OBSERVED ROW
+                =================================================================== */}
+            <tr className="bg-emerald-950/20 border-t-2 border-emerald-500/30">
+              <td className="sticky left-0 z-20 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md shadow-md">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <CheckCircle className="w-4 h-4" />
                   </div>
-                </td>
+                  <div>
+                    <div className="font-extrabold text-emerald-300 text-xs">
+                      Ground Truth (Actuals)
+                    </div>
+                    <div className="text-[10px] text-slate-400">Recorded weather readings</div>
+                  </div>
+                </div>
+              </td>
 
-                {hours.map((hour) => {
-                  const act = hour.actual;
-                  if (!hour.isPast || act?.temperature === null) {
-                    return (
-                      <td key={hour.timeIso} className="p-2 text-center text-slate-400 text-[10px] border-r border-slate-800/40">
-                        Future
-                      </td>
-                    );
-                  }
-
-                  const smartActual = resolveSmartWeatherInfo(act.weatherCode, act.precipitation > 0 ? 95 : 0, act.precipitation);
-
+              {hourlyData.map((hour, idx) => {
+                const isNewDay = idx === 0 || hour.date !== hourlyData[idx - 1].date;
+                const act = hour.actual;
+                if (!hour.isPast || act?.temperature === null) {
                   return (
                     <td
                       key={hour.timeIso}
-                      onClick={() => onSelectHour(hour)}
-                      className="p-2 text-center cursor-pointer hover:bg-emerald-500/15 transition-colors border-r border-slate-800/40"
+                      className={`p-2 text-center text-slate-400 text-[10px] ${
+                        isNewDay ? 'border-l-4 border-l-cyan-400/60 bg-emerald-950/10' : 'border-r border-slate-800/40'
+                      }`}
                     >
-                      <div className="flex flex-col items-center gap-1">
-                        <WeatherIcon iconName={smartActual.icon} className="w-4 h-4" />
-                        
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 truncate max-w-[95px]">
-                          {smartActual.shortLabel}
-                        </span>
-
-                        <div className="font-bold text-emerald-300 text-xs font-mono">
-                          {formatTemp(act.temperature, unit)}
-                        </div>
-                        <div className="text-[10px] text-emerald-400/80 font-mono">
-                          Feels {formatTemp(act.apparentTemperature, unit)}
-                        </div>
-
-                        <div className="text-[10px] text-emerald-300 font-mono font-bold">
-                          {act.precipitation > 0 ? `${act.precipitation} mm` : '0 mm'}
-                        </div>
-                      </div>
+                      Future
                     </td>
                   );
-                })}
-              </tr>
-            )}
+                }
+
+                const smartActual = resolveSmartWeatherInfo(
+                  act.weatherCode,
+                  act.precipitation > 0 ? 95 : 0,
+                  act.precipitation
+                );
+
+                return (
+                  <td
+                    key={hour.timeIso}
+                    onClick={() => onSelectHour(hour)}
+                    className={`p-2 text-center cursor-pointer hover:bg-emerald-500/15 transition-colors ${
+                      isNewDay ? 'border-l-4 border-l-cyan-400/60 bg-emerald-950/10' : 'border-r border-slate-800/40'
+                    } ${hour.isCurrent ? 'bg-emerald-500/15' : ''}`}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <WeatherIcon iconName={smartActual.icon} className="w-4 h-4" />
+
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 truncate max-w-[90px]">
+                        {smartActual.shortLabel}
+                      </span>
+
+                      <div className="font-bold text-emerald-300 text-xs font-mono">
+                        {formatTemp(act.temperature, unit)}
+                      </div>
+                      <div className="text-[10px] text-emerald-400/80 font-mono">
+                        Feels {formatTemp(act.apparentTemperature, unit)}
+                      </div>
+
+                      <div className="text-[10px] text-emerald-300 font-mono font-bold">
+                        {act.precipitation > 0 ? `${act.precipitation} mm` : '0 mm'}
+                      </div>
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
 
           </tbody>
         </table>
       </div>
 
-      {/* Footer Info & Legend */}
-      <div className="p-3 bg-slate-950/70 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
+      {/* =========================================================================
+          FOOTER & RAIN CLASSIFICATION LEGEND
+          ========================================================================= */}
+      <div className="p-3.5 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-blue-600/50 border border-blue-500/40" />
@@ -365,7 +848,7 @@ export default function HourlyMatrix({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-teal-500/20 border border-teal-500/20" />
-            <span>Misting Drizzle / "Soft Day"</span>
+            <span>Misting / "Soft Day"</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-slate-800" />
@@ -373,8 +856,8 @@ export default function HourlyMatrix({
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-400">
-          💡 Click any hour column to view the deep Model Showdown &amp; Rain Breakdown
+        <div className="text-[11px] text-cyan-300/80 flex items-center gap-1.5 font-medium">
+          <span>💡 Endless scrolling: swipe right past 23:00 to glide seamlessly into the next day</span>
         </div>
       </div>
 

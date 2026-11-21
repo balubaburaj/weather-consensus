@@ -27,6 +27,7 @@ export default function App() {
   const [unit, setUnit] = useState(() => localStorage.getItem('omni_weather_unit') || 'C');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedHour, setSelectedHour] = useState(null);
+  const [jumpNowTrigger, setJumpNowTrigger] = useState(0);
   const [showExplainer, setShowExplainer] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [weightingStrategy, setWeightingStrategy] = useState('accuracy'); // 'accuracy' | 'benchmark' | 'equal'
@@ -243,6 +244,9 @@ export default function App() {
               selectedDate={selectedDate}
               onSelectDate={(date) => {
                 setSelectedDate(date);
+                if (date === todayDateStr) {
+                  setJumpNowTrigger((prev) => prev + 1);
+                }
                 if (activeTab === 'accuracy') setActiveTab('matrix');
               }}
               hoursByDate={hoursByDate}
@@ -298,14 +302,18 @@ export default function App() {
               </div>
             </div>
 
-            {/* Tab 1: Side-by-Side Hourly Matrix */}
+            {/* Tab 1: Side-by-Side Hourly Matrix (Endless Horizontal Multi-Day Timeline) */}
             {activeTab === 'matrix' && (
               <HourlyMatrix
-                hours={currentDayHours}
+                allHours={processedWeatherData.hours}
                 unit={unit}
                 onSelectHour={(hour) => setSelectedHour(hour)}
                 selectedHour={selectedHour}
                 activeProviders={activeProviders}
+                selectedDate={selectedDate}
+                todayDateStr={todayDateStr}
+                onDateChange={(date) => setSelectedDate(date)}
+                jumpNowTrigger={jumpNowTrigger}
               />
             )}
 

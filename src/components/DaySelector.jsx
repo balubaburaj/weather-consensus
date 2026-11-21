@@ -64,7 +64,7 @@ export default function DaySelector({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2.5">
+      <div className="flex sm:grid sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2.5 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 touch-pan-x scrollbar-thin">
         {dates.map((dateStr) => {
           const isSelected = !isAuditMode && selectedDate === dateStr;
           const dayHours = hoursByDate[dateStr] || [];
@@ -83,7 +83,7 @@ export default function DaySelector({
             <button
               key={dateStr}
               onClick={() => onSelectDate(dateStr)}
-              className={`flex flex-col p-2.5 sm:p-3 rounded-2xl border text-left transition-all relative overflow-hidden group ${
+              className={`flex flex-col min-w-[130px] sm:min-w-0 flex-shrink-0 sm:flex-shrink p-2.5 sm:p-3 rounded-2xl border text-left transition-all relative overflow-hidden group active:scale-95 cursor-pointer ${
                 isSelected
                   ? 'bg-gradient-to-b from-cyan-950/70 to-slate-900 border-cyan-500 text-white shadow-lg shadow-cyan-500/15 scale-[1.02] ring-1 ring-cyan-500/50'
                   : dayInfo.isPast
@@ -97,11 +97,18 @@ export default function DaySelector({
 
               {/* Day & Date & Past badge */}
               <div className="flex items-center justify-between w-full">
-                <span className={`text-xs font-black tracking-tight ${
-                  isSelected ? 'text-cyan-300' : dayInfo.isToday ? 'text-white' : 'text-slate-300'
-                }`}>
-                  {dayInfo.label}
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className={`text-xs font-black tracking-tight ${
+                    isSelected ? 'text-cyan-300' : dayInfo.isToday ? 'text-white' : 'text-slate-300'
+                  }`}>
+                    {dayInfo.label}
+                  </span>
+                  {dayInfo.isToday && (
+                    <span className="px-1 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 animate-pulse">
+                      NOW
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] text-slate-400 font-mono">
                   {getFormattedDate(dateStr)}
                 </span>
