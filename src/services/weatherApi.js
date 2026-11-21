@@ -27,8 +27,7 @@ export async function searchLocations(query) {
     const data = await res.json();
     if (!data.results) return [];
 
-    // Prioritize Irish results if matched
-    const results = data.results.map((item) => ({
+    return data.results.map((item) => ({
       id: item.id,
       name: item.name,
       admin1: item.admin1,
@@ -39,8 +38,6 @@ export async function searchLocations(query) {
       timezone: item.timezone || 'Europe/Dublin',
       elevation: item.elevation,
     }));
-
-    return results;
   } catch (err) {
     console.error('Error searching location:', err);
     return [];
@@ -48,18 +45,30 @@ export async function searchLocations(query) {
 }
 
 /**
+ * Calculate Australian Apparent Temperature (Wind Chill & Humidity Feel) fallback
+ */
+function calculateFeelsLike(tempC, windKmh, humidityPct) {
+  if (tempC === null || tempC === undefined) return null;
+  const rh = humidityPct !== null && humidityPct !== undefined ? humidityPct : 75;
+  const v = (windKmh || 15) / 3.6; // m/s
+  const e = (rh / 100) * 6.105 * Math.exp((17.27 * tempC) / (237.7 + tempC));
+  const at = tempC + 0.33 * e - 0.70 * v - 4.0;
+  return Math.round(at * 10) / 10;
+}
+
+/**
  * Fetch comprehensive multi-model forecast and ground-truth observations
  */
 export async function fetchMultiModelWeather(lat, lon, timezone = 'auto') {
   const modelsParam = PROVIDER_KEYS.join(',');
-  const hourlyVariables = 'temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
+  const hourlyVariables = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
   const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,is_day';
 
   // 1. Multi-model call (past 2 days + next 6 days)
   const modelsUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourlyVariables}&models=${modelsParam}&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   // 2. Actual observations / standard seamless analysis call
-  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,precipitation,weather_code,relative_humidity_2m,wind_speed_10m&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
+  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   try {
     const [modelsRes, actualRes] = await Promise.all([
@@ -100,32 +109,48 @@ function parseWeatherData(modelsPayload, actualPayload) {
     const isPast = timeDate < currentHourDate;
     const isCurrent = Math.abs(timeDate.getTime() - currentHourDate.getTime()) < 30 * 60 * 1000;
 
-    // Actual observed values for this hour (from seamless reanalysis/nowcast)
+    const actualTemp = actualHourly.temperature_2m ? actualHourly.temperature_2m[idx] : null;
+    const actualWind = actualHourly.wind_speed_10m ? actualHourly.wind_speed_10m[idx] : null;
+    const actualHumidity = actualHourly.relative_humidity_2m ? actualHourly.relative_humidity_2m[idx] : null;
+    const actualApparent = actualHourly.apparent_temperature
+      ? actualHourly.apparent_temperature[idx]
+      : calculateFeelsLike(actualTemp, actualWind, actualHumidity);
+
+    // Actual observed values for this hour
     const actual = {
-      temperature: actualHourly.temperature_2m ? actualHourly.temperature_2m[idx] : null,
+      temperature: actualTemp !== null ? Math.round(actualTemp * 10) / 10 : null,
+      apparentTemperature: actualApparent !== null ? Math.round(actualApparent * 10) / 10 : null,
       precipitation: actualHourly.precipitation ? actualHourly.precipitation[idx] : 0,
       weatherCode: actualHourly.weather_code ? actualHourly.weather_code[idx] : 0,
-      humidity: actualHourly.relative_humidity_2m ? actualHourly.relative_humidity_2m[idx] : null,
-      windSpeed: actualHourly.wind_speed_10m ? actualHourly.wind_speed_10m[idx] : null,
+      humidity: actualHumidity,
+      windSpeed: actualWind,
     };
 
     // Providers values for this hour
     const providers = {};
     for (const key of PROVIDER_KEYS) {
       const tempKey = `temperature_2m_${key}`;
+      const apparentKey = `apparent_temperature_${key}`;
       const precipProbKey = `precipitation_probability_${key}`;
       const precipKey = `precipitation_${key}`;
       const codeKey = `weather_code_${key}`;
       const windKey = `wind_speed_10m_${key}`;
+      const humKey = `relative_humidity_2m_${key}`;
 
       const temp = modelsHourly[tempKey] ? modelsHourly[tempKey][idx] : null;
+      let apparent = modelsHourly[apparentKey] ? modelsHourly[apparentKey][idx] : null;
       let prob = modelsHourly[precipProbKey] ? modelsHourly[precipProbKey][idx] : null;
       const precip = modelsHourly[precipKey] ? modelsHourly[precipKey][idx] : 0;
       const code = modelsHourly[codeKey] ? modelsHourly[codeKey][idx] : 0;
       const wind = modelsHourly[windKey] ? modelsHourly[windKey][idx] : 0;
+      const hum = modelsHourly[humKey] ? modelsHourly[humKey][idx] : 80;
 
-      // When precipitation probability is not directly provided by a model,
-      // calculate meteorologically sound probability based on precipitation rate
+      // Fallback feels like if model didn't return apparent_temp directly
+      if (apparent === null && temp !== null) {
+        apparent = calculateFeelsLike(temp, wind, hum);
+      }
+
+      // If model omitted probability, estimate from rain rate
       if (prob === null || prob === undefined) {
         if (precip > 1.5) prob = 90;
         else if (precip > 0.5) prob = 75;
@@ -136,10 +161,12 @@ function parseWeatherData(modelsPayload, actualPayload) {
 
       providers[key] = {
         temperature: temp !== null ? Math.round(temp * 10) / 10 : null,
+        apparentTemperature: apparent !== null ? Math.round(apparent * 10) / 10 : null,
         precipitationProbability: Math.min(100, Math.max(0, Math.round(prob || 0))),
         precipitation: precip !== null ? Math.round(precip * 10) / 10 : 0,
         weatherCode: code || 0,
         windSpeed: wind !== null ? Math.round(wind * 10) / 10 : 0,
+        humidity: hum,
       };
     }
 
@@ -166,7 +193,7 @@ function parseWeatherData(modelsPayload, actualPayload) {
     current: {
       time: current.time,
       temperature: current.temperature_2m,
-      apparentTemperature: current.apparent_temperature,
+      apparentTemperature: current.apparent_temperature !== undefined ? current.apparent_temperature : calculateFeelsLike(current.temperature_2m, current.wind_speed_10m, current.relative_humidity_2m),
       relativeHumidity: current.relative_humidity_2m,
       precipitation: current.precipitation,
       weatherCode: current.weather_code,

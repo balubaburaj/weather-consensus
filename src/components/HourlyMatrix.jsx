@@ -35,18 +35,18 @@ export default function HourlyMatrix({
     <div className="rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl overflow-hidden backdrop-blur-sm mb-8">
       
       {/* Header controls */}
-      <div className="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60">
+      <div className="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/70">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-base font-bold text-white tracking-tight">
               Side-by-Side Hourly Matrix
             </h3>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-mono font-semibold">
-              8 NWP Models • 24-Hour Comparison
+              Temp • Feels Like • Specific Weather • Rain
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Compare all models at a glance. Icons and badges clearly reflect rain probability and temperature. Click any hour for details.
+            Compare all models at a glance. Icons and badges tell the story: from fine misting drizzle to heavy lashing rain. Click any column for the deep showdown.
           </p>
         </div>
 
@@ -71,9 +71,9 @@ export default function HourlyMatrix({
 
       {/* Matrix Table with fixed row headers and horizontally scrolling hours */}
       <div className="relative overflow-x-auto" ref={scrollRef}>
-        <table className="w-full text-left border-collapse min-w-[1100px]">
+        <table className="w-full text-left border-collapse min-w-[1200px]">
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-950/80">
+            <tr className="border-b border-slate-800 bg-slate-950/85">
               
               {/* Sticky provider label column */}
               <th className="sticky left-0 z-20 bg-slate-950/95 p-3.5 text-xs font-bold uppercase tracking-wider text-slate-400 border-r border-slate-800 min-w-[210px] backdrop-blur-md">
@@ -90,7 +90,7 @@ export default function HourlyMatrix({
                   <th
                     key={hour.timeIso}
                     onClick={() => onSelectHour(hour)}
-                    className={`p-2.5 text-center min-w-[95px] max-w-[105px] cursor-pointer transition-colors border-r border-slate-800/40 group ${
+                    className={`p-2.5 text-center min-w-[115px] max-w-[125px] cursor-pointer transition-colors border-r border-slate-800/40 group ${
                       isSelected
                         ? 'bg-cyan-500/20 ring-1 ring-cyan-500'
                         : isCurrent
@@ -158,10 +158,25 @@ export default function HourlyMatrix({
                     className="p-2 text-center cursor-pointer hover:bg-cyan-500/15 transition-colors border-r border-slate-800/40"
                   >
                     <div className="flex flex-col items-center gap-1">
+                      {/* Specific Weather Icon */}
                       <WeatherIcon iconName={c.weatherIcon} className="w-5 h-5" />
-                      <div className="font-bold text-white text-xs font-mono">
+                      
+                      {/* Weather label badge so it's clear at a single glance */}
+                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold truncate max-w-[100px] ${
+                        c.rainTypeInfo?.badgeBg || 'bg-slate-800 text-slate-300'
+                      }`}>
+                        {c.shortLabel || 'Partly Cloudy'}
+                      </span>
+
+                      {/* Temp & Feels Like */}
+                      <div className="font-black text-white text-xs font-mono">
                         {formatTemp(c.temperature, unit)}
                       </div>
+                      <div className="text-[10px] text-slate-400 font-mono">
+                        Feels {formatTemp(c.apparentTemperature, unit)}
+                      </div>
+
+                      {/* Rain Probability & Volume */}
                       <div className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                         c.precipitationProbability >= 60
                           ? 'bg-blue-500/30 text-blue-200 border border-blue-500/30'
@@ -169,7 +184,7 @@ export default function HourlyMatrix({
                           ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20'
                           : 'bg-slate-800/80 text-slate-400'
                       }`}>
-                        {c.precipitationProbability}%
+                        {c.precipitationProbability}% {c.precipitation > 0 && `(${c.precipitation}mm)`}
                       </div>
                     </div>
                   </td>
@@ -229,10 +244,22 @@ export default function HourlyMatrix({
                         className="p-2 text-center cursor-pointer hover:bg-slate-800/60 transition-colors border-r border-slate-800/40"
                       >
                         <div className="flex flex-col items-center gap-1">
+                          {/* Specific Weather Icon */}
                           <WeatherIcon iconName={smartInfo.icon} className="w-4 h-4 opacity-90" />
                           
-                          <div className="font-semibold text-slate-200 text-xs font-mono">
+                          {/* Specific Condition text badge */}
+                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-semibold truncate max-w-[95px] ${
+                            smartInfo.rainInfo?.badgeBg || 'bg-slate-800/60 text-slate-300'
+                          }`}>
+                            {smartInfo.shortLabel}
+                          </span>
+
+                          {/* Temp & Feels Like */}
+                          <div className="font-bold text-slate-200 text-xs font-mono">
                             {formatTemp(data.temperature, unit)}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            Feels {formatTemp(data.apparentTemperature, unit)}
                           </div>
 
                           {/* Rain Probability Badge */}
@@ -246,17 +273,10 @@ export default function HourlyMatrix({
                                 ? 'bg-amber-500/15 text-amber-300/90'
                                 : 'bg-slate-800/50 text-slate-400'
                             }`}
-                            title={`${smartInfo.label} • ${prob}% chance of rain (${precip} mm)`}
+                            title={`${smartInfo.label} • ${prob}% chance (${precip} mm)`}
                           >
-                            {prob}%
+                            {prob}% {precip > 0 && `(${precip}mm)`}
                           </div>
-
-                          {/* Rain volume indicator */}
-                          {precip > 0.1 && (
-                            <div className="text-[9px] font-mono text-cyan-400 font-medium">
-                              {formatPrecip(precip, unit)}
-                            </div>
-                          )}
                         </div>
                       </td>
                     );
@@ -302,11 +322,20 @@ export default function HourlyMatrix({
                     >
                       <div className="flex flex-col items-center gap-1">
                         <WeatherIcon iconName={smartActual.icon} className="w-4 h-4" />
+                        
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 truncate max-w-[95px]">
+                          {smartActual.shortLabel}
+                        </span>
+
                         <div className="font-bold text-emerald-300 text-xs font-mono">
                           {formatTemp(act.temperature, unit)}
                         </div>
-                        <div className="text-[10px] text-emerald-400 font-mono font-bold">
-                          {act.precipitation > 0 ? formatPrecip(act.precipitation, unit) : '0 mm'}
+                        <div className="text-[10px] text-emerald-400/80 font-mono">
+                          Feels {formatTemp(act.apparentTemperature, unit)}
+                        </div>
+
+                        <div className="text-[10px] text-emerald-300 font-mono font-bold">
+                          {act.precipitation > 0 ? `${act.precipitation} mm` : '0 mm'}
                         </div>
                       </div>
                     </td>
@@ -321,27 +350,31 @@ export default function HourlyMatrix({
 
       {/* Footer Info & Legend */}
       <div className="p-3 bg-slate-950/70 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded bg-blue-600/40 border border-blue-500/40" />
-            <span>Heavy Rain (≥60%)</span>
+            <span className="w-2.5 h-2.5 rounded bg-blue-600/50 border border-blue-500/40" />
+            <span>Heavy Lashing Rain (≥2.5mm)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded bg-blue-500/25 border border-blue-500/30" />
+            <span>Moderate Showers (0.7-2.4mm)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-cyan-500/20 border border-cyan-500/20" />
-            <span>Showers (30-59%)</span>
+            <span>Light Rain (0.25-0.6mm)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded bg-amber-500/20 border border-amber-500/20" />
-            <span>Passing (15-29%)</span>
+            <span className="w-2.5 h-2.5 rounded bg-teal-500/20 border border-teal-500/20" />
+            <span>Misting Drizzle / "Soft Day"</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-slate-800" />
-            <span>Dry (&lt;15%)</span>
+            <span>Dry &amp; Settled</span>
           </div>
         </div>
 
         <div className="text-[11px] text-slate-400">
-          💡 Click any hour column to view the head-to-head Model Showdown
+          💡 Click any hour column to view the deep Model Showdown &amp; Rain Breakdown
         </div>
       </div>
 

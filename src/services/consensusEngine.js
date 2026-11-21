@@ -1,4 +1,4 @@
-import { WEATHER_PROVIDERS, PROVIDER_KEYS, getWeatherInfo, resolveSmartWeatherInfo } from '../constants/providers';
+import { WEATHER_PROVIDERS, PROVIDER_KEYS, getWeatherInfo, resolveSmartWeatherInfo, getRainHumanType } from '../constants/providers';
 
 /**
  * Compute the TrueCast Consensus for an array of hourly items.
@@ -27,21 +27,24 @@ export function computeHourlyConsensus(hours, customWeights = null) {
       totalWeight += w;
     }
 
-    // 2. Temperature statistics
+    // 2. Temperature & Apparent Temperature (Feels Like)
     const temps = providerValues.map(([_, d]) => d.temperature);
     const sortedTemps = [...temps].sort((a, b) => a - b);
     const minTemp = sortedTemps[0];
     const maxTemp = sortedTemps[sortedTemps.length - 1];
     const tempSpread = Math.round((maxTemp - minTemp) * 10) / 10;
 
-    // Weighted temperature
     let weightedTempSum = 0;
+    let weightedApparentSum = 0;
     for (const [id, d] of providerValues) {
-      weightedTempSum += d.temperature * (weights[id] || 1);
+      const weight = weights[id] || 1;
+      weightedTempSum += d.temperature * weight;
+      const app = d.apparentTemperature !== null && d.apparentTemperature !== undefined ? d.apparentTemperature : d.temperature;
+      weightedApparentSum += app * weight;
     }
     const weightedTemp = Math.round((weightedTempSum / totalWeight) * 10) / 10;
+    const weightedApparent = Math.round((weightedApparentSum / totalWeight) * 10) / 10;
 
-    // Median temperature
     const mid = Math.floor(sortedTemps.length / 2);
     const medianTemp = sortedTemps.length % 2 !== 0
       ? sortedTemps[mid]
@@ -125,13 +128,15 @@ export function computeHourlyConsensus(hours, customWeights = null) {
       }
     }
 
-    // Smart resolver ensures that high rain probability or rain volume ALWAYS has a matching rain icon & label!
+    // Smart resolver ensures that icons & human labels match reality
     const weatherInfo = resolveSmartWeatherInfo(dominantCode, consensusProb, consensusPrecip);
+    const rainTypeInfo = getRainHumanType(consensusPrecip, consensusProb, dominantCode);
 
     return {
       ...hour,
       consensus: {
         temperature: weightedTemp,
+        apparentTemperature: weightedApparent,
         medianTemperature: medianTemp,
         tempSpread,
         minTemp,
@@ -141,9 +146,11 @@ export function computeHourlyConsensus(hours, customWeights = null) {
         probSpread,
         weatherCode: dominantCode,
         weatherLabel: weatherInfo.label,
+        shortLabel: weatherInfo.shortLabel,
         weatherIcon: weatherInfo.icon,
         weatherEmoji: weatherInfo.emoji,
         isRain: weatherInfo.isRain,
+        rainTypeInfo,
         agreementScore,
         agreementLevel,
         agreementColor,
@@ -172,6 +179,7 @@ export function generateDailySummary(dayHours, dateStr) {
   const rainHours = validHours.filter((h) => h.consensus.precipitationProbability >= 40 || h.consensus.precipitation >= 0.15);
   const maxRainProb = Math.max(...validHours.map((h) => h.consensus.precipitationProbability));
   const totalRain = Math.round(validHours.reduce((sum, h) => sum + (h.consensus.precipitation || 0), 0) * 10) / 10;
+  const maxHourlyRain = Math.max(...validHours.map((h) => h.consensus.precipitation || 0));
 
   const avgAgreement = Math.round(validHours.reduce((sum, h) => sum + h.consensus.agreementScore, 0) / validHours.length);
 
@@ -186,43 +194,50 @@ export function generateDailySummary(dayHours, dateStr) {
   // Divergent hours
   const divergentHours = validHours.filter((h) => h.consensus.isDivergent);
 
+  // Peak rain human classification
+  const peakRainType = getRainHumanType(maxHourlyRain, maxRainProb, 0);
+
   // Determine true dominant daily icon & condition that tells the story
   let dailyCondition = 'Partly Cloudy';
   let dailyIcon = 'CloudSun';
   let dailyEmoji = '⛅';
 
-  if (maxRainProb >= 70 || totalRain >= 2.0) {
-    dailyCondition = totalRain >= 5.0 ? 'Heavy Rain Downpours' : 'Rain Showers';
+  if (maxHourlyRain >= 2.5 || totalRain >= 6.0) {
+    dailyCondition = 'Heavy Downpours ("Lashing Rain")';
+    dailyIcon = 'CloudRainWind';
+    dailyEmoji = '⛈️';
+  } else if (maxHourlyRain >= 0.7 || totalRain >= 2.0 || maxRainProb >= 70) {
+    dailyCondition = 'Moderate Rain Showers';
     dailyIcon = 'CloudRain';
     dailyEmoji = '🌧️';
-  } else if (maxRainProb >= 40 || totalRain >= 0.4) {
-    dailyCondition = 'Light Rain / Showers';
+  } else if (maxRainProb >= 40 || totalRain >= 0.3) {
+    dailyCondition = 'Steady Light Rain';
     dailyIcon = 'CloudRain';
-    dailyEmoji = '🌦️';
-  } else if (maxRainProb >= 25) {
-    dailyCondition = 'Passing Drizzle';
+    dailyEmoji = '🌧️';
+  } else if (maxRainProb >= 25 || totalRain > 0) {
+    dailyCondition = 'Fine Misting Drizzle ("Soft Day")';
     dailyIcon = 'CloudDrizzle';
     dailyEmoji = '🌦️';
   } else if (validHours.filter((h) => h.consensus.weatherCode === 3).length > 10) {
-    dailyCondition = 'Overcast';
+    dailyCondition = 'Overcast / Grey Sky';
     dailyIcon = 'Cloud';
     dailyEmoji = '☁️';
   } else {
-    dailyCondition = 'Mainly Clear';
+    dailyCondition = 'Mainly Clear & Sunny';
     dailyIcon = 'Sun';
     dailyEmoji = '☀️';
   }
 
-  // Natural language summary
+  // Natural language human description
   let description = '';
-  if (totalRain >= 10.0 || maxRainProb >= 85) {
-    description = `Substantial rainfall expected ${rainWindow}. Peak precipitation probability is ${maxRainProb}% with up to ${totalRain} mm expected. Heavy downpours possible.`;
+  if (totalRain >= 8.0 || maxHourlyRain >= 3.0) {
+    description = `Substantial rainfall expected ${rainWindow}. Peak conditions: ${peakRainType.label} (up to ${maxHourlyRain} mm/hr). Expect wet roads, localized surface spray, and ~${totalRain} mm total volume.`;
   } else if (rainHours.length > 0) {
-    description = `Showers expected ${rainWindow}. Peak rain chance is ${maxRainProb}% with ~${totalRain} mm total volume.`;
+    description = `${peakRainType.label} expected ${rainWindow}. Peak rain chance is ${maxRainProb}% with ~${totalRain} mm total volume.`;
   } else if (maxRainProb < 20) {
-    description = `Largely dry and settled conditions throughout the day. High model consensus (${avgAgreement}%) with low chance of rain.`;
+    description = `Dry and settled conditions throughout the day. High model consensus (${avgAgreement}%) with low chance of rain.`;
   } else {
-    description = `Overcast with isolated chance (${maxRainProb}%) of passing drizzle. High of ${maxTemp}°C.`;
+    description = `Overcast with isolated chance (${maxRainProb}%) of passing fine drizzle. High of ${maxTemp}°C.`;
   }
 
   return {
@@ -231,6 +246,7 @@ export function generateDailySummary(dayHours, dateStr) {
     maxTemp,
     maxRainProb,
     totalRain,
+    maxHourlyRain,
     avgAgreement,
     rainWindow,
     hasRain: rainHours.length > 0,
@@ -238,6 +254,7 @@ export function generateDailySummary(dayHours, dateStr) {
     dailyCondition,
     dailyIcon,
     dailyEmoji,
+    peakRainType,
     description,
   };
 }

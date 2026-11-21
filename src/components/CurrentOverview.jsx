@@ -11,11 +11,13 @@ import {
   CloudRain,
   Compass,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Umbrella,
+  Eye
 } from 'lucide-react';
 import { WeatherIcon } from '../utils/weatherIcons';
 import { formatTemp, formatWind, formatPrecip } from '../utils/units';
-import { getWeatherInfo, resolveSmartWeatherInfo, WEATHER_PROVIDERS } from '../constants/providers';
+import { getWeatherInfo, resolveSmartWeatherInfo, getRainHumanType, WEATHER_PROVIDERS } from '../constants/providers';
 
 export default function CurrentOverview({
   weatherData,
@@ -30,45 +32,46 @@ export default function CurrentOverview({
   const { current } = weatherData;
   const topPerformer = accuracyReport?.topPerformer;
 
-  // Resolve condition text and icon explicitly
-  const currentCondition = resolveSmartWeatherInfo(current.weatherCode, current.precipitation > 0 ? 80 : 10, current.precipitation);
+  // Resolve condition text and specific human rain classification
+  const currentCondition = resolveSmartWeatherInfo(current.weatherCode, current.precipitation > 0 ? 85 : 10, current.precipitation);
+  const currentRainType = getRainHumanType(current.precipitation, current.precipitation > 0 ? 85 : 0, current.weatherCode);
   const isCurrentlyRaining = current.precipitation > 0 || currentCondition.isRain;
 
   return (
     <div className="space-y-4 mb-8">
       
-      {/* ⚠️ Severe Weather / Heavy Rain Warning Banner for Ireland / Cork */}
-      {(dailySummary?.totalRain >= 8.0 || current.precipitation >= 0.2 || dailySummary?.maxRainProb >= 80) && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-amber-900/30 to-slate-900 border border-amber-500/50 shadow-lg shadow-amber-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs animate-pulse-slow">
+      {/* ⚠️ Met Weather Advisory for Heavy Rain in Ireland / Cork */}
+      {(dailySummary?.totalRain >= 6.0 || current.precipitation >= 0.2 || dailySummary?.maxRainProb >= 80) && (
+        <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-950/70 via-amber-900/40 to-slate-900 border border-amber-500/50 shadow-lg shadow-amber-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+            <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
               <AlertTriangle className="w-5 h-5 text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-amber-300 uppercase tracking-wider text-[11px] px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30">
+                <span className="font-extrabold text-amber-300 uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30">
                   Met Weather Advisory
                 </span>
                 <span className="font-bold text-white text-sm">
-                  Heavy Rain at Times Across {selectedCity?.name || 'Area'}
+                  Heavy Rain & Road Spray Across {selectedCity?.name || 'Area'}
                 </span>
               </div>
               <p className="text-amber-200/90 mt-1 leading-relaxed text-xs">
-                Active precipitation detected. Models predict substantial rain tonight ({dailySummary?.rainWindow || 'overnight'}), with peak downpours up to {dailySummary?.totalRain} mm total volume. Localized surface water and slick roads expected.
+                Active rain falling now. Models predict substantial rain tonight ({dailySummary?.rainWindow || 'overnight'}), with peak downpours reaching <strong>{dailySummary?.peakRainType?.label || 'Heavy Rain'}</strong> ({dailySummary?.maxHourlyRain} mm/hr). Expect slick roads, standing water, and reduced visibility.
               </p>
             </div>
           </div>
-          <div className="self-end sm:self-auto shrink-0 font-mono text-[11px] bg-slate-950/70 px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-300 font-bold">
+          <div className="self-end sm:self-auto shrink-0 font-mono text-xs bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-amber-500/40 text-amber-300 font-bold">
             Rain Chance: {dailySummary?.maxRainProb || 95}%
           </div>
         </div>
       )}
 
-      {/* ⭐ THE 4 CORE ANSWERS HERO BAR (Temperature, Feels Like, How Much Rain, How Accurate) */}
+      {/* ⭐ THE 4 CORE ANSWERS HERO BAR (Temperature, Feels Like, What Kind of Rain, How Accurate) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         
         {/* Pillar 1: What is the Temperature? */}
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center gap-4 relative overflow-hidden">
+        <div className="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center gap-4 relative overflow-hidden">
           <div className="p-3 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shrink-0">
             <Thermometer className="w-6 h-6" />
           </div>
@@ -86,7 +89,7 @@ export default function CurrentOverview({
         </div>
 
         {/* Pillar 2: What Does It Feel Like? */}
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center gap-4 relative overflow-hidden">
+        <div className="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center gap-4 relative overflow-hidden">
           <div className="p-3 rounded-2xl bg-sky-500/15 border border-sky-500/30 text-sky-400 shrink-0">
             <Wind className="w-6 h-6" />
           </div>
@@ -98,42 +101,50 @@ export default function CurrentOverview({
               {formatTemp(current.apparentTemperature, unit)}
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Wind: <span className="text-slate-200 font-semibold">{formatWind(current.windSpeed, unit)}</span> (Wind Chill)
+              Wind: <span className="text-slate-200 font-semibold">{formatWind(current.windSpeed, unit)}</span> ({Math.round(current.temperature - current.apparentTemperature)}° colder from wind chill)
             </div>
           </div>
         </div>
 
-        {/* Pillar 3: How Much Rain? */}
-        <div className={`p-4 rounded-2xl border shadow-md flex items-center gap-4 relative overflow-hidden ${
+        {/* Pillar 3: How Much & What Kind of Rain? */}
+        <div className={`p-4 rounded-3xl border shadow-md flex items-start gap-4 relative overflow-hidden ${
           isCurrentlyRaining
             ? 'bg-blue-950/40 border-blue-500/40 shadow-blue-500/10'
             : 'bg-slate-900/90 border-slate-800'
         }`}>
-          <div className={`p-3 rounded-2xl shrink-0 ${
+          <div className={`p-3 rounded-2xl shrink-0 mt-0.5 ${
             isCurrentlyRaining
-              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 animate-bounce-subtle'
+              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 animate-pulse-subtle'
               : 'bg-slate-800 text-slate-400 border border-slate-700'
           }`}>
-            <CloudRain className="w-6 h-6" />
+            <WeatherIcon iconName={currentRainType.icon} className="w-6 h-6" />
           </div>
           <div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <span>3. How Much Rain?</span>
+              <span>3. What Kind of Rain?</span>
               {isCurrentlyRaining && (
                 <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
               )}
             </div>
-            <div className="text-sm font-black text-white font-mono mt-0.5">
-              {isCurrentlyRaining ? `🌧️ Raining Now (${current.precipitation} mm/hr)` : 'Currently Dry'}
+            
+            {/* Plain English Human Rain Classification */}
+            <div className="text-xs font-black text-white mt-1 flex items-center gap-1">
+              <span>{currentRainType.emoji}</span>
+              <span>{isCurrentlyRaining ? currentRainType.label : 'Currently Dry'}</span>
             </div>
-            <div className="text-[11px] text-cyan-300 font-semibold mt-0.5">
-              {dailySummary?.totalRain > 0 ? `~${dailySummary.totalRain} mm expected today` : 'No rain expected today'}
-            </div>
+
+            <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+              {isCurrentlyRaining
+                ? `${currentRainType.whatItMeans} (${current.precipitation} mm/hr)`
+                : dailySummary?.totalRain > 0
+                ? `${dailySummary.peakRainType.label} coming tonight (~${dailySummary.totalRain} mm)`
+                : 'Dry sidewalks & roads throughout today.'}
+            </p>
           </div>
         </div>
 
         {/* Pillar 4: How Accurate Are You? */}
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center gap-4 relative overflow-hidden">
+        <div className="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center gap-4 relative overflow-hidden">
           <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
             <Award className="w-6 h-6" />
           </div>
@@ -145,7 +156,7 @@ export default function CurrentOverview({
               {topPerformer ? `${topPerformer.overallScore}% Grade` : '95% Benchmarked'}
             </div>
             <div className="text-[11px] text-slate-300 truncate mt-0.5" title={topPerformer ? `#1 ${topPerformer.provider.name} (±${topPerformer.mae}°C error)` : 'Ground truth verified'}>
-              {topPerformer ? `Best: ${topPerformer.provider.shortName} (±${topPerformer.mae}°C)` : 'Ground Truth Verified'}
+              {topPerformer ? `Best: ${topPerformer.provider.shortName} (±${topPerformer.mae}°C error)` : 'Ground Truth Verified'}
             </div>
           </div>
         </div>
@@ -179,13 +190,18 @@ export default function CurrentOverview({
           </div>
 
           {/* Large Explicit Condition Display so icons tell the story */}
-          <div className="mt-4 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center gap-2">
-            <span className="text-lg">{currentCondition.emoji}</span>
-            <span className="text-sm font-extrabold text-white">
-              {currentCondition.label}
-            </span>
+          <div className="mt-4 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center gap-2.5">
+            <span className="text-xl">{currentCondition.emoji}</span>
+            <div>
+              <div className="text-sm font-black text-white">
+                {currentCondition.label}
+              </div>
+              <div className="text-[10px] text-cyan-400 font-medium">
+                {currentRainType.intensity !== 'Dry' ? `Intensity: ${currentRainType.intensity}` : 'Clear & Dry Conditions'}
+              </div>
+            </div>
             <span className="text-[10px] text-slate-400 font-mono ml-auto">
-              WMO Code {current.weatherCode}
+              WMO {current.weatherCode}
             </span>
           </div>
 
