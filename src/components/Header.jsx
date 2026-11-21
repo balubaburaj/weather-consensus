@@ -1,0 +1,228 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, Navigation, RefreshCw, Compass, Sparkles, Sliders } from 'lucide-react';
+import { searchLocations, DEFAULT_CITIES } from '../services/weatherApi';
+
+export default function Header({
+  selectedCity,
+  onSelectCity,
+  unit,
+  onToggleUnit,
+  onRefresh,
+  loading,
+  lastUpdated,
+  onOpenExplainer,
+}) {
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    if (!query || query.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      const results = await searchLocations(query);
+      setSuggestions(results);
+      setIsSearching(false);
+      setShowDropdown(true);
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const handleSelect = (city) => {
+    onSelectCity(city);
+    setQuery('');
+    setShowDropdown(false);
+  };
+
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onSelectCity({
+          name: 'Current Location',
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          country: 'GPS Detected',
+          timezone: 'auto',
+        });
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        alert('Could not access current location. Please check your browser permissions.');
+      }
+    );
+  };
+
+  return (
+    <header className="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md sticky top-0 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          
+          {/* Logo & Subtitle */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20 text-white font-black text-xl">
+              <span>🌤️</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                  WeatherConsensus
+                </span>
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  TrueCast AI
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Multi-Model Aggregator & Accuracy Engine
+              </p>
+            </div>
+          </div>
+
+          {/* Search bar & Controls */}
+          <div className="flex flex-1 max-w-xl items-center gap-2" ref={dropdownRef}>
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+                placeholder="Search city, town, or country (e.g. London, Tokyo, Austin)..."
+                className="w-full pl-10 pr-10 py-2 bg-slate-900/90 border border-slate-700/80 rounded-xl text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all shadow-inner"
+              />
+              {isSearching && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <RefreshCw className="w-4 h-4 text-cyan-400 animate-spin" />
+                </div>
+              )}
+
+              {/* Suggestions Dropdown */}
+              {showDropdown && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 divide-y divide-slate-800">
+                  {suggestions.map((item) => (
+                    <button
+                      key={`${item.id}-${item.latitude}-${item.longitude}`}
+                      onClick={() => handleSelect(item)}
+                      className="w-full px-4 py-2.5 text-left flex items-center justify-between hover:bg-slate-800/80 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <MapPin className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+                        <div>
+                          <div className="text-sm font-medium text-slate-200">
+                            {item.name}
+                            {item.admin1 ? <span className="text-xs text-slate-400 font-normal">, {item.admin1}</span> : null}
+                          </div>
+                          <div className="text-xs text-slate-400">{item.country}</div>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        {item.latitude.toFixed(2)}°, {item.longitude.toFixed(2)}°
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* GPS Locate Button */}
+            <button
+              onClick={handleUseLocation}
+              title="Use Current Location"
+              className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 transition-all"
+            >
+              <Navigation className="w-4 h-4" />
+            </button>
+
+            {/* Unit Toggle */}
+            <div className="flex rounded-xl bg-slate-900 border border-slate-700/80 p-0.5">
+              <button
+                onClick={() => onToggleUnit('C')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  unit === 'C' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                °C
+              </button>
+              <button
+                onClick={() => onToggleUnit('F')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  unit === 'F' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                °F
+              </button>
+            </div>
+
+            {/* Refresh */}
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              title="Refresh All Forecasts"
+              className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+            </button>
+
+            {/* How it Works / Consensus Settings */}
+            <button
+              onClick={onOpenExplainer}
+              title="How TrueCast Consensus Works"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-300 hover:text-cyan-400 transition-all"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Consensus Model</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Popular Cities Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2.5 pb-0.5 text-xs no-scrollbar">
+          <span className="text-slate-400 text-[11px] uppercase tracking-wider font-semibold mr-1 shrink-0">
+            Presets:
+          </span>
+          {DEFAULT_CITIES.map((city) => {
+            const isSelected = selectedCity?.name === city.name;
+            return (
+              <button
+                key={city.name}
+                onClick={() => handleSelect(city)}
+                className={`px-2.5 py-0.5 rounded-lg text-xs font-medium transition-all shrink-0 border ${
+                  isSelected
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm'
+                    : 'bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
+                }`}
+              >
+                {city.name}
+              </button>
+            );
+          })}
+        </div>
+
+      </div>
+    </header>
+  );
+}
