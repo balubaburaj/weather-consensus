@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, RefreshCw, Compass, Sparkles, Sliders } from 'lucide-react';
+import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key } from 'lucide-react';
 import { searchLocations, DEFAULT_CITIES } from '../services/weatherApi';
 
 export default function Header({
@@ -11,6 +11,7 @@ export default function Header({
   loading,
   lastUpdated,
   onOpenExplainer,
+  onOpenApiKeyModal,
 }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -65,7 +66,7 @@ export default function Header({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
           country: 'GPS Detected',
-          timezone: 'auto',
+          timezone: 'Europe/Dublin',
         });
       },
       (err) => {
@@ -95,7 +96,7 @@ export default function Header({
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Multi-Model Aggregator & Accuracy Engine
+                Multi-Model Aggregator & Accuracy Engine • Ireland Edition
               </p>
             </div>
           </div>
@@ -111,7 +112,7 @@ export default function Header({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
-                placeholder="Search city, town, or country (e.g. London, Tokyo, Austin)..."
+                placeholder="Search any town, city, or place (e.g. Cork, Galway, Dublin, Kinsale)..."
                 className="w-full pl-10 pr-10 py-2 bg-slate-900/90 border border-slate-700/80 rounded-xl text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all shadow-inner"
               />
               {isSearching && (
@@ -187,6 +188,16 @@ export default function Header({
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
             </button>
 
+            {/* API Keys Modal */}
+            <button
+              onClick={onOpenApiKeyModal}
+              title="API Keys & Data Status"
+              className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-emerald-400 transition-all flex items-center gap-1.5"
+            >
+              <Key className="w-4 h-4" />
+              <span className="hidden xl:inline text-xs font-medium">Free Feeds Active</span>
+            </button>
+
             {/* How it Works / Consensus Settings */}
             <button
               onClick={onOpenExplainer}
@@ -199,24 +210,25 @@ export default function Header({
           </div>
         </div>
 
-        {/* Popular Cities Bar */}
+        {/* Preset Cities Bar */}
         <div className="flex items-center gap-1.5 overflow-x-auto pt-2.5 pb-0.5 text-xs no-scrollbar">
           <span className="text-slate-400 text-[11px] uppercase tracking-wider font-semibold mr-1 shrink-0">
-            Presets:
+            Quick Cities:
           </span>
           {DEFAULT_CITIES.map((city) => {
-            const isSelected = selectedCity?.name === city.name;
+            const isSelected = selectedCity?.name === city.name && selectedCity?.country === city.country;
             return (
               <button
-                key={city.name}
+                key={`${city.name}-${city.country}`}
                 onClick={() => handleSelect(city)}
-                className={`px-2.5 py-0.5 rounded-lg text-xs font-medium transition-all shrink-0 border ${
+                className={`px-2.5 py-0.5 rounded-lg text-xs font-medium transition-all shrink-0 border flex items-center gap-1 ${
                   isSelected
-                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm'
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm font-semibold'
                     : 'bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
                 }`}
               >
-                {city.name}
+                {city.countryCode === 'IE' ? '🇮🇪' : ''}
+                <span>{city.name}</span>
               </button>
             );
           })}

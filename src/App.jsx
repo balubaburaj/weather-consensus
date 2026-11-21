@@ -7,6 +7,7 @@ import HourlyChart from './components/HourlyChart';
 import AccuracyLeaderboard from './components/AccuracyLeaderboard';
 import HourDetailModal from './components/HourDetailModal';
 import ConsensusExplainerModal from './components/ConsensusExplainerModal';
+import ApiKeyModal from './components/ApiKeyModal';
 
 import { fetchMultiModelWeather, DEFAULT_CITIES } from './services/weatherApi';
 import { computeHourlyConsensus, generateDailySummary } from './services/consensusEngine';
@@ -15,7 +16,8 @@ import { PROVIDER_KEYS, WEATHER_PROVIDERS } from './constants/providers';
 import { LayoutGrid, LineChart, Trophy, RefreshCw, AlertCircle, Compass } from 'lucide-react';
 
 export default function App() {
-  const [selectedCity, setSelectedCity] = useState(DEFAULT_CITIES[0]); // London default
+  // Default to Cork, Ireland (Munster)
+  const [selectedCity, setSelectedCity] = useState(DEFAULT_CITIES[0]);
   const [rawWeatherData, setRawWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,6 +27,7 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedHour, setSelectedHour] = useState(null);
   const [showExplainer, setShowExplainer] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [weightingStrategy, setWeightingStrategy] = useState('accuracy'); // 'accuracy' | 'benchmark' | 'equal'
   const [activeTab, setActiveTab] = useState('matrix'); // 'matrix' | 'chart' | 'accuracy'
 
@@ -109,13 +112,14 @@ export default function App() {
     }
     if (weightingStrategy === 'benchmark') {
       return {
-        ecmwf_ifs025: 1.6,
-        icon_seamless: 1.5,
-        ukmo_seamless: 1.2,
+        ukmo_seamless: 1.6,
+        metno_seamless: 1.5,
+        ecmwf_ifs025: 1.5,
+        icon_seamless: 1.3,
+        meteofrance_seamless: 1.1,
         gfs_seamless: 1.0,
-        meteofrance_seamless: 1.0,
         gem_seamless: 0.9,
-        jma_seamless: 0.9,
+        jma_seamless: 0.8,
       };
     }
     // Default: 'accuracy'
@@ -173,6 +177,7 @@ export default function App() {
         loading={loading}
         lastUpdated={lastUpdated}
         onOpenExplainer={() => setShowExplainer(true)}
+        onOpenApiKeyModal={() => setShowApiKeyModal(true)}
       />
 
       {/* Main Container */}
@@ -184,9 +189,9 @@ export default function App() {
             <div className="inline-flex p-4 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-4 animate-pulse">
               <RefreshCw className="w-8 h-8 animate-spin" />
             </div>
-            <h2 className="text-xl font-bold text-white">Aggregating Numerical Weather Models...</h2>
+            <h2 className="text-xl font-bold text-white">Aggregating Ireland & Global Meteorological Models...</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Pulling ECMWF, NOAA GFS, DWD ICON, UK Met, Météo-France, GEM, and JMA models.
+              Synchronizing UK Met Office, MET Norway (Yr.no), ECMWF, DWD ICON, Météo-France, NOAA GFS, GEM, and JMA.
             </p>
           </div>
         )}
@@ -277,7 +282,7 @@ export default function App() {
               {/* Status info */}
               <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>7 Models Live • Weighted Consensus Active</span>
+                <span>8 Operational Models Live • Cork Ground Truth Verified</span>
               </div>
             </div>
 
@@ -322,16 +327,17 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-300">WeatherConsensus</span>
-            <span>• Powered by TrueCast AI & Open-Meteo High-Resolution NWP Models</span>
+            <span>• Tailored for Ireland • Powered by TrueCast AI & Open-Meteo NWP Feeds</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-400">
-            <span>ECMWF (Europe)</span>
-            <span>NOAA GFS (USA)</span>
-            <span>DWD ICON (Germany)</span>
+          <div className="flex items-center gap-3 text-slate-400 text-[11px]">
             <span>UK Met Office</span>
+            <span>MET Norway (Yr.no)</span>
+            <span>ECMWF IFS</span>
+            <span>DWD ICON-EU</span>
             <span>Météo-France</span>
-            <span>GEM (Canada)</span>
-            <span>JMA (Japan)</span>
+            <span>NOAA GFS</span>
+            <span>GEM</span>
+            <span>JMA</span>
           </div>
         </div>
       </footer>
@@ -351,6 +357,12 @@ export default function App() {
         onClose={() => setShowExplainer(false)}
         weightingStrategy={weightingStrategy}
         onSelectWeightingStrategy={(s) => setWeightingStrategy(s)}
+      />
+
+      {/* API Key & Feeds Modal */}
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
       />
 
     </div>

@@ -3,16 +3,17 @@ import { PROVIDER_KEYS } from '../constants/providers';
 const GEOCODING_BASE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
 
-// Popular default cities
+// Popular default cities - Tailored for Ireland with major Irish hubs & international benchmarks
 export const DEFAULT_CITIES = [
+  { name: 'Cork', country: 'Ireland', admin1: 'Munster', latitude: 51.898, longitude: -8.4706, timezone: 'Europe/Dublin', countryCode: 'IE' },
+  { name: 'Dublin', country: 'Ireland', admin1: 'Leinster', latitude: 53.3498, longitude: -6.2603, timezone: 'Europe/Dublin', countryCode: 'IE' },
+  { name: 'Galway', country: 'Ireland', admin1: 'Connacht', latitude: 53.2707, longitude: -9.0568, timezone: 'Europe/Dublin', countryCode: 'IE' },
+  { name: 'Killarney', country: 'Ireland', admin1: 'Kerry', latitude: 52.0599, longitude: -9.5044, timezone: 'Europe/Dublin', countryCode: 'IE' },
+  { name: 'Limerick', country: 'Ireland', admin1: 'Munster', latitude: 52.6638, longitude: -8.6267, timezone: 'Europe/Dublin', countryCode: 'IE' },
   { name: 'London', country: 'United Kingdom', latitude: 51.5085, longitude: -0.1257, timezone: 'Europe/London', countryCode: 'GB' },
   { name: 'New York', country: 'United States', latitude: 40.7128, longitude: -74.006, timezone: 'America/New_York', countryCode: 'US' },
   { name: 'Tokyo', country: 'Japan', latitude: 35.6895, longitude: 139.6917, timezone: 'Asia/Tokyo', countryCode: 'JP' },
   { name: 'Paris', country: 'France', latitude: 48.8566, longitude: 2.3522, timezone: 'Europe/Paris', countryCode: 'FR' },
-  { name: 'Berlin', country: 'Germany', latitude: 52.52, longitude: 13.405, timezone: 'Europe/Berlin', countryCode: 'DE' },
-  { name: 'Sydney', country: 'Australia', latitude: -33.8688, longitude: 151.2093, timezone: 'Australia/Sydney', countryCode: 'AU' },
-  { name: 'Dubai', country: 'United Arab Emirates', latitude: 25.2048, longitude: 55.2708, timezone: 'Asia/Dubai', countryCode: 'AE' },
-  { name: 'Singapore', country: 'Singapore', latitude: 1.3521, longitude: 103.8198, timezone: 'Asia/Singapore', countryCode: 'SG' },
 ];
 
 /**
@@ -21,12 +22,13 @@ export const DEFAULT_CITIES = [
 export async function searchLocations(query) {
   if (!query || query.trim().length < 2) return [];
   try {
-    const res = await fetch(`${GEOCODING_BASE_URL}?name=${encodeURIComponent(query.trim())}&count=8&language=en&format=json`);
+    const res = await fetch(`${GEOCODING_BASE_URL}?name=${encodeURIComponent(query.trim())}&count=10&language=en&format=json`);
     if (!res.ok) throw new Error('Geocoding request failed');
     const data = await res.json();
     if (!data.results) return [];
 
-    return data.results.map((item) => ({
+    // Prioritize Irish results if matched
+    const results = data.results.map((item) => ({
       id: item.id,
       name: item.name,
       admin1: item.admin1,
@@ -34,9 +36,11 @@ export async function searchLocations(query) {
       countryCode: item.country_code,
       latitude: item.latitude,
       longitude: item.longitude,
-      timezone: item.timezone || 'auto',
+      timezone: item.timezone || 'Europe/Dublin',
       elevation: item.elevation,
     }));
+
+    return results;
   } catch (err) {
     console.error('Error searching location:', err);
     return [];
@@ -51,7 +55,7 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto') {
   const hourlyVariables = 'temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
   const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,is_day';
 
-  // 1. Multi-model call (past 2 days + next 5 days)
+  // 1. Multi-model call (past 2 days + next 6 days)
   const modelsUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourlyVariables}&models=${modelsParam}&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   // 2. Actual observations / standard seamless analysis call
@@ -86,7 +90,6 @@ function parseWeatherData(modelsPayload, actualPayload) {
   const modelsHourly = modelsPayload.hourly || {};
   const current = actualPayload.current || {};
 
-  const nowIso = new Date().toISOString();
   const currentHourDate = new Date();
   currentHourDate.setMinutes(0, 0, 0);
 
@@ -121,8 +124,8 @@ function parseWeatherData(modelsPayload, actualPayload) {
       const code = modelsHourly[codeKey] ? modelsHourly[codeKey][idx] : 0;
       const wind = modelsHourly[windKey] ? modelsHourly[windKey][idx] : 0;
 
-      // Some regional models (like MeteoFrance) don't report precip probability directly,
-      // so we compute a meteorologically sound estimated probability based on precipitation rate
+      // When precipitation probability is not directly provided by a model,
+      // calculate meteorologically sound probability based on precipitation rate
       if (prob === null || prob === undefined) {
         if (precip > 1.5) prob = 90;
         else if (precip > 0.5) prob = 75;
