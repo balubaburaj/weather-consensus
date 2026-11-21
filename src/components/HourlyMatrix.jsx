@@ -5,8 +5,6 @@ import { formatTemp } from '../utils/units';
 import {
   Sparkles,
   CheckCircle,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Calendar,
   Sun,
@@ -41,6 +39,11 @@ export default function HourlyMatrix({
   const startX = useRef(0);
   const scrollLeftStart = useRef(0);
   const hasAutoScrolled = useRef(false);
+  
+  // Guard against circular feedback loops during smooth scrolling
+  const isProgrammaticScroll = useRef(false);
+  const scrollTimeout = useRef(null);
+  const debounceScrollEndRef = useRef(null);
 
   const [seekIndex, setSeekIndex] = useState(0);
   const [activeViewingDate, setActiveViewingDate] = useState(selectedDate || todayDateStr);
@@ -77,6 +80,13 @@ export default function HourlyMatrix({
         const elWidth = el.offsetWidth;
         const containerWidth = container.offsetWidth;
 
+        // Mark programmatic scroll to prevent onScroll feedback loops
+        isProgrammaticScroll.current = true;
+        if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          isProgrammaticScroll.current = false;
+        }, 750);
+
         // Center element in viewport
         const targetScroll = elOffset - containerWidth / 2 + elWidth / 2;
         container.scrollTo({ left: Math.max(0, targetScroll), behavior });
@@ -95,11 +105,8 @@ export default function HourlyMatrix({
     if (targetHour) {
       setActiveViewingDate(targetHour.date);
       setActiveViewingHour(targetHour);
-      if (onDateChange && targetHour.date !== selectedDate) {
-        onDateChange(targetHour.date);
-      }
     }
-  }, [currentHourIndex, hourlyData, scrollToHourIndex, onDateChange, selectedDate]);
+  }, [currentHourIndex, hourlyData, scrollToHourIndex]);
 
   // AUTO-SCROLL ON INITIAL LOAD OR PAGE REFRESH -> Always land on CURRENT DATE & TIME (NOW)!
   useEffect(() => {
@@ -111,40 +118,40 @@ export default function HourlyMatrix({
         setSeekIndex(currentHourIndex);
         setActiveViewingHour(hourlyData[currentHourIndex]);
         setActiveViewingDate(hourlyData[currentHourIndex]?.date);
-      }, 120);
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [hourlyData, currentHourIndex, scrollToHourIndex]);
 
-  // React to jumpNowTrigger (e.g. user clicked "Today" pill in DaySelector)
+  // React to jumpNowTrigger (e.g. user clicked "Today NOW" pill in DaySelector)
   useEffect(() => {
     if (jumpNowTrigger > 0 && currentHourIndex >= 0) {
       jumpToNow();
     }
   }, [jumpNowTrigger, currentHourIndex, jumpToNow]);
 
-  // When selectedDate changes externally (e.g. user clicked a different day pill in DaySelector)
+  // When selectedDate changes externally (e.g. user clicked Tomorrow, Monday, etc. in DaySelector)
   useEffect(() => {
     if (!hasAutoScrolled.current || !selectedDate) return;
 
     if (selectedDate === todayDateStr && currentHourIndex >= 0) {
-      // If user selected Today, land on the current hour (NOW), not midnight!
+      // If user selected Today, land on current hour (NOW), not midnight!
       scrollToHourIndex(currentHourIndex, 'smooth');
       setSeekIndex(currentHourIndex);
-    } else if (dateColRefs.current[selectedDate] && scrollRef.current) {
-      // For any other day, scroll to that day's morning (08:00) or start (00:00)
+      setActiveViewingDate(todayDateStr);
+      setActiveViewingHour(hourlyData[currentHourIndex]);
+    } else {
+      // For any other day (Tomorrow, Yesterday, etc.), scroll directly to that day's morning (08:00) or start (00:00)
       const morningHour = hourlyData.find((h) => h.date === selectedDate && h.hourLabel.startsWith('08'));
       const targetHour = morningHour || hourlyData.find((h) => h.date === selectedDate);
       if (targetHour) {
         const idx = hourlyData.indexOf(targetHour);
         if (idx >= 0) {
           setSeekIndex(idx);
+          setActiveViewingDate(selectedDate);
+          setActiveViewingHour(targetHour);
           scrollToHourIndex(idx, 'smooth');
         }
-      } else {
-        const el = dateColRefs.current[selectedDate];
-        const container = scrollRef.current;
-        container.scrollTo({ left: Math.max(0, el.offsetLeft - 240), behavior: 'smooth' });
       }
     }
   }, [selectedDate, todayDateStr, currentHourIndex, hourlyData, scrollToHourIndex]);
@@ -157,9 +164,6 @@ export default function HourlyMatrix({
     if (hour) {
       setActiveViewingDate(hour.date);
       setActiveViewingHour(hour);
-      if (hour.date !== selectedDate && onDateChange) {
-        onDateChange(hour.date);
-      }
     }
   };
 
@@ -223,14 +227,23 @@ export default function HourlyMatrix({
 
     if (closestHour) {
       setActiveViewingHour(closestHour);
-      if (closestHour.date !== activeViewingDate) {
-        setActiveViewingDate(closestHour.date);
-        if (onDateChange && closestHour.date !== selectedDate) {
-          onDateChange(closestHour.date);
-        }
-      }
+      setActiveViewingDate(closestHour.date);
       setSeekIndex(closestIdx);
     }
+
+    // CRITICAL FIX: If programmatic smooth scrolling is active, do NOT sync onDateChange!
+    // This prevents the feedback loop that snapped the view back to Today when Tomorrow was clicked!
+    if (isProgrammaticScroll.current) {
+      return;
+    }
+
+    // Debounce manual scroll synchronization with parent (only fires 400ms after user finishes scrolling)
+    if (debounceScrollEndRef.current) clearTimeout(debounceScrollEndRef.current);
+    debounceScrollEndRef.current = setTimeout(() => {
+      if (!isProgrammaticScroll.current && closestHour && closestHour.date !== selectedDate && onDateChange) {
+        onDateChange(closestHour.date);
+      }
+    }, 450);
   };
 
   if (!hourlyData || hourlyData.length === 0) {
@@ -261,6 +274,7 @@ export default function HourlyMatrix({
 
   return (
     <div className="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-hidden backdrop-blur-md mb-8">
+      
       {/* =========================================================================
           TOP CONTROLS & TOUCH-SEEK TIMELINE CONTROL CENTER
           ========================================================================= */}
@@ -301,7 +315,7 @@ export default function HourlyMatrix({
             {/* Jump to Now Button */}
             <button
               onClick={jumpToNow}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95 cursor-pointer"
               title="Jump directly to Current Time (NOW)"
             >
               <Clock className="w-3.5 h-3.5" />
@@ -312,14 +326,14 @@ export default function HourlyMatrix({
             <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-xl border border-slate-800">
               <button
                 onClick={() => handleNudge(-6)}
-                className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+                className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
                 title="Back 6 hours"
               >
                 -6h
               </button>
               <button
                 onClick={() => handleNudge(6)}
-                className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+                className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
                 title="Forward 6 hours"
               >
                 +6h
@@ -382,13 +396,13 @@ export default function HourlyMatrix({
             {/* Current NOW Preset */}
             <button
               onClick={jumpToNow}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-bold shrink-0 transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-bold shrink-0 transition-all active:scale-95 cursor-pointer"
             >
               <Clock className="w-3 h-3" />
               <span>Current Time (NOW)</span>
             </button>
 
-            {/* Yesterday Morning */}
+            {/* Yesterday Midday */}
             <button
               onClick={() => {
                 const today = todayDateStr || new Date().toISOString().split('T')[0];
@@ -397,7 +411,7 @@ export default function HourlyMatrix({
                 const yestStr = d.toISOString().split('T')[0];
                 handlePresetSeek((h) => h.date === yestStr && h.hourLabel.startsWith('12'));
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Yesterday Midday</span>
@@ -409,7 +423,7 @@ export default function HourlyMatrix({
                 const today = todayDateStr || new Date().toISOString().split('T')[0];
                 handlePresetSeek((h) => h.date === today && h.hourLabel.startsWith('08'));
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
             >
               <Sunrise className="w-3 h-3 text-amber-400" />
               <span>Today 08:00</span>
@@ -421,7 +435,7 @@ export default function HourlyMatrix({
                 const today = todayDateStr || new Date().toISOString().split('T')[0];
                 handlePresetSeek((h) => h.date === today && h.hourLabel.startsWith('14'));
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
             >
               <Sun className="w-3 h-3 text-amber-400" />
               <span>Today 14:00</span>
@@ -433,7 +447,7 @@ export default function HourlyMatrix({
                 const today = todayDateStr || new Date().toISOString().split('T')[0];
                 handlePresetSeek((h) => h.date === today && h.hourLabel.startsWith('20'));
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
             >
               <Sunset className="w-3 h-3 text-purple-400" />
               <span>Today 20:00</span>
@@ -448,7 +462,7 @@ export default function HourlyMatrix({
                 const tomStr = d.toISOString().split('T')[0];
                 handlePresetSeek((h) => h.date === tomStr && h.hourLabel.startsWith('09'));
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-300 hover:text-white shrink-0 transition-all active:scale-95 border border-cyan-500/20"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-300 hover:text-white shrink-0 transition-all active:scale-95 border border-cyan-500/20 cursor-pointer"
             >
               <ArrowRight className="w-3 h-3" />
               <span>Tomorrow 09:00</span>
@@ -463,7 +477,7 @@ export default function HourlyMatrix({
                 const plus2Str = d.toISOString().split('T')[0];
                 handlePresetSeek((h) => h.date === plus2Str && h.hourLabel.startsWith('12'));
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
             >
               <Calendar className="w-3 h-3 text-blue-400" />
               <span>+2 Days Midday</span>
@@ -492,14 +506,16 @@ export default function HourlyMatrix({
             <tr className="border-b border-slate-800 bg-slate-950/95 text-xs">
               
               {/* Sticky Provider Name Column */}
-              <th className="sticky left-0 z-30 bg-slate-950/95 p-3.5 font-black uppercase tracking-wider text-slate-400 border-r border-slate-800 min-w-[210px] backdrop-blur-md shadow-md">
-                <div className="flex items-center justify-between">
-                  <span>Model / Provider</span>
-                  <span className="text-[10px] text-cyan-400/80 font-mono font-normal">8 Live</span>
+              <th className="sticky left-0 z-30 bg-slate-950/95 p-3.5 font-black uppercase tracking-wider text-slate-400 border-r border-slate-800 min-w-[210px] backdrop-blur-md shadow-md align-bottom">
+                <div className="flex flex-col justify-end h-full">
+                  <div className="text-[10px] text-cyan-400/80 font-mono font-normal mb-1">
+                    Timeline &amp; 8 NWP Models
+                  </div>
+                  <div className="text-xs font-black text-slate-200">Model / Provider</div>
                 </div>
               </th>
 
-              {/* Endless Hourly Columns with Day Separator Badges */}
+              {/* Endless Hourly Columns with IN-FLOW, NEVER-CLIPPED Date Badges */}
               {hourlyData.map((hour, idx) => {
                 const isNewDay = idx === 0 || hour.date !== hourlyData[idx - 1].date;
                 const c = hour.consensus;
@@ -519,9 +535,9 @@ export default function HourlyMatrix({
                       if (isNewDay) dateColRefs.current[hour.date] = el;
                     }}
                     onClick={() => onSelectHour(hour)}
-                    className={`p-2.5 text-center min-w-[110px] max-w-[120px] cursor-pointer transition-colors relative group ${
+                    className={`p-2.5 text-center min-w-[115px] max-w-[125px] cursor-pointer transition-colors relative group ${
                       isNewDay
-                        ? 'border-l-4 border-l-cyan-400 bg-slate-900/60'
+                        ? 'border-l-4 border-l-cyan-400 bg-slate-900/80 shadow-md'
                         : 'border-r border-slate-800/40'
                     } ${
                       isCurrent
@@ -531,14 +547,20 @@ export default function HourlyMatrix({
                         : 'hover:bg-slate-800/50'
                     }`}
                   >
-                    {/* Day Separator Header Pill on the 00:00 hour of each day */}
-                    {isNewDay && (
-                      <div className="absolute -top-3 left-0 z-20 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-md whitespace-nowrap border border-cyan-300/40">
-                        📅 {dayLabel} ({formattedDate})
-                      </div>
-                    )}
+                    {/* IN-FLOW DATE HEADER - 100% UNCLIPPED & PROMINENT */}
+                    <div className="w-full pb-2 mb-2 border-b border-slate-800/70 flex items-center justify-center min-h-[30px]">
+                      {isNewDay ? (
+                        <div className="px-2 py-0.5 rounded-lg bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-slate-950 font-black text-[10px] uppercase tracking-wider shadow whitespace-nowrap border border-cyan-300/40">
+                          📅 {dayLabel}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-slate-400 font-mono">
+                          {formattedDate}
+                        </span>
+                      )}
+                    </div>
 
-                    <div className="flex flex-col items-center gap-1 mt-1">
+                    <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
                         <span
                           className={`text-xs font-mono font-bold ${
