@@ -154,7 +154,6 @@ export default function App() {
   }, [processedWeatherData]);
 
   // Comprehensive Timeline Dates: Past 2 Days (Thu 19, Fri 20) + Today + Next 6 Days
-  // Allows user to inspect yesterday's sunny/chilly weather alongside the forward forecast!
   const allTimelineDates = useMemo(() => {
     if (!processedWeatherData) return [];
     return processedWeatherData.dates.slice(0, 9);
@@ -228,7 +227,7 @@ export default function App() {
         {/* Content */}
         {processedWeatherData && (
           <>
-            {/* Live Observation & 4 Core Pillars Hero Bar */}
+            {/* Live Observation, 4 Core Pillars Hero Bar & Modest Quick Wear Checklist */}
             <CurrentOverview
               weatherData={processedWeatherData}
               selectedCity={selectedCity}
@@ -236,14 +235,6 @@ export default function App() {
               accuracyReport={accuracyReport}
               unit={unit}
               onOpenExplainer={() => setShowExplainer(true)}
-            />
-
-            {/* Smart Clothing & Thermal Comfort Stylist Guide */}
-            <WhatToWearCard
-              current={processedWeatherData.current}
-              dailySummary={dailySummary}
-              selectedDayHours={currentDayHours}
-              unit={unit}
             />
 
             {/* Day Selector Timeline (Includes Past 2 Days + Today + Next 6 Days) */}
@@ -303,7 +294,7 @@ export default function App() {
               {/* Status info */}
               <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>8 Operational Models Live • Thermal Comfort Active</span>
+                <span>8 Operational Models Live • Cork Ground Truth Verified</span>
               </div>
             </div>
 
@@ -338,6 +329,16 @@ export default function App() {
                 onOpenExplainer={() => setShowExplainer(true)}
               />
             )}
+
+            {/* Detailed What to Wear & Thermal Comfort Stylist Guide (Placed at the bottom below comparison) */}
+            <div className="mt-8 pt-4 border-t border-slate-800/80">
+              <WhatToWearCard
+                current={processedWeatherData.current}
+                dailySummary={dailySummary}
+                selectedDayHours={currentDayHours}
+                unit={unit}
+              />
+            </div>
           </>
         )}
 

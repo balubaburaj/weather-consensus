@@ -5,19 +5,84 @@ import {
   Droplets,
   Wind,
   Thermometer,
-  Gauge,
   Award,
   Sparkles,
   CloudRain,
-  Compass,
-  CheckCircle2,
-  AlertCircle,
   Umbrella,
-  Eye
+  Eye,
+  Check
 } from 'lucide-react';
 import { WeatherIcon } from '../utils/weatherIcons';
 import { formatTemp, formatWind, formatPrecip } from '../utils/units';
 import { getWeatherInfo, resolveSmartWeatherInfo, getRainHumanType, WEATHER_PROVIDERS } from '../constants/providers';
+
+/**
+ * Quick modest gear & wear checklist generator
+ */
+function getQuickGearChecklist(current, isWet, isSunny) {
+  const temp = current?.temperature || 12;
+  const feels = current?.apparentTemperature !== null && current?.apparentTemperature !== undefined ? current.apparentTemperature : temp;
+  const wind = current?.windSpeed || 15;
+
+  // Jacket
+  let jacket = 'Light jacket or overshirt';
+  if (isWet) {
+    jacket = feels < 8 ? 'Warm waterproof coat / winter trench' : 'Water-resistant rain jacket or mac';
+  } else if (feels < 4) {
+    jacket = 'Heavy down puffer or thick wool overcoat';
+  } else if (feels < 9) {
+    jacket = 'Warm fleece-lined coat or wool jacket';
+  } else if (feels < 14) {
+    jacket = 'Light quilted jacket or denim with overshirt';
+  } else {
+    jacket = 'No heavy jacket needed';
+  }
+
+  // Umbrella
+  const umbrellaNeeded = isWet;
+  const umbrella = isWet
+    ? (wind >= 25 ? 'Yes, stout windproof umbrella (25+ km/h gusts)' : 'Yes, umbrella recommended')
+    : 'No umbrella needed';
+
+  // Sunglasses
+  const sunglassesNeeded = isSunny && current?.isDay;
+  const sunglasses = sunglassesNeeded
+    ? 'Yes, polarized sunglasses (low-angle sun glare)'
+    : 'No sunglasses needed (overcast)';
+
+  // Hoodie / Mid-layer
+  let hoodie = 'Cotton t-shirt is fine';
+  if (feels < 6) {
+    hoodie = 'Heavy fleece hoodie or merino wool jumper';
+  } else if (feels < 12) {
+    hoodie = 'Warm hoodie or knit sweater underneath';
+  } else if (feels < 16) {
+    hoodie = 'Light hoodie or long-sleeve layer';
+  }
+
+  // Hat / Headwear
+  let earCover = false;
+  let hat = 'No hat required';
+  if (feels < 6 || (feels < 8 && wind >= 25)) {
+    earCover = true;
+    hat = 'Warm beanie / ear cover hat (blocks sharp wind)';
+  } else if (isSunny && current?.isDay) {
+    hat = 'Normal cap or sun visor (for sun glare)';
+  } else if (isWet) {
+    hat = 'Hood up or water-resistant cap';
+  }
+
+  return {
+    jacket,
+    umbrella,
+    umbrellaNeeded,
+    sunglasses,
+    sunglassesNeeded,
+    hoodie,
+    hat,
+    earCover,
+  };
+}
 
 export default function CurrentOverview({
   weatherData,
@@ -36,6 +101,10 @@ export default function CurrentOverview({
   const currentCondition = resolveSmartWeatherInfo(current.weatherCode, current.precipitation > 0 ? 85 : 10, current.precipitation);
   const currentRainType = getRainHumanType(current.precipitation, current.precipitation > 0 ? 85 : 0, current.weatherCode);
   const isCurrentlyRaining = current.precipitation > 0 || currentCondition.isRain;
+  const isSunny = current.weatherCode === 0 || current.weatherCode === 1 || current.weatherCode === 2;
+
+  // Quick modest gear checklist
+  const quickGear = getQuickGearChecklist(current, isCurrentlyRaining, isSunny);
 
   return (
     <div className="space-y-4 mb-8">
@@ -53,7 +122,7 @@ export default function CurrentOverview({
                   Met Weather Advisory
                 </span>
                 <span className="font-bold text-white text-sm">
-                  Heavy Rain & Road Spray Across {selectedCity?.name || 'Area'}
+                  Heavy Rain &amp; Road Spray Across {selectedCity?.name || 'Area'}
                 </span>
               </div>
               <p className="text-amber-200/90 mt-1 leading-relaxed text-xs">
@@ -167,71 +236,140 @@ export default function CurrentOverview({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         {/* Live Ground Observation Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-slate-800 p-6 shadow-xl backdrop-blur-md">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-slate-800 p-6 shadow-xl backdrop-blur-md flex flex-col justify-between">
           <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-cyan-400 font-bold mb-1 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Live Ground Station Weather
-              </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
-                {selectedCity?.name || 'Selected City'}
-              </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {selectedCity?.admin1 ? `${selectedCity.admin1}, ` : ''}{selectedCity?.country} • {weatherData.timezone}
-              </p>
-            </div>
-
-            <div className="p-3 bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-inner">
-              <WeatherIcon iconName={currentCondition.icon} className="w-10 h-10" />
-            </div>
-          </div>
-
-          {/* Large Explicit Condition Display so icons tell the story */}
-          <div className="mt-4 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center gap-2.5">
-            <span className="text-xl">{currentCondition.emoji}</span>
-            <div>
-              <div className="text-sm font-black text-white">
-                {currentCondition.label}
-              </div>
-              <div className="text-[10px] text-cyan-400 font-medium">
-                {currentRainType.intensity !== 'Dry' ? `Intensity: ${currentRainType.intensity}` : 'Clear & Dry Conditions'}
-              </div>
-            </div>
-            <span className="text-[10px] text-slate-400 font-mono ml-auto">
-              WMO {current.weatherCode}
-            </span>
-          </div>
-
-          <div className="mt-5 flex items-baseline gap-4">
-            <div className="text-5xl font-black text-white tracking-tighter">
-              {formatTemp(current.temperature, unit)}
-            </div>
-            <div className="text-xs text-slate-400 space-y-0.5">
-              <div>Feels like <span className="font-bold text-slate-100">{formatTemp(current.apparentTemperature, unit)}</span></div>
-              <div>Humidity <span className="font-bold text-slate-100">{current.relativeHumidity || '--'}%</span></div>
-            </div>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="mt-5 grid grid-cols-2 gap-2 pt-4 border-t border-slate-800/80 text-xs">
-            <div className="flex items-center gap-2 text-slate-300">
-              <Wind className="w-4 h-4 text-sky-400 shrink-0" />
+          <div>
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">Wind Speed</div>
-                <div className="font-bold">{formatWind(current.windSpeed, unit)}</div>
+                <div className="text-[11px] uppercase tracking-wider text-cyan-400 font-bold mb-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Ground Station Weather
+                </div>
+                <h1 className="text-2xl font-black text-white tracking-tight">
+                  {selectedCity?.name || 'Selected City'}
+                </h1>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {selectedCity?.admin1 ? `${selectedCity.admin1}, ` : ''}{selectedCity?.country} • {weatherData.timezone}
+                </p>
+              </div>
+
+              <div className="p-3 bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-inner">
+                <WeatherIcon iconName={currentCondition.icon} className="w-10 h-10" />
               </div>
             </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <Droplets className="w-4 h-4 text-cyan-400 shrink-0" />
+
+            {/* Explicit Condition Display */}
+            <div className="mt-4 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center gap-2.5">
+              <span className="text-xl">{currentCondition.emoji}</span>
               <div>
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">Active Precip</div>
-                <div className="font-bold">{formatPrecip(current.precipitation, unit)}</div>
+                <div className="text-sm font-black text-white">
+                  {currentCondition.label}
+                </div>
+                <div className="text-[10px] text-cyan-400 font-medium">
+                  {currentRainType.intensity !== 'Dry' ? `Intensity: ${currentRainType.intensity}` : 'Clear & Dry Conditions'}
+                </div>
+              </div>
+              <span className="text-[10px] text-slate-400 font-mono ml-auto">
+                WMO {current.weatherCode}
+              </span>
+            </div>
+
+            <div className="mt-4 flex items-baseline gap-4">
+              <div className="text-5xl font-black text-white tracking-tighter">
+                {formatTemp(current.temperature, unit)}
+              </div>
+              <div className="text-xs text-slate-400 space-y-0.5">
+                <div>Feels like <span className="font-bold text-slate-100">{formatTemp(current.apparentTemperature, unit)}</span></div>
+                <div>Humidity <span className="font-bold text-slate-100">{current.relativeHumidity || '--'}%</span></div>
+              </div>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="mt-4 grid grid-cols-2 gap-2 pt-3 border-t border-slate-800/80 text-xs">
+              <div className="flex items-center gap-2 text-slate-300">
+                <Wind className="w-4 h-4 text-sky-400 shrink-0" />
+                <div>
+                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Wind Speed</div>
+                  <div className="font-bold">{formatWind(current.windSpeed, unit)}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-slate-300">
+                <Droplets className="w-4 h-4 text-cyan-400 shrink-0" />
+                <div>
+                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Active Precip</div>
+                  <div className="font-bold">{formatPrecip(current.precipitation, unit)}</div>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* ⭐ SIMPLE & MODEST QUICK GEAR CHECKLIST (At the end of Live Ground Station Weather) */}
+          <div className="mt-5 pt-4 border-t border-slate-800/80 bg-slate-950/40 p-3.5 rounded-2xl border border-slate-850">
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-200">
+                <span>🧥</span>
+                <span>Quick Wear &amp; Gear Checklist:</span>
+              </span>
+              <span className="text-[10px] text-cyan-400 font-mono font-medium">
+                {formatTemp(current.apparentTemperature, unit)} feel
+              </span>
+            </div>
+
+            <div className="space-y-1.5 text-[11px] leading-tight">
+              {/* Jacket */}
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-xs">🧥</span>
+                <div>
+                  <span className="font-bold text-white">Jacket: </span>
+                  <span className="text-slate-300">{quickGear.jacket}</span>
+                </div>
+              </div>
+
+              {/* Umbrella */}
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-xs">☂️</span>
+                <div>
+                  <span className="font-bold text-white">Umbrella: </span>
+                  <span className={quickGear.umbrellaNeeded ? 'text-cyan-300 font-semibold' : 'text-slate-400'}>
+                    {quickGear.umbrella}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sunglasses */}
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-xs">🕶️</span>
+                <div>
+                  <span className="font-bold text-white">Sunglasses: </span>
+                  <span className={quickGear.sunglassesNeeded ? 'text-amber-300 font-semibold' : 'text-slate-400'}>
+                    {quickGear.sunglasses}
+                  </span>
+                </div>
+              </div>
+
+              {/* Hoodie */}
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-xs">🧶</span>
+                <div>
+                  <span className="font-bold text-white">Hoodie / Mid: </span>
+                  <span className="text-slate-300">{quickGear.hoodie}</span>
+                </div>
+              </div>
+
+              {/* Hat */}
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-xs">🧢</span>
+                <div>
+                  <span className="font-bold text-white">Hat: </span>
+                  <span className={quickGear.earCover ? 'text-sky-300 font-semibold' : 'text-slate-300'}>
+                    {quickGear.hat}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         {/* TrueCast Smart Consensus Card */}
@@ -244,7 +382,7 @@ export default function CurrentOverview({
                   <Sparkles className="w-3 h-3 text-cyan-300" />
                   TrueCast AI Consensus
                 </span>
-                <span className="text-xs text-slate-400">8 Models Aggregated & Verified</span>
+                <span className="text-xs text-slate-400">8 Models Aggregated &amp; Verified</span>
               </div>
               <h2 className="text-xl font-bold text-white">
                 Consensus Weather Outlook
