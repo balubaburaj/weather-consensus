@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import CurrentOverview from './components/CurrentOverview';
 import WhatToWearCard from './components/WhatToWearCard';
 import DaySelector from './components/DaySelector';
 import HourlyMatrix from './components/HourlyMatrix';
-import HourlyChart from './components/HourlyChart';
-import AccuracyLeaderboard from './components/AccuracyLeaderboard';
-import HourDetailModal from './components/HourDetailModal';
-import ConsensusExplainerModal from './components/ConsensusExplainerModal';
-import ApiKeyModal from './components/ApiKeyModal';
+
+// Performance optimization: code-split heavy secondary tabs and modals
+const HourlyChart = lazy(() => import('./components/HourlyChart'));
+const AccuracyLeaderboard = lazy(() => import('./components/AccuracyLeaderboard'));
+const HourDetailModal = lazy(() => import('./components/HourDetailModal'));
+const ConsensusExplainerModal = lazy(() => import('./components/ConsensusExplainerModal'));
+const ApiKeyModal = lazy(() => import('./components/ApiKeyModal'));
 
 import { fetchMultiModelWeather, DEFAULT_CITIES } from './services/weatherApi';
 import { computeHourlyConsensus, generateDailySummary } from './services/consensusEngine';
@@ -317,25 +319,37 @@ export default function App() {
               />
             )}
 
-            {/* Tab 2: Interactive Chart */}
+            {/* Tab 2: Interactive Chart (Lazy loaded) */}
             {activeTab === 'chart' && (
-              <HourlyChart
-                hours={currentDayHours}
-                unit={unit}
-                activeProviders={activeProviders}
-                onToggleProvider={handleToggleProvider}
-                onSelectAllProviders={handleSelectAllProviders}
-                onResetProviders={handleResetProviders}
-              />
+              <Suspense fallback={
+                <div className="p-12 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse">
+                  Loading multi-model interactive chart...
+                </div>
+              }>
+                <HourlyChart
+                  hours={currentDayHours}
+                  unit={unit}
+                  activeProviders={activeProviders}
+                  onToggleProvider={handleToggleProvider}
+                  onSelectAllProviders={handleSelectAllProviders}
+                  onResetProviders={handleResetProviders}
+                />
+              </Suspense>
             )}
 
-            {/* Tab 3: Accuracy Leaderboard & Truth Verification */}
+            {/* Tab 3: Accuracy Leaderboard & Truth Verification (Lazy loaded) */}
             {activeTab === 'accuracy' && (
-              <AccuracyLeaderboard
-                accuracyReport={accuracyReport}
-                unit={unit}
-                onOpenExplainer={() => setShowExplainer(true)}
-              />
+              <Suspense fallback={
+                <div className="p-12 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse">
+                  Loading accuracy leaderboard &amp; truth audit...
+                </div>
+              }>
+                <AccuracyLeaderboard
+                  accuracyReport={accuracyReport}
+                  unit={unit}
+                  onOpenExplainer={() => setShowExplainer(true)}
+                />
+              </Suspense>
             )}
 
             {/* Detailed What to Wear & Thermal Comfort Stylist Guide (Placed at the bottom below comparison) */}
@@ -372,28 +386,35 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Hourly Detail Modal */}
-      {selectedHour && (
-        <HourDetailModal
-          hour={selectedHour}
-          unit={unit}
-          onClose={() => setSelectedHour(null)}
-        />
-      )}
+      {/* Lazy Modals with Suspense */}
+      <Suspense fallback={null}>
+        {/* Hourly Detail Modal */}
+        {selectedHour && (
+          <HourDetailModal
+            hour={selectedHour}
+            unit={unit}
+            onClose={() => setSelectedHour(null)}
+          />
+        )}
 
-      {/* Consensus Explainer Modal */}
-      <ConsensusExplainerModal
-        isOpen={showExplainer}
-        onClose={() => setShowExplainer(false)}
-        weightingStrategy={weightingStrategy}
-        onSelectWeightingStrategy={(s) => setWeightingStrategy(s)}
-      />
+        {/* Consensus Explainer Modal */}
+        {showExplainer && (
+          <ConsensusExplainerModal
+            isOpen={showExplainer}
+            onClose={() => setShowExplainer(false)}
+            weightingStrategy={weightingStrategy}
+            onSelectWeightingStrategy={(s) => setWeightingStrategy(s)}
+          />
+        )}
 
-      {/* API Key & Feeds Modal */}
-      <ApiKeyModal
-        isOpen={showApiKeyModal}
-        onClose={() => setShowApiKeyModal(false)}
-      />
+        {/* API Key & Feeds Modal */}
+        {showApiKeyModal && (
+          <ApiKeyModal
+            isOpen={showApiKeyModal}
+            onClose={() => setShowApiKeyModal(false)}
+          />
+        )}
+      </Suspense>
 
     </div>
   );
