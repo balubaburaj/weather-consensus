@@ -1,0 +1,51 @@
+name: Deploy WeatherConsensus to Hostinger Subdomain
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+concurrency:
+  group: deploy-subdomain
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to weather.bwisetech.com
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: ⚡ Build Static Production Assets
+        run: npm run build
+
+      - name: 🛡️ Verify Build Output Exists
+        run: |
+          test -f dist/index.html || { echo "Build failed: dist/index.html not found!"; exit 1; }
+          echo "Production build verified successfully."
+
+      - name: 🚀 Deploy ONLY to Subdomain Directory (FTPS)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_HOST }}
+          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          # Points strictly to the subdomain directory so main domain is NEVER touched
+          server-dir: ${{ secrets.HOSTINGER_SUBDOMAIN_DIR || 'public_html/weather/' }}
+          local-dir: ./dist/
+          protocol: ftps
+          port: 21
+          # Keep files safe
+          dangerous-clean-slate: false
