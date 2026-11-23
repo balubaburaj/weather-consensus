@@ -2,17 +2,17 @@ import React from 'react';
 import { X, Sparkles, AlertTriangle, ShieldCheck, Droplets, Wind, Thermometer, CloudRain, Umbrella, Car, Compass } from 'lucide-react';
 import { WEATHER_PROVIDERS, PROVIDER_KEYS, resolveSmartWeatherInfo, getRainHumanType } from '../constants/providers';
 import { WeatherIcon } from '../utils/weatherIcons';
-import { formatTemp, formatPrecip, formatWind } from '../utils/units';
+import { formatTemp, formatPrecip, formatWind, formatTime } from '../utils/units';
 
-export default function HourDetailModal({ hour, unit, onClose }) {
+export default function HourDetailModal({ hour, unit, timeFormat = '24h', onClose }) {
   if (!hour) return null;
 
   const c = hour.consensus;
   const isPast = hour.isPast;
 
-  // Format human-friendly time and date (e.g. 10:00 PM • Saturday, Nov 21)
+  // Format human-friendly time and date
   const d = new Date(hour.date + 'T' + hour.hourLabel + ':00');
-  const timeFormatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const timeFormatted = formatTime(hour.hourLabel, timeFormat);
   const dateFormatted = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
   // Rain classification for this hour
@@ -49,7 +49,7 @@ export default function HourDetailModal({ hour, unit, onClose }) {
                   Hourly Forecast &amp; Rain Breakdown
                 </h3>
                 <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  {timeFormatted} ({hour.hourLabel})
+                  {timeFormatted}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -189,7 +189,7 @@ export default function HourDetailModal({ hour, unit, onClose }) {
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 <div>
                   <div>Recorded Ground Truth (Actual Observation)</div>
-                  <div className="text-[11px] text-emerald-400/80 font-normal">What actually occurred at {hour.hourLabel}</div>
+                  <div className="text-[11px] text-emerald-400/80 font-normal">What actually occurred at {formatTime(hour.hourLabel, timeFormat)}</div>
                 </div>
               </div>
               <div className="font-mono text-right">

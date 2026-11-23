@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key } from 'lucide-react';
 import { searchLocations, DEFAULT_CITIES } from '../services/weatherApi';
+import { formatTime } from '../utils/units';
 
 export default function Header({
   selectedCity,
   onSelectCity,
   unit,
   onToggleUnit,
+  timeFormat = '24h',
+  onToggleTimeFormat,
   onRefresh,
   loading,
   lastUpdated,
@@ -202,6 +205,28 @@ export default function Header({
               </button>
             </div>
 
+            {/* 24h / 12h Time Format Toggle */}
+            <div className="flex rounded-xl bg-slate-900 border border-slate-700/80 p-0.5 shadow-sm">
+              <button
+                onClick={() => onToggleTimeFormat && onToggleTimeFormat('24h')}
+                title="24-hour time format (13:00, 23:00)"
+                className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  timeFormat === '24h' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                24h
+              </button>
+              <button
+                onClick={() => onToggleTimeFormat && onToggleTimeFormat('12h')}
+                title="12-hour AM/PM time format (1:00 PM, 11:00 PM)"
+                className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  timeFormat === '12h' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                12h
+              </button>
+            </div>
+
             {/* Refresh & Auto-Sync Control */}
             <div className="relative" ref={refreshMenuRef}>
               <div className="flex items-center rounded-xl bg-slate-900 border border-slate-700/80 p-0.5 shadow-sm">
@@ -210,7 +235,7 @@ export default function Header({
                 <button
                   onClick={onRefresh}
                   disabled={loading}
-                  title={`Manual Refresh (Last updated: ${lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'})`}
+                  title={`Manual Refresh (Last updated: ${lastUpdated ? formatTime(lastUpdated, timeFormat) : 'Never'})`}
                   className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-all disabled:opacity-50 cursor-pointer"
                   aria-label="Refresh All Forecasts"
                 >

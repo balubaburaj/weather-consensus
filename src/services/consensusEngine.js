@@ -1,4 +1,5 @@
 import { WEATHER_PROVIDERS, PROVIDER_KEYS, getWeatherInfo, resolveSmartWeatherInfo, getRainHumanType } from '../constants/providers';
+import { formatTime } from '../utils/units';
 
 /**
  * Compute the TrueCast Consensus for an array of hourly items.
@@ -166,7 +167,7 @@ export function computeHourlyConsensus(hours, customWeights = null) {
 /**
  * Generate a smart high-level daily synthesis summary
  */
-export function generateDailySummary(dayHours, dateStr) {
+export function generateDailySummary(dayHours, dateStr, timeFormat = '24h') {
   if (!dayHours || dayHours.length === 0) return null;
 
   const validHours = dayHours.filter((h) => h.consensus);
@@ -186,8 +187,8 @@ export function generateDailySummary(dayHours, dateStr) {
   // Peak rain window
   let rainWindow = null;
   if (rainHours.length > 0) {
-    const startHour = rainHours[0].hourLabel;
-    const endHour = rainHours[rainHours.length - 1].hourLabel;
+    const startHour = formatTime(rainHours[0].hourLabel, timeFormat);
+    const endHour = formatTime(rainHours[rainHours.length - 1].hourLabel, timeFormat);
     rainWindow = startHour === endHour ? `around ${startHour}` : `between ${startHour} and ${endHour}`;
   }
 

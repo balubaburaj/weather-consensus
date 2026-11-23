@@ -14,12 +14,13 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { WEATHER_PROVIDERS } from '../constants/providers';
-import { formatTemp, formatPrecip } from '../utils/units';
+import { formatTemp, formatPrecip, formatTime } from '../utils/units';
 import { WeatherIcon } from '../utils/weatherIcons';
 
 export default function AccuracyLeaderboard({
   accuracyReport,
   unit,
+  timeFormat = '24h',
   onOpenExplainer,
 }) {
   const [showTruthAudit, setShowTruthAudit] = useState(false);
@@ -294,7 +295,7 @@ export default function AccuracyLeaderboard({
                   return (
                     <tr key={h.timeIso} className="hover:bg-slate-900/40">
                       <td className="p-2 font-mono font-medium text-slate-300">
-                        {h.date.slice(5)} {h.hourLabel}
+                        {h.date.slice(5)} {formatTime(h.hourLabel, timeFormat)}
                       </td>
                       <td className="p-2 bg-emerald-950/15 font-bold text-emerald-300 font-mono">
                         {formatTemp(act.temperature, unit)} • {act.precipitation > 0 ? `${act.precipitation}mm rain` : 'Dry'}

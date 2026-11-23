@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { WEATHER_PROVIDERS, PROVIDER_KEYS, resolveSmartWeatherInfo } from '../constants/providers';
 import { WeatherIcon } from '../utils/weatherIcons';
-import { formatTemp } from '../utils/units';
+import { formatTemp, formatTime } from '../utils/units';
 import {
   Sparkles,
   CheckCircle,
@@ -31,6 +31,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
   onScrollRight,
   todayDateStr,
   unit,
+  timeFormat = '24h',
   getHumanDayTitle,
 }) {
   const currentViewing = activeViewingHour || hourlyData[0];
@@ -63,7 +64,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
               {getHumanDayTitle(activeViewingDate)} ({activeViewingDate})
             </span>
             <span className="font-mono font-bold text-cyan-300">
-              • {currentViewing?.hourLabel}{' '}
+              • {formatTime(currentViewing?.hourLabel, timeFormat)}{' '}
               {currentViewing?.isCurrent && '(NOW)'}
             </span>
           </div>
@@ -71,9 +72,9 @@ const MatrixControlBar = memo(function MatrixControlBar({
           {/* Astronomical Sun Pill for Viewing Day */}
           {currentViewing?.sunriseTime && (
             <div className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-amber-500/30 text-xs text-amber-300 font-mono shadow-inner">
-              <span title="Sunrise">🌅 {currentViewing.sunriseTime}</span>
+              <span title="Sunrise">🌅 {formatTime(currentViewing.sunriseTime, timeFormat)}</span>
               <span className="text-slate-600">•</span>
-              <span title="Sunset">🌇 {currentViewing.sunsetTime}</span>
+              <span title="Sunset">🌇 {formatTime(currentViewing.sunsetTime, timeFormat)}</span>
               {currentViewing.daylightDuration && (
                 <span className="text-[10px] text-slate-400">({currentViewing.daylightDuration})</span>
               )}
@@ -113,7 +114,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
       </div>
 
       {/* Quick Seek Filter Buttons & Live Condition Metric Chip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-850">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-855">
         
         {/* Quick-Seek Touch Preset Pills (Instant Jump Targets) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs touch-pan-x scrollbar-none">
@@ -155,7 +156,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Sunrise className="w-3 h-3 text-amber-400" />
-            <span>Today 08:00</span>
+            <span>Today {formatTime('08:00', timeFormat)}</span>
           </button>
 
           {/* Today Afternoon */}
@@ -167,7 +168,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Sun className="w-3 h-3 text-amber-400" />
-            <span>Today 14:00</span>
+            <span>Today {formatTime('14:00', timeFormat)}</span>
           </button>
 
           {/* Today Evening */}
@@ -179,7 +180,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Sunset className="w-3 h-3 text-purple-400" />
-            <span>Today 20:00</span>
+            <span>Today {formatTime('20:00', timeFormat)}</span>
           </button>
 
           {/* Tomorrow Morning */}
@@ -194,7 +195,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-cyan-300 hover:text-white shrink-0 transition-all active:scale-95 border border-cyan-500/20 cursor-pointer"
           >
             <ArrowRight className="w-3 h-3" />
-            <span>Tomorrow 09:00</span>
+            <span>Tomorrow {formatTime('09:00', timeFormat)}</span>
           </button>
 
           {/* Day +2 */}
@@ -219,7 +220,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-mono font-bold">
               <WeatherIcon iconName={currentViewing.consensus?.weatherIcon || 'Sun'} className="w-4 h-4" />
               <span>
-                {currentViewing.hourLabel} {currentViewing.isCurrent && '(NOW)'}
+                {formatTime(currentViewing.hourLabel, timeFormat)} {currentViewing.isCurrent && '(NOW)'}
               </span>
             </div>
             <span className="text-white font-bold font-mono">
@@ -248,6 +249,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
 const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
   hourlyData,
   unit,
+  timeFormat = '24h',
   onSelectHour,
   selectedHour,
   activeProviders,
@@ -256,8 +258,21 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
   dateColRefs,
   getHumanDayTitle,
 }) {
+  const handleTableClick = useCallback(
+    (e) => {
+      const cell = e.target.closest('[data-hour-idx]');
+      if (cell) {
+        const idx = parseInt(cell.getAttribute('data-hour-idx'), 10);
+        if (!isNaN(idx) && hourlyData[idx]) {
+          onSelectHour(hourlyData[idx]);
+        }
+      }
+    },
+    [hourlyData, onSelectHour]
+  );
+
   return (
-    <table className="w-full text-left border-collapse min-w-[1200px]">
+    <table className="w-full text-left border-collapse min-w-[1200px]" onClick={handleTableClick}>
       <thead>
         {/* Header Row: Sticky Provider Label + Continuous Hourly Columns */}
         <tr className="border-b border-slate-800 bg-slate-950/95 text-xs">
@@ -290,7 +305,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                   hourColRefs.current[hour.timeIso] = el;
                   if (isNewDay) dateColRefs.current[hour.date] = el;
                 }}
-                onClick={() => onSelectHour(hour)}
+                data-hour-idx={idx}
                 className={`p-2.5 text-center min-w-[115px] max-w-[125px] cursor-pointer transition-colors relative group ${
                   isNewDay
                     ? 'border-l-4 border-l-cyan-400 bg-slate-900/80 shadow-md'
@@ -323,7 +338,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                         isCurrent ? 'text-cyan-300 font-black scale-105' : 'text-slate-200'
                       }`}
                     >
-                      {hour.hourLabel}
+                      {formatTime(hour.hourLabel, timeFormat)}
                     </span>
                     <span className="text-[10px]" title={hour.isDay ? 'Daylight' : 'Night'}>
                       {hour.isDay ? '☀️' : '🌙'}
@@ -338,12 +353,12 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                   {/* Sunrise or Sunset Event Badge on Column Header */}
                   {hour.isSunriseHour && (
                     <div className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm animate-pulse">
-                      🌅 {hour.sunriseTime}
+                      🌅 {formatTime(hour.sunriseTime, timeFormat)}
                     </div>
                   )}
                   {hour.isSunsetHour && (
                     <div className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-purple-500/25 text-purple-300 border border-purple-500/40 shadow-sm animate-pulse">
-                      🌇 {hour.sunsetTime}
+                      🌇 {formatTime(hour.sunsetTime, timeFormat)}
                     </div>
                   )}
 
@@ -404,7 +419,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
             return (
               <td
                 key={hour.timeIso}
-                onClick={() => onSelectHour(hour)}
+                data-hour-idx={idx}
                 className={`p-2 text-center cursor-pointer hover:bg-cyan-500/20 transition-colors ${
                   isNewDay ? 'border-l-4 border-l-cyan-400 bg-cyan-950/20' : 'border-r border-slate-800/40'
                 } ${hour.isCurrent ? 'bg-blue-600/15 ring-1 ring-cyan-400' : ''}`}
@@ -466,7 +481,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
             return (
               <td
                 key={`sun-${hour.timeIso}`}
-                onClick={() => onSelectHour(hour)}
+                data-hour-idx={idx}
                 className={`p-2 text-center cursor-pointer hover:bg-amber-500/15 transition-colors ${
                   isNewDay ? 'border-l-4 border-l-cyan-400 bg-cyan-950/15' : 'border-r border-slate-800/40'
                 } ${hour.isCurrent ? 'bg-amber-500/10 ring-1 ring-amber-400/40' : ''}`}
@@ -475,13 +490,13 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                   <div className="flex flex-col items-center gap-0.5 p-1 rounded-lg bg-amber-500/25 border border-amber-500/40 text-amber-200">
                     <span className="text-sm">🌅</span>
                     <span className="font-bold text-[10px] text-amber-300">Sunrise</span>
-                    <span className="font-mono text-[9px] text-white font-bold">{hour.sunriseTime}</span>
+                    <span className="font-mono text-[9px] text-white font-bold">{formatTime(hour.sunriseTime, timeFormat)}</span>
                   </div>
                 ) : hour.isSunsetHour ? (
                   <div className="flex flex-col items-center gap-0.5 p-1 rounded-lg bg-purple-500/25 border border-purple-500/40 text-purple-200">
                     <span className="text-sm">🌇</span>
                     <span className="font-bold text-[10px] text-purple-300">Sunset</span>
-                    <span className="font-mono text-[9px] text-white font-bold">{hour.sunsetTime}</span>
+                    <span className="font-mono text-[9px] text-white font-bold">{formatTime(hour.sunsetTime, timeFormat)}</span>
                   </div>
                 ) : hour.isDay ? (
                   <div className="flex flex-col items-center gap-1">
@@ -566,7 +581,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                 return (
                   <td
                     key={hour.timeIso}
-                    onClick={() => onSelectHour(hour)}
+                    data-hour-idx={idx}
                     className={`p-2 text-center cursor-pointer hover:bg-slate-800/60 transition-colors ${
                       isNewDay ? 'border-l-4 border-l-cyan-400/60 bg-cyan-950/10' : 'border-r border-slate-800/40'
                     } ${hour.isCurrent ? 'bg-blue-600/5' : ''}`}
@@ -652,7 +667,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
             return (
               <td
                 key={hour.timeIso}
-                onClick={() => onSelectHour(hour)}
+                data-hour-idx={idx}
                 className={`p-2 text-center cursor-pointer hover:bg-emerald-500/15 transition-colors ${
                   isNewDay ? 'border-l-4 border-l-cyan-400/60 bg-emerald-950/10' : 'border-r border-slate-800/40'
                 } ${hour.isCurrent ? 'bg-emerald-500/15' : ''}`}
@@ -691,6 +706,7 @@ export default function HourlyMatrix({
   allHours = [],
   hours = [],
   unit,
+  timeFormat = '24h',
   onSelectHour,
   selectedHour,
   activeProviders = {},
@@ -985,6 +1001,7 @@ export default function HourlyMatrix({
         onScrollRight={() => handleScrollBy('right')}
         todayDateStr={todayDateStr}
         unit={unit}
+        timeFormat={timeFormat}
         getHumanDayTitle={getHumanDayTitle}
       />
 
@@ -1002,6 +1019,7 @@ export default function HourlyMatrix({
         <MemoizedMatrixTable
           hourlyData={hourlyData}
           unit={unit}
+          timeFormat={timeFormat}
           onSelectHour={onSelectHour}
           selectedHour={selectedHour}
           activeProviders={activeProviders}

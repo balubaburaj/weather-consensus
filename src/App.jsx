@@ -16,6 +16,7 @@ import { fetchMultiModelWeather, DEFAULT_CITIES } from './services/weatherApi';
 import { computeHourlyConsensus, generateDailySummary } from './services/consensusEngine';
 import { calculateModelAccuracy, saveForecastSnapshot } from './services/accuracyTracker';
 import { PROVIDER_KEYS, WEATHER_PROVIDERS } from './constants/providers';
+import { getSystemTimeFormatPreference } from './utils/units';
 import { LayoutGrid, LineChart, Trophy, RefreshCw, AlertCircle, Compass } from 'lucide-react';
 
 export default function App() {
@@ -27,6 +28,18 @@ export default function App() {
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const [unit, setUnit] = useState(() => localStorage.getItem('omni_weather_unit') || 'C');
+
+  // Time format preference ('12h' or '24h') - Defaults to user's system setting via Intl API
+  const [timeFormat, setTimeFormat] = useState(() => {
+    const saved = localStorage.getItem('omni_time_format');
+    if (saved === '12h' || saved === '24h') return saved;
+    return getSystemTimeFormatPreference();
+  });
+
+  const handleToggleTimeFormat = (newFormat) => {
+    setTimeFormat(newFormat);
+    localStorage.setItem('omni_time_format', newFormat);
+  };
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedHour, setSelectedHour] = useState(null);
   const [jumpNowTrigger, setJumpNowTrigger] = useState(0);
@@ -264,8 +277,8 @@ export default function App() {
 
   // Daily summary for currently selected day
   const dailySummary = useMemo(() => {
-    return generateDailySummary(currentDayHours, selectedDate);
-  }, [currentDayHours, selectedDate]);
+    return generateDailySummary(currentDayHours, selectedDate, timeFormat);
+  }, [currentDayHours, selectedDate, timeFormat]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
@@ -276,6 +289,8 @@ export default function App() {
         onSelectCity={(city) => setSelectedCity(city)}
         unit={unit}
         onToggleUnit={handleToggleUnit}
+        timeFormat={timeFormat}
+        onToggleTimeFormat={handleToggleTimeFormat}
         onRefresh={() => loadWeatherData(selectedCity, true, false)}
         loading={loading}
         lastUpdated={lastUpdated}
@@ -327,6 +342,7 @@ export default function App() {
               dailySummary={dailySummary}
               accuracyReport={accuracyReport}
               unit={unit}
+              timeFormat={timeFormat}
               onOpenExplainer={() => setShowExplainer(true)}
             />
 
@@ -399,6 +415,7 @@ export default function App() {
               <HourlyMatrix
                 allHours={processedWeatherData.hours}
                 unit={unit}
+                timeFormat={timeFormat}
                 onSelectHour={(hour) => setSelectedHour(hour)}
                 selectedHour={selectedHour}
                 activeProviders={activeProviders}
@@ -419,6 +436,7 @@ export default function App() {
                 <HourlyChart
                   hours={currentDayHours}
                   unit={unit}
+                  timeFormat={timeFormat}
                   activeProviders={activeProviders}
                   onToggleProvider={handleToggleProvider}
                   onSelectAllProviders={handleSelectAllProviders}
@@ -437,6 +455,7 @@ export default function App() {
                 <AccuracyLeaderboard
                   accuracyReport={accuracyReport}
                   unit={unit}
+                  timeFormat={timeFormat}
                   onOpenExplainer={() => setShowExplainer(true)}
                 />
               </Suspense>
@@ -483,6 +502,7 @@ export default function App() {
           <HourDetailModal
             hour={selectedHour}
             unit={unit}
+            timeFormat={timeFormat}
             onClose={() => setSelectedHour(null)}
           />
         )}

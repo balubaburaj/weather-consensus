@@ -16,7 +16,7 @@ import {
   Sun,
 } from 'lucide-react';
 import { WeatherIcon } from '../utils/weatherIcons';
-import { formatTemp, formatWind, formatPrecip } from '../utils/units';
+import { formatTemp, formatWind, formatPrecip, formatTime } from '../utils/units';
 import { getWeatherInfo, resolveSmartWeatherInfo, getRainHumanType, WEATHER_PROVIDERS } from '../constants/providers';
 
 /**
@@ -93,6 +93,7 @@ export default function CurrentOverview({
   dailySummary,
   accuracyReport,
   unit,
+  timeFormat = '24h',
   onOpenExplainer,
 }) {
   if (!weatherData) return null;
@@ -313,7 +314,7 @@ export default function CurrentOverview({
               <div className="flex items-center gap-2 text-amber-300 font-semibold">
                 <Sunrise className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="text-[11px] text-slate-400 uppercase font-bold">Sunrise:</span>
-                <span className="font-mono font-bold text-white text-xs">{current.sunrise || '08:06'}</span>
+                <span className="font-mono font-bold text-white text-xs">{formatTime(current.sunrise || '08:06', timeFormat)}</span>
               </div>
 
               <div className="flex items-center gap-1.5 text-slate-300 text-xs font-medium">
@@ -324,7 +325,7 @@ export default function CurrentOverview({
               <div className="flex items-center gap-2 text-purple-300 font-semibold">
                 <Sunset className="w-4 h-4 text-purple-400 shrink-0" />
                 <span className="text-[11px] text-slate-400 uppercase font-bold">Sunset:</span>
-                <span className="font-mono font-bold text-white text-xs">{current.sunset || '16:33'}</span>
+                <span className="font-mono font-bold text-white text-xs">{formatTime(current.sunset || '16:33', timeFormat)}</span>
               </div>
             </div>
 

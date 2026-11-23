@@ -12,12 +12,13 @@ import {
   ComposedChart
 } from 'recharts';
 import { WEATHER_PROVIDERS, PROVIDER_KEYS } from '../constants/providers';
-import { formatRawTemp, formatTemp, formatPrecip, formatWind } from '../utils/units';
+import { formatRawTemp, formatTemp, formatPrecip, formatWind, formatTime } from '../utils/units';
 import { Sparkles, SlidersHorizontal, CheckSquare, Square, Thermometer, CloudRain, Droplets, Wind } from 'lucide-react';
 
 export default function HourlyChart({
   hours,
   unit,
+  timeFormat = '24h',
   activeProviders,
   onToggleProvider,
   onSelectAllProviders,
@@ -97,7 +98,7 @@ export default function HourlyChart({
       <div className="bg-slate-900/95 border border-slate-700 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[220px]">
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
           <div className="flex items-center gap-1.5 font-bold text-slate-100">
-            <span className="font-mono text-cyan-400">{label}</span>
+            <span className="font-mono text-cyan-400">{formatTime(label, timeFormat)}</span>
             <span>Forecast</span>
           </div>
           {consensus && (
@@ -286,6 +287,7 @@ export default function HourlyChart({
               fontSize={11}
               tickLine={false}
               interval="preserveStartEnd"
+              tickFormatter={(val) => formatTime(val, timeFormat)}
             />
             <YAxis
               domain={getMetricYAxisDomain()}
