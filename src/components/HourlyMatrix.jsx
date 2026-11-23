@@ -68,6 +68,18 @@ const MatrixControlBar = memo(function MatrixControlBar({
             </span>
           </div>
 
+          {/* Astronomical Sun Pill for Viewing Day */}
+          {currentViewing?.sunriseTime && (
+            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-amber-500/30 text-xs text-amber-300 font-mono shadow-inner">
+              <span title="Sunrise">🌅 {currentViewing.sunriseTime}</span>
+              <span className="text-slate-600">•</span>
+              <span title="Sunset">🌇 {currentViewing.sunsetTime}</span>
+              {currentViewing.daylightDuration && (
+                <span className="text-[10px] text-slate-400">({currentViewing.daylightDuration})</span>
+              )}
+            </div>
+          )}
+
           {/* Jump to Now Button */}
           <button
             onClick={onJumpToNow}
@@ -313,12 +325,27 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                     >
                       {hour.hourLabel}
                     </span>
+                    <span className="text-[10px]" title={hour.isDay ? 'Daylight' : 'Night'}>
+                      {hour.isDay ? '☀️' : '🌙'}
+                    </span>
                     {isCurrent && (
                       <span className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 shadow animate-pulse">
                         NOW
                       </span>
                     )}
                   </div>
+
+                  {/* Sunrise or Sunset Event Badge on Column Header */}
+                  {hour.isSunriseHour && (
+                    <div className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm animate-pulse">
+                      🌅 {hour.sunriseTime}
+                    </div>
+                  )}
+                  {hour.isSunsetHour && (
+                    <div className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-purple-500/25 text-purple-300 border border-purple-500/40 shadow-sm animate-pulse">
+                      🌇 {hour.sunsetTime}
+                    </div>
+                  )}
 
                   {/* Agreement Pill */}
                   {c && (
@@ -412,6 +439,75 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                     {c.precipitationProbability}% {c.precipitation > 0 && `(${c.precipitation}mm)`}
                   </div>
                 </div>
+              </td>
+            );
+          })}
+        </tr>
+
+        {/* ROW 2: Sunlight & Daylight Status (Direct Sunshine, Sunrise/Sunset & UV Index) */}
+        <tr className="bg-gradient-to-r from-amber-950/20 via-slate-900/60 to-purple-950/20 border-b border-amber-500/20">
+          <td className="sticky left-0 z-20 bg-slate-900/95 p-3.5 border-r border-slate-800 backdrop-blur-md shadow-md">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm">
+                <Sun className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-extrabold text-amber-300 text-xs flex items-center gap-1">
+                  Sunlight &amp; Daylight
+                </div>
+                <div className="text-[10px] text-slate-400">Direct sun &amp; UV index</div>
+              </div>
+            </div>
+          </td>
+
+          {hourlyData.map((hour, idx) => {
+            const isNewDay = idx === 0 || hour.date !== hourlyData[idx - 1].date;
+
+            return (
+              <td
+                key={`sun-${hour.timeIso}`}
+                onClick={() => onSelectHour(hour)}
+                className={`p-2 text-center cursor-pointer hover:bg-amber-500/15 transition-colors ${
+                  isNewDay ? 'border-l-4 border-l-cyan-400 bg-cyan-950/15' : 'border-r border-slate-800/40'
+                } ${hour.isCurrent ? 'bg-amber-500/10 ring-1 ring-amber-400/40' : ''}`}
+              >
+                {hour.isSunriseHour ? (
+                  <div className="flex flex-col items-center gap-0.5 p-1 rounded-lg bg-amber-500/25 border border-amber-500/40 text-amber-200">
+                    <span className="text-sm">🌅</span>
+                    <span className="font-bold text-[10px] text-amber-300">Sunrise</span>
+                    <span className="font-mono text-[9px] text-white font-bold">{hour.sunriseTime}</span>
+                  </div>
+                ) : hour.isSunsetHour ? (
+                  <div className="flex flex-col items-center gap-0.5 p-1 rounded-lg bg-purple-500/25 border border-purple-500/40 text-purple-200">
+                    <span className="text-sm">🌇</span>
+                    <span className="font-bold text-[10px] text-purple-300">Sunset</span>
+                    <span className="font-mono text-[9px] text-white font-bold">{hour.sunsetTime}</span>
+                  </div>
+                ) : hour.isDay ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
+                      hour.sunshineMinutes >= 40
+                        ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40'
+                        : hour.sunshineMinutes > 0
+                        ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                        : 'bg-slate-800/80 text-slate-400 border border-slate-700/50'
+                    }`}>
+                      <span>{hour.sunshineMinutes > 0 ? '☀️' : '☁️'}</span>
+                      <span>{hour.sunshineMinutes > 0 ? `${hour.sunshineMinutes}m Sun` : '0m Sun'}</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-400">
+                      {hour.uvIndex > 0 ? `UV ${hour.uvIndex}` : 'Low UV'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-0.5 opacity-60">
+                    <div className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-900 text-slate-400 flex items-center gap-1 border border-slate-800">
+                      <span>🌙</span>
+                      <span>Night</span>
+                    </div>
+                    <div className="text-[9px] font-mono text-slate-600">UV 0</div>
+                  </div>
+                )}
               </td>
             );
           })}

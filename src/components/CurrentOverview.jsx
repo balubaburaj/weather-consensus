@@ -10,7 +10,10 @@ import {
   CloudRain,
   Umbrella,
   Eye,
-  Check
+  Check,
+  Sunrise,
+  Sunset,
+  Sun,
 } from 'lucide-react';
 import { WeatherIcon } from '../utils/weatherIcons';
 import { formatTemp, formatWind, formatPrecip } from '../utils/units';
@@ -302,6 +305,26 @@ export default function CurrentOverview({
                   <div className="text-[9px] uppercase font-bold text-slate-400">Station Code</div>
                   <div className="font-bold text-white">WMO {current.weatherCode} ({currentCondition.label})</div>
                 </div>
+              </div>
+            </div>
+
+            {/* Astronomical Sunrise, Sunset & Daylight Hours Strip */}
+            <div className="flex items-center justify-between flex-wrap gap-2 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-950/30 via-slate-950/60 to-purple-950/30 border border-amber-500/25 text-xs shadow-inner">
+              <div className="flex items-center gap-2 text-amber-300 font-semibold">
+                <Sunrise className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="text-[11px] text-slate-400 uppercase font-bold">Sunrise:</span>
+                <span className="font-mono font-bold text-white text-xs">{current.sunrise || '08:06'}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-slate-300 text-xs font-medium">
+                <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Daylight: <strong className="text-white font-mono">{current.daylightDuration || '8h 27m'}</strong></span>
+              </div>
+
+              <div className="flex items-center gap-2 text-purple-300 font-semibold">
+                <Sunset className="w-4 h-4 text-purple-400 shrink-0" />
+                <span className="text-[11px] text-slate-400 uppercase font-bold">Sunset:</span>
+                <span className="font-mono font-bold text-white text-xs">{current.sunset || '16:33'}</span>
               </div>
             </div>
 

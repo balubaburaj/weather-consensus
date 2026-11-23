@@ -83,8 +83,8 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceR
   // 1. Multi-model call (past 2 days + next 6 days)
   const modelsUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourlyVariables}&models=${modelsParam}&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
-  // 2. Actual observations / standard seamless analysis call
-  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
+  // 2. Actual observations & astronomical daylight call (past 2 days + next 6 days)
+  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,is_day,sunshine_duration,uv_index&daily=sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   try {
     const [modelsRes, actualRes] = await Promise.all([
@@ -132,6 +132,33 @@ function parseWeatherData(modelsPayload, actualPayload) {
   const actualHourly = actualPayload.hourly || {};
   const modelsHourly = modelsPayload.hourly || {};
   const current = actualPayload.current || {};
+  const daily = actualPayload.daily || {};
+
+  // Parse daily astronomical sunrise, sunset & daylight duration map
+  const dailySunByDate = {};
+  if (daily.time) {
+    daily.time.forEach((dateStr, idx) => {
+      const sunriseIso = daily.sunrise ? daily.sunrise[idx] : null;
+      const sunsetIso = daily.sunset ? daily.sunset[idx] : null;
+      const daylightSec = daily.daylight_duration ? daily.daylight_duration[idx] : 0;
+      const daylightHours = Math.floor(daylightSec / 3600);
+      const daylightMinutes = Math.round((daylightSec % 3600) / 60);
+
+      const sunriseTime = sunriseIso ? sunriseIso.split('T')[1].substring(0, 5) : null;
+      const sunsetTime = sunsetIso ? sunsetIso.split('T')[1].substring(0, 5) : null;
+
+      dailySunByDate[dateStr] = {
+        date: dateStr,
+        sunriseIso,
+        sunsetIso,
+        sunriseTime,
+        sunsetTime,
+        daylightDuration: `${daylightHours}h ${daylightMinutes}m`,
+        daylightSeconds: daylightSec,
+        maxUvIndex: daily.uv_index_max ? daily.uv_index_max[idx] : 0,
+      };
+    });
+  }
 
   const currentHourDate = new Date();
   currentHourDate.setMinutes(0, 0, 0);
@@ -154,6 +181,19 @@ function parseWeatherData(modelsPayload, actualPayload) {
     const actualApparent = actualHourly.apparent_temperature
       ? actualHourly.apparent_temperature[idx]
       : calculateFeelsLike(actualTemp, actualWind, actualHumidity);
+
+    // Sunlight & Astronomical metrics
+    const sunData = dailySunByDate[dateStr] || {};
+    const sunriseHourLabel = sunData.sunriseTime ? sunData.sunriseTime.split(':')[0] + ':00' : null;
+    const sunsetHourLabel = sunData.sunsetTime ? sunData.sunsetTime.split(':')[0] + ':00' : null;
+
+    const isSunriseHour = hourLabel === sunriseHourLabel;
+    const isSunsetHour = hourLabel === sunsetHourLabel;
+
+    const isDay = actualHourly.is_day ? actualHourly.is_day[idx] === 1 : (timeDate.getHours() >= 8 && timeDate.getHours() < 17);
+    const sunshineSec = actualHourly.sunshine_duration ? actualHourly.sunshine_duration[idx] : 0;
+    const sunshineMinutes = Math.min(60, Math.round(sunshineSec / 60));
+    const uvIndex = actualHourly.uv_index ? Math.round(actualHourly.uv_index[idx] * 10) / 10 : 0;
 
     // Actual observed values for this hour
     const actual = {
@@ -216,6 +256,14 @@ function parseWeatherData(modelsPayload, actualPayload) {
       hourLabel,
       isPast,
       isCurrent,
+      isDay,
+      sunshineMinutes,
+      uvIndex,
+      isSunriseHour,
+      isSunsetHour,
+      sunriseTime: sunData.sunriseTime,
+      sunsetTime: sunData.sunsetTime,
+      daylightDuration: sunData.daylightDuration,
       actual,
       providers,
     };
@@ -224,11 +272,15 @@ function parseWeatherData(modelsPayload, actualPayload) {
   // Extract distinct dates
   const dates = Array.from(new Set(hours.map((h) => h.date))).sort();
 
+  const todayStr = current.time ? current.time.split('T')[0] : new Date().toISOString().split('T')[0];
+  const todaySun = dailySunByDate[todayStr] || Object.values(dailySunByDate)[0] || {};
+
   return {
     latitude: actualPayload.latitude,
     longitude: actualPayload.longitude,
     timezone: actualPayload.timezone,
     elevation: actualPayload.elevation,
+    dailySunByDate,
     current: {
       time: current.time,
       temperature: current.temperature_2m,
@@ -238,6 +290,9 @@ function parseWeatherData(modelsPayload, actualPayload) {
       weatherCode: current.weather_code,
       windSpeed: current.wind_speed_10m,
       isDay: current.is_day === 1,
+      sunrise: todaySun.sunriseTime || '08:06',
+      sunset: todaySun.sunsetTime || '16:33',
+      daylightDuration: todaySun.daylightDuration || '8h 27m',
     },
     dates,
     hours,
