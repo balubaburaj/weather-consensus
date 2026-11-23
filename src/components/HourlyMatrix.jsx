@@ -13,30 +13,31 @@ import {
   ArrowRight,
   RotateCcw,
   Zap,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 // ============================================================================
-// SUBCOMPONENT 1: TOP CONTROLS & TOUCH-SEEK TIMELINE CONTROL CENTER
-// (Rerenders when seekIndex changes, without re-rendering the 1,700-cell table)
+// SUBCOMPONENT 1: TOP CONTROLS & QUICK-SEEK FILTER BAR
+// (Clean desktop layout with left/right seek arrows, viewing pill & quick jumps)
 // ============================================================================
-const MatrixScrubberBar = memo(function MatrixScrubberBar({
+const MatrixControlBar = memo(function MatrixControlBar({
   hourlyData,
-  seekIndex,
-  onSeekChange,
   activeViewingDate,
   activeViewingHour,
   onJumpToNow,
   onPresetSeek,
-  onNudge,
+  onScrollLeft,
+  onScrollRight,
   todayDateStr,
   unit,
   getHumanDayTitle,
 }) {
-  const seekHour = hourlyData[seekIndex] || hourlyData[0];
+  const currentViewing = activeViewingHour || hourlyData[0];
 
   return (
-    <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/90 space-y-3.5">
-      {/* Title, Viewing Status & Navigation Actions */}
+    <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/90 space-y-3">
+      {/* Title, Viewing Status, Jump to Now & Left/Right Seek Arrows */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -48,11 +49,11 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Swipe across all 9 days continuously. Auto-lands on current time. Click any column for the showdown modal.
+            Swipe or seek across all 9 days continuously. Auto-lands on current time. Click any column for the showdown modal.
           </p>
         </div>
 
-        {/* Real-time Viewing Indicator Badge & Jump to Now */}
+        {/* Real-time Viewing Indicator Badge, Jump to Now & Left/Right Seek Arrows */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Live Center-View Date & Time Pill */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-cyan-500/30 text-xs shadow-inner">
@@ -62,84 +63,46 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               {getHumanDayTitle(activeViewingDate)} ({activeViewingDate})
             </span>
             <span className="font-mono font-bold text-cyan-300">
-              • {activeViewingHour?.hourLabel || seekHour?.hourLabel}{' '}
-              {activeViewingHour?.isCurrent && '(NOW)'}
+              • {currentViewing?.hourLabel}{' '}
+              {currentViewing?.isCurrent && '(NOW)'}
             </span>
           </div>
 
           {/* Jump to Now Button */}
           <button
             onClick={onJumpToNow}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer"
             title="Jump directly to Current Time (NOW)"
           >
             <Clock className="w-3.5 h-3.5" />
             <span>Jump to Now</span>
           </button>
 
-          {/* Nudge Arrows (Quick ±6h skip) */}
+          {/* ⬅️ ➡️ Left and Right Seek Arrows */}
           <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-xl border border-slate-800">
             <button
-              onClick={() => onNudge(-6)}
-              className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
-              title="Back 6 hours"
+              onClick={onScrollLeft}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title="Seek Left (-3 hours)"
+              aria-label="Seek Left"
             >
-              -6h
+              <ChevronLeft className="w-4 h-4" />
             </button>
             <button
-              onClick={() => onNudge(6)}
-              className="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
-              title="Forward 6 hours"
+              onClick={onScrollRight}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title="Seek Right (+3 hours)"
+              aria-label="Seek Right"
             >
-              +6h
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* 🖐️ TOUCH & SEEK INTERACTIVE SCRUBBER BAR */}
-      <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-inner space-y-2.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
-            <span className="text-base">👆</span>
-            <span>Touch &amp; Seek Timeline Scrubber:</span>
-          </div>
-
-          {/* Live Hover/Scrub Info Chip */}
-          <div className="flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 font-mono font-bold">
-              <WeatherIcon iconName={seekHour?.consensus?.weatherIcon || 'Sun'} className="w-4 h-4" />
-              <span>
-                {getHumanDayTitle(seekHour?.date)} • {seekHour?.hourLabel}{' '}
-                {seekHour?.isCurrent && '(NOW)'}
-              </span>
-            </div>
-            <span className="text-white font-bold font-mono">
-              {seekHour?.consensus?.temperature !== undefined && formatTemp(seekHour.consensus.temperature, unit)}
-            </span>
-            <span className="text-[10px] text-slate-400">
-              (Feels {seekHour?.consensus?.apparentTemperature !== undefined && formatTemp(seekHour.consensus.apparentTemperature, unit)})
-            </span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-              seekHour?.consensus?.rainTypeInfo?.badgeBg || 'bg-slate-800 text-slate-300'
-            }`}>
-              {seekHour?.consensus?.precipitationProbability}% {seekHour?.consensus?.precipitation > 0 && `(${seekHour.consensus.precipitation}mm)`}
-            </span>
-          </div>
-        </div>
-
-        {/* The Range Slider */}
-        <div className="relative py-1">
-          <input
-            type="range"
-            min={0}
-            max={hourlyData.length - 1}
-            value={seekIndex}
-            onChange={(e) => onSeekChange(Number(e.target.value))}
-            className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
-          />
-        </div>
-
+      {/* Quick Seek Filter Buttons & Live Condition Metric Chip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-850">
+        
         {/* Quick-Seek Touch Preset Pills (Instant Jump Targets) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs touch-pan-x scrollbar-none">
           <span className="text-[10px] uppercase font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
@@ -165,7 +128,7 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               const yestStr = d.toISOString().split('T')[0];
               onPresetSeek((h) => h.date === yestStr && h.hourLabel.startsWith('12'));
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Yesterday Midday</span>
@@ -177,7 +140,7 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               const today = todayDateStr || new Date().toISOString().split('T')[0];
               onPresetSeek((h) => h.date === today && h.hourLabel.startsWith('08'));
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Sunrise className="w-3 h-3 text-amber-400" />
             <span>Today 08:00</span>
@@ -189,7 +152,7 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               const today = todayDateStr || new Date().toISOString().split('T')[0];
               onPresetSeek((h) => h.date === today && h.hourLabel.startsWith('14'));
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Sun className="w-3 h-3 text-amber-400" />
             <span>Today 14:00</span>
@@ -201,7 +164,7 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               const today = todayDateStr || new Date().toISOString().split('T')[0];
               onPresetSeek((h) => h.date === today && h.hourLabel.startsWith('20'));
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Sunset className="w-3 h-3 text-purple-400" />
             <span>Today 20:00</span>
@@ -216,7 +179,7 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               const tomStr = d.toISOString().split('T')[0];
               onPresetSeek((h) => h.date === tomStr && h.hourLabel.startsWith('09'));
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-300 hover:text-white shrink-0 transition-all active:scale-95 border border-cyan-500/20 cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-cyan-300 hover:text-white shrink-0 transition-all active:scale-95 border border-cyan-500/20 cursor-pointer"
           >
             <ArrowRight className="w-3 h-3" />
             <span>Tomorrow 09:00</span>
@@ -231,12 +194,36 @@ const MatrixScrubberBar = memo(function MatrixScrubberBar({
               const plus2Str = d.toISOString().split('T')[0];
               onPresetSeek((h) => h.date === plus2Str && h.hourLabel.startsWith('12'));
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-850 hover:bg-slate-750 text-slate-300 hover:text-white shrink-0 transition-all active:scale-95 border border-slate-750 cursor-pointer"
           >
             <Calendar className="w-3 h-3 text-blue-400" />
             <span>+2 Days Midday</span>
           </button>
         </div>
+
+        {/* Live Viewing Condition Chip on Right */}
+        {currentViewing && (
+          <div className="flex items-center gap-2 text-xs shrink-0 self-end sm:self-auto">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-mono font-bold">
+              <WeatherIcon iconName={currentViewing.consensus?.weatherIcon || 'Sun'} className="w-4 h-4" />
+              <span>
+                {currentViewing.hourLabel} {currentViewing.isCurrent && '(NOW)'}
+              </span>
+            </div>
+            <span className="text-white font-bold font-mono">
+              {currentViewing.consensus?.temperature !== undefined && formatTemp(currentViewing.consensus.temperature, unit)}
+            </span>
+            <span className="text-[10px] text-slate-400">
+              (Feels {currentViewing.consensus?.apparentTemperature !== undefined && formatTemp(currentViewing.consensus.apparentTemperature, unit)})
+            </span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+              currentViewing.consensus?.rainTypeInfo?.badgeBg || 'bg-slate-800 text-slate-300'
+            }`}>
+              {currentViewing.consensus?.precipitationProbability}% {currentViewing.consensus?.precipitation > 0 && `(${currentViewing.consensus.precipitation}mm)`}
+            </span>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -797,11 +784,19 @@ export default function HourlyMatrix({
     }
   }, [hourlyData, handleSeekChange]);
 
-  // Nudge left or right by hours
-  const handleNudge = useCallback((hoursDelta) => {
-    const targetIdx = Math.max(0, Math.min(hourlyData.length - 1, seekIndex + hoursDelta));
-    handleSeekChange(targetIdx);
-  }, [hourlyData.length, seekIndex, handleSeekChange]);
+  // Scroll horizontally by direction (Left or Right arrow click)
+  const handleScrollBy = useCallback((direction) => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const offset = direction === 'left' ? -380 : 380;
+      isProgrammaticScroll.current = true;
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 750);
+      container.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  }, []);
 
   // Mouse Drag-to-Scroll handlers (Trackpad & Desktop Touch Ergonomics)
   const handleMouseDown = (e) => {
@@ -883,16 +878,15 @@ export default function HourlyMatrix({
 
   return (
     <div className="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-hidden backdrop-blur-md mb-8">
-      {/* 1. Scrubber & Top Control Bar (isolated memoized subcomponent) */}
-      <MatrixScrubberBar
+      {/* 1. Control & Filter Bar (Desktop Left/Right seek arrows + Quick Seek Pills) */}
+      <MatrixControlBar
         hourlyData={hourlyData}
-        seekIndex={seekIndex}
-        onSeekChange={handleSeekChange}
         activeViewingDate={activeViewingDate}
         activeViewingHour={activeViewingHour}
         onJumpToNow={jumpToNow}
         onPresetSeek={handlePresetSeek}
-        onNudge={handleNudge}
+        onScrollLeft={() => handleScrollBy('left')}
+        onScrollRight={() => handleScrollBy('right')}
         todayDateStr={todayDateStr}
         unit={unit}
         getHumanDayTitle={getHumanDayTitle}
