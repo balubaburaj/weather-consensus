@@ -34,7 +34,7 @@ export default function WeatherHouse3D({
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeCam, setActiveCam] = useState('couple');
+  const [activeCam, setActiveCam] = useState('iso'); // Starts at isometric street view
   const [lightingMode, setLightingMode] = useState('auto'); // 'auto' | 'noon' | 'afternoon' | 'rainy' | 'dusk'
   const [isMotionActive, setIsMotionActive] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
@@ -58,7 +58,11 @@ export default function WeatherHouse3D({
 
     try {
       sceneInstance = createHouseNo121Scene(mountRef.current, {
-        initialCamera: 'couple',
+        initialCamera: 'iso',
+        playIntro: true,
+        onStepChange: (stepKey) => {
+          setActiveCam(stepKey);
+        },
         onLoaded: () => setIsLoaded(true),
         onToast: (msg) => showToast(msg),
       });

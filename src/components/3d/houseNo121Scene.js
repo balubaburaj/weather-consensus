@@ -3233,8 +3233,9 @@ export function createHouseNo121Scene(container, options = {}) {
 
       const cameraPresets = {
         front: {
-          pos: new THREE.Vector3(0.05, 3.15, 11.4),
-          target: new THREE.Vector3(0.05, 2.55, 0.0),
+          // Full house front view zoomed in slightly
+          pos: new THREE.Vector3(0.05, 2.95, 9.4),
+          target: new THREE.Vector3(0.05, 2.45, 0.0),
         },
         iso: {
           pos: new THREE.Vector3(-8.2, 5.8, 9.8),
@@ -3258,30 +3259,81 @@ export function createHouseNo121Scene(container, options = {}) {
         toPos: new THREE.Vector3(),
         fromTarget: new THREE.Vector3(),
         toTarget: new THREE.Vector3(),
+        onComplete: null,
       };
 
-      function transitionCameraTo(presetKey) {
+      let introTimer = null;
+      let isIntroPlaying = false;
+
+      function cancelIntroSequence() {
+        if (introTimer) {
+          clearTimeout(introTimer);
+          introTimer = null;
+        }
+        isIntroPlaying = false;
+        if (camAnim.onComplete) {
+          camAnim.onComplete = null;
+        }
+      }
+
+      function transitionCameraTo(presetKey, duration = 1.1, onComplete = null) {
         const preset = cameraPresets[presetKey];
         if (!preset) return;
         camAnim.active = true;
         camAnim.startTime = performance.now() / 1000;
+        camAnim.duration = duration;
         camAnim.fromPos.copy(camera.position);
         camAnim.toPos.copy(preset.pos);
         camAnim.fromTarget.copy(controls.target);
         camAnim.toTarget.copy(preset.target);
+        camAnim.onComplete = onComplete;
+      }
+
+      function playIntroSequence(seqOptions = {}) {
+        cancelIntroSequence();
+        isIntroPlaying = true;
+
+        // Step 1: Start at iso immediately
+        camera.position.copy(cameraPresets.iso.pos);
+        controls.target.copy(cameraPresets.iso.target);
+        controls.update();
+        if (seqOptions.onStepChange) seqOptions.onStepChange('iso');
+
+        // After 650ms, glide smoothly to couple view
+        introTimer = setTimeout(() => {
+          if (!isRunning || !isIntroPlaying) return;
+          if (seqOptions.onStepChange) seqOptions.onStepChange('couple');
+
+          transitionCameraTo('couple', 1.35, () => {
+            if (!isRunning || !isIntroPlaying) return;
+            // Friendly wave & smile bounce on couple arrival
+            happyBoost = 0.85;
+
+            // Dwell on couple for 1.3s, then glide smoothly to zoomed front view
+            introTimer = setTimeout(() => {
+              if (!isRunning || !isIntroPlaying) return;
+              if (seqOptions.onStepChange) seqOptions.onStepChange('front');
+
+              transitionCameraTo('front', 1.35, () => {
+                isIntroPlaying = false;
+                if (seqOptions.onComplete) seqOptions.onComplete();
+              });
+            }, 1300);
+          });
+        }, 650);
       }
 
       controls.addEventListener('start', () => {
         camAnim.active = false;
+        cancelIntroSequence();
       });
 
-
-    if (options.initialCamera && cameraPresets[options.initialCamera]) {
-      const p = cameraPresets[options.initialCamera];
-      camera.position.copy(p.pos);
-      controls.target.copy(p.target);
-      controls.update();
-    }
+      if (options.initialCamera && cameraPresets[options.initialCamera]) {
+        const p = cameraPresets[options.initialCamera];
+        camera.position.copy(p.pos);
+        controls.target.copy(p.target);
+        controls.update();
+      }
 
     // =======================================================================
     // 13. INTERACTIVE RAYCASTER (TAP COUPLE FOR CHEERFUL BOUNCE & WAVE!)
@@ -3388,7 +3440,14 @@ export function createHouseNo121Scene(container, options = {}) {
         const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
         camera.position.lerpVectors(camAnim.fromPos, camAnim.toPos, ease);
         controls.target.lerpVectors(camAnim.fromTarget, camAnim.toTarget, ease);
-        if (p >= 1) camAnim.active = false;
+        if (p >= 1) {
+          camAnim.active = false;
+          if (camAnim.onComplete) {
+            const cb = camAnim.onComplete;
+            camAnim.onComplete = null;
+            cb();
+          }
+        }
       }
 
       controls.target.y = Math.max(0.45, Math.min(7.5, controls.target.y));
@@ -3511,15 +3570,30 @@ export function createHouseNo121Scene(container, options = {}) {
     let loadTimeoutId = null;
     if (options.onLoaded) {
       loadTimeoutId = setTimeout(() => {
-        if (isRunning && options.onLoaded) options.onLoaded();
+        if (isRunning && options.onLoaded) {
+          options.onLoaded();
+        }
       }, 150);
     }
     animFrameId = requestAnimationFrame(animate);
 
+    // If playIntro requested, initiate intro sequence on load
+    if (options.playIntro !== false) {
+      // Small timeout to allow canvas mount and initial render
+      setTimeout(() => {
+        if (isRunning) {
+          playIntroSequence({
+            onStepChange: options.onStepChange,
+            onComplete: options.onIntroComplete,
+          });
+        }
+      }, 100);
+    }
+
     // Teardown function
     function destroy() {
-      isRunning = true;
       isRunning = false;
+      cancelIntroSequence();
       if (animFrameId) cancelAnimationFrame(animFrameId);
       if (resizeRaf) cancelAnimationFrame(resizeRaf);
       if (loadTimeoutId) clearTimeout(loadTimeoutId);
@@ -3575,8 +3649,9 @@ export function createHouseNo121Scene(container, options = {}) {
       }
     }
 
-    function setCameraPreset(key) {
-      transitionCameraTo(key);
+    function setCameraPreset(key, duration) {
+      cancelIntroSequence();
+      transitionCameraTo(key, duration);
     }
 
     function triggerWaveJump() {
@@ -3607,6 +3682,8 @@ export function createHouseNo121Scene(container, options = {}) {
     return {
       setWeatherState,
       setCameraPreset,
+      playIntroSequence,
+      cancelIntroSequence,
       setLightingPreset,
       triggerWaveJump,
       toggleAnimation,
