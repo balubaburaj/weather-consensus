@@ -1,6 +1,7 @@
 {
-  "name": "omni-weather",
+  "name": "weather-consensus",
   "version": "1.0.0",
+  "description": "Multi-Provider Weather Forecast Aggregator & Real-Time Accuracy Engine (TrueCast AI)",
   "type": "module",
   "scripts": {
     "dev": "vite",
