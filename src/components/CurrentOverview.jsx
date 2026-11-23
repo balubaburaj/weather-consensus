@@ -232,232 +232,231 @@ export default function CurrentOverview({
 
       </div>
 
-      {/* Main Ground Observation & TrueCast Consensus Dual Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Main Live Ground Observation & TrueCast Consensus Blocks */}
+      <div className="space-y-4">
         
-        {/* Live Ground Observation Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-slate-800 p-6 shadow-xl backdrop-blur-md flex flex-col justify-between">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
+        {/* 1. Live Ground Observation Card (UP: Full Width Desktop Dashboard) */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950/95 border border-slate-800 p-6 shadow-xl backdrop-blur-md">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          <div>
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-[11px] uppercase tracking-wider text-cyan-400 font-bold mb-1 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Ground Station Weather
-                </div>
-                <h1 className="text-2xl font-black text-white tracking-tight">
-                  {selectedCity?.name || 'Selected City'}
-                </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {selectedCity?.admin1 ? `${selectedCity.admin1}, ` : ''}{selectedCity?.country} • {weatherData.timezone}
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-inner">
-                <WeatherIcon iconName={currentCondition.icon} className="w-10 h-10" />
-              </div>
-            </div>
-
-            {/* Explicit Condition Display */}
-            <div className="mt-4 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center gap-2.5">
-              <span className="text-xl">{currentCondition.emoji}</span>
-              <div>
-                <div className="text-sm font-black text-white">
-                  {currentCondition.label}
-                </div>
-                <div className="text-[10px] text-cyan-400 font-medium">
-                  {currentRainType.intensity !== 'Dry' ? `Intensity: ${currentRainType.intensity}` : 'Clear & Dry Conditions'}
-                </div>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono ml-auto">
-                WMO {current.weatherCode}
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-baseline gap-4">
-              <div className="text-5xl font-black text-white tracking-tighter">
-                {formatTemp(current.temperature, unit)}
-              </div>
-              <div className="text-xs text-slate-400 space-y-0.5">
-                <div>Feels like <span className="font-bold text-slate-100">{formatTemp(current.apparentTemperature, unit)}</span></div>
-                <div>Humidity <span className="font-bold text-slate-100">{current.relativeHumidity || '--'}%</span></div>
-              </div>
-            </div>
-
-            {/* Quick Metrics */}
-            <div className="mt-4 grid grid-cols-2 gap-2 pt-3 border-t border-slate-800/80 text-xs">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Wind className="w-4 h-4 text-sky-400 shrink-0" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            
+            {/* Col 1-5: Live Station Readings */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Wind Speed</div>
-                  <div className="font-bold">{formatWind(current.windSpeed, unit)}</div>
+                  <div className="text-[11px] uppercase tracking-wider text-cyan-400 font-bold mb-1 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Ground Station Weather
+                  </div>
+                  <h1 className="text-2xl font-black text-white tracking-tight">
+                    {selectedCity?.name || 'Selected City'}
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {selectedCity?.admin1 ? `${selectedCity.admin1}, ` : ''}{selectedCity?.country} • {weatherData.timezone}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-inner">
+                  <WeatherIcon iconName={currentCondition.icon} className="w-10 h-10" />
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <Droplets className="w-4 h-4 text-cyan-400 shrink-0" />
+
+              {/* Explicit Condition Display */}
+              <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center gap-2.5">
+                <span className="text-xl">{currentCondition.emoji}</span>
                 <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Active Precip</div>
-                  <div className="font-bold">{formatPrecip(current.precipitation, unit)}</div>
+                  <div className="text-sm font-black text-white">
+                    {currentCondition.label}
+                  </div>
+                  <div className="text-[10px] text-cyan-400 font-medium">
+                    {currentRainType.intensity !== 'Dry' ? `Intensity: ${currentRainType.intensity}` : 'Clear & Dry Conditions'}
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono ml-auto">
+                  WMO {current.weatherCode}
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-4">
+                <div className="text-5xl font-black text-white tracking-tighter">
+                  {formatTemp(current.temperature, unit)}
+                </div>
+                <div className="text-xs text-slate-400 space-y-0.5">
+                  <div>Feels like <span className="font-bold text-slate-100">{formatTemp(current.apparentTemperature, unit)}</span></div>
+                  <div>Humidity <span className="font-bold text-slate-100">{current.relativeHumidity || '--'}%</span></div>
+                </div>
+              </div>
+
+              {/* Quick Metrics */}
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800/80 text-xs">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Wind className="w-4 h-4 text-sky-400 shrink-0" />
+                  <div>
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Wind Speed</div>
+                    <div className="font-bold">{formatWind(current.windSpeed, unit)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Droplets className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <div>
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Active Precip</div>
+                    <div className="font-bold">{formatPrecip(current.precipitation, unit)}</div>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Col 6-12: Quick Wear & Gear Checklist */}
+            <div className="lg:col-span-7 lg:border-l lg:border-slate-800/80 lg:pl-6">
+              <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/80">
+                <div className="text-xs font-black uppercase tracking-wider text-slate-300 mb-3 flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-white">
+                    <span className="text-sm">🧥</span>
+                    <span>Quick Wear &amp; Gear Checklist</span>
+                  </span>
+                  <span className="text-xs text-cyan-400 font-mono font-medium px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20">
+                    {formatTemp(current.apparentTemperature, unit)} feel
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs leading-snug">
+                  {/* Jacket */}
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <span className="shrink-0 text-base">🧥</span>
+                    <div>
+                      <div className="font-bold text-white text-[11px] uppercase tracking-wide text-slate-400">Jacket</div>
+                      <div className="text-slate-200 font-medium text-xs mt-0.5">{quickGear.jacket}</div>
+                    </div>
+                  </div>
+
+                  {/* Umbrella */}
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <span className="shrink-0 text-base">☂️</span>
+                    <div>
+                      <div className="font-bold text-white text-[11px] uppercase tracking-wide text-slate-400">Umbrella</div>
+                      <div className={`font-medium text-xs mt-0.5 ${quickGear.umbrellaNeeded ? 'text-cyan-300 font-semibold' : 'text-slate-300'}`}>
+                        {quickGear.umbrella}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hoodie / Mid */}
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <span className="shrink-0 text-base">🧶</span>
+                    <div>
+                      <div className="font-bold text-white text-[11px] uppercase tracking-wide text-slate-400">Hoodie / Mid-Layer</div>
+                      <div className="text-slate-200 font-medium text-xs mt-0.5">{quickGear.hoodie}</div>
+                    </div>
+                  </div>
+
+                  {/* Sunglasses */}
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <span className="shrink-0 text-base">🕶️</span>
+                    <div>
+                      <div className="font-bold text-white text-[11px] uppercase tracking-wide text-slate-400">Sunglasses</div>
+                      <div className={`font-medium text-xs mt-0.5 ${quickGear.sunglassesNeeded ? 'text-amber-300 font-semibold' : 'text-slate-400'}`}>
+                        {quickGear.sunglasses}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hat (Full Width on 2-col) */}
+                  <div className="sm:col-span-2 flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <span className="shrink-0 text-base">🧢</span>
+                    <div>
+                      <div className="font-bold text-white text-[11px] uppercase tracking-wide text-slate-400">Hat &amp; Headwear</div>
+                      <div className={`font-medium text-xs mt-0.5 ${quickGear.earCover ? 'text-sky-300 font-semibold' : 'text-slate-300'}`}>
+                        {quickGear.hat}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
-
-          {/* ⭐ SIMPLE & MODEST QUICK GEAR CHECKLIST (At the end of Live Ground Station Weather) */}
-          <div className="mt-5 pt-4 border-t border-slate-800/80 bg-slate-950/40 p-3.5 rounded-2xl border border-slate-850">
-            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-slate-200">
-                <span>🧥</span>
-                <span>Quick Wear &amp; Gear Checklist:</span>
-              </span>
-              <span className="text-[10px] text-cyan-400 font-mono font-medium">
-                {formatTemp(current.apparentTemperature, unit)} feel
-              </span>
-            </div>
-
-            <div className="space-y-1.5 text-[11px] leading-tight">
-              {/* Jacket */}
-              <div className="flex items-start gap-2">
-                <span className="shrink-0 text-xs">🧥</span>
-                <div>
-                  <span className="font-bold text-white">Jacket: </span>
-                  <span className="text-slate-300">{quickGear.jacket}</span>
-                </div>
-              </div>
-
-              {/* Umbrella */}
-              <div className="flex items-start gap-2">
-                <span className="shrink-0 text-xs">☂️</span>
-                <div>
-                  <span className="font-bold text-white">Umbrella: </span>
-                  <span className={quickGear.umbrellaNeeded ? 'text-cyan-300 font-semibold' : 'text-slate-400'}>
-                    {quickGear.umbrella}
-                  </span>
-                </div>
-              </div>
-
-              {/* Sunglasses */}
-              <div className="flex items-start gap-2">
-                <span className="shrink-0 text-xs">🕶️</span>
-                <div>
-                  <span className="font-bold text-white">Sunglasses: </span>
-                  <span className={quickGear.sunglassesNeeded ? 'text-amber-300 font-semibold' : 'text-slate-400'}>
-                    {quickGear.sunglasses}
-                  </span>
-                </div>
-              </div>
-
-              {/* Hoodie */}
-              <div className="flex items-start gap-2">
-                <span className="shrink-0 text-xs">🧶</span>
-                <div>
-                  <span className="font-bold text-white">Hoodie / Mid: </span>
-                  <span className="text-slate-300">{quickGear.hoodie}</span>
-                </div>
-              </div>
-
-              {/* Hat */}
-              <div className="flex items-start gap-2">
-                <span className="shrink-0 text-xs">🧢</span>
-                <div>
-                  <span className="font-bold text-white">Hat: </span>
-                  <span className={quickGear.earCover ? 'text-sky-300 font-semibold' : 'text-slate-300'}>
-                    {quickGear.hat}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        {/* TrueCast Smart Consensus Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-950/40 via-slate-900/90 to-blue-950/40 border border-cyan-500/30 p-6 shadow-xl backdrop-blur-md lg:col-span-2">
+        {/* 2. Consensus Weather Outlook (DOWN: Compact, Low-Height Desktop Bar) */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-950/30 via-slate-900/90 to-blue-950/30 border border-cyan-500/30 px-5 py-3.5 shadow-lg backdrop-blur-md">
           
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            
+            {/* Left: Badge, Title & Brief Summary */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-cyan-300" />
                   TrueCast AI Consensus
                 </span>
-                <span className="text-xs text-slate-400">8 Models Aggregated &amp; Verified</span>
+                <h2 className="text-sm font-bold text-white tracking-tight">
+                  Consensus Weather Outlook
+                </h2>
+                <span className="text-[11px] text-slate-400">
+                  • 8 Models Aggregated &amp; Verified
+                </span>
               </div>
-              <h2 className="text-xl font-bold text-white">
-                Consensus Weather Outlook
-              </h2>
-              <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+              <p className="text-xs text-slate-300 mt-1 line-clamp-2 lg:line-clamp-1 leading-snug">
                 {dailySummary?.description || 'Aggregating predictions from 8 world-class meteorological models.'}
               </p>
             </div>
 
-            {/* Model Agreement Gauge */}
-            {dailySummary && (
-              <div className="shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex items-center gap-3">
-                <div className="relative flex items-center justify-center">
-                  <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm ${
+            {/* Middle / Right: Compact Status Badges & Agreement Score */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              {dailySummary?.divergentCount > 0 ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                  <span>{dailySummary.divergentCount} hrs split</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                  <span>Strong Agreement</span>
+                </div>
+              )}
+
+              {topPerformer && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-200 text-xs font-medium">
+                  <Award className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>#1: <strong className="text-cyan-300">{topPerformer.provider.shortName}</strong> ({topPerformer.overallScore}%)</span>
+                </div>
+              )}
+
+              {/* Compact Agreement Score Badge */}
+              {dailySummary && (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-900/90 border border-slate-700/80">
+                  <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center font-bold text-xs ${
                     dailySummary.avgAgreement >= 80
-                      ? 'border-emerald-500/80 text-emerald-400 bg-emerald-500/10'
+                      ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10'
                       : dailySummary.avgAgreement >= 60
-                      ? 'border-amber-500/80 text-amber-400 bg-amber-500/10'
-                      : 'border-rose-500/80 text-rose-400 bg-rose-500/10'
+                      ? 'border-amber-500 text-amber-400 bg-amber-500/10'
+                      : 'border-rose-500 text-rose-400 bg-rose-500/10'
                   }`}>
                     {dailySummary.avgAgreement}%
                   </div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400">Agreement Score</div>
-                  <div className={`text-xs font-bold ${
-                    dailySummary.avgAgreement >= 80 ? 'text-emerald-300' : dailySummary.avgAgreement >= 60 ? 'text-amber-300' : 'text-rose-300'
-                  }`}>
-                    {dailySummary.avgAgreement >= 80 ? 'High Confidence' : dailySummary.avgAgreement >= 60 ? 'Moderate Variance' : 'High Divergence'}
+                  <div className="text-[11px] leading-tight">
+                    <div className={`font-bold ${
+                      dailySummary.avgAgreement >= 80 ? 'text-emerald-300' : dailySummary.avgAgreement >= 60 ? 'text-amber-300' : 'text-rose-300'
+                    }`}>
+                      {dailySummary.avgAgreement >= 80 ? 'High Confidence' : dailySummary.avgAgreement >= 60 ? 'Moderate Variance' : 'Divergent'}
+                    </div>
+                    <div className="text-[9px] text-slate-400">Agreement</div>
                   </div>
-                  <div className="text-[10px] text-slate-400">8 NWP Models Tested</div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
           </div>
 
-          {/* Divergence Notice or High Confidence Status */}
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
-            {dailySummary?.divergentCount > 0 ? (
-              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                <div>
-                  <span className="font-bold">Model Divergence:</span> {dailySummary.divergentCount} hours today show split forecasts. Review the side-by-side hourly comparison below.
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs">
-                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-                <div>
-                  <span className="font-bold">Strong Model Agreement:</span> The UK Met Office, MET Norway, and ECMWF are tightly aligned for today.
-                </div>
-              </div>
-            )}
-
-            {/* Top Predictor for Cork */}
-            {topPerformer && (
-              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-300 text-xs">
-                <Award className="w-4 h-4 shrink-0 text-cyan-400" />
-                <div className="truncate">
-                  <span className="font-semibold text-white">#1 Ranked Predictor:</span>{' '}
-                  <span className="text-cyan-300 font-bold">{topPerformer.provider.name}</span>{' '}
-                  <span className="text-slate-400 font-mono text-[11px]">({topPerformer.overallScore}% score, ±{topPerformer.mae}°C error)</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Contributing Models Pill Row */}
-          <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+          {/* Active Feeds & Explainer Link */}
+          <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-slate-400 text-[10px] uppercase font-bold mr-1">Active Feeds:</span>
               {Object.values(WEATHER_PROVIDERS).map((p) => (
                 <span
                   key={p.id}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-850/80 border border-slate-700/60 text-slate-300"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-850/80 border border-slate-700/50 text-slate-300"
                 >
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
                   {p.shortName}
@@ -467,7 +466,7 @@ export default function CurrentOverview({
 
             <button
               onClick={onOpenExplainer}
-              className="text-cyan-400 hover:text-cyan-300 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+              className="text-cyan-400 hover:text-cyan-300 text-[11px] font-semibold inline-flex items-center gap-1 transition-colors"
             >
               How consensus weighting works →
             </button>
