@@ -272,8 +272,9 @@ export default function Header({
                       </button>
                     ))}
                   </div>
-                  <div className="mt-2 pt-2 border-t border-slate-800 px-2 text-[10px] text-slate-400 leading-tight">
-                    Pauses automatically when tab is hidden or offline. Rate-limit protected.
+                  <div className="mt-2 pt-2 border-t border-slate-800 px-2 text-[10px] text-slate-400 leading-tight space-y-1">
+                    <div>• Only runs while window is active.</div>
+                    <div>• Instantly updates on return if away 5+ mins.</div>
                   </div>
                 </div>
               )}

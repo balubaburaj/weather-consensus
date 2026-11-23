@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import CurrentOverview from './components/CurrentOverview';
 import WhatToWearCard from './components/WhatToWearCard';
@@ -108,38 +108,73 @@ export default function App() {
     }
   }, [selectedCity, loadWeatherData]);
 
-  // Smart Periodic Background Refresh with Visibility & Rate-Limit Safeguards
+  const isRefreshingRef = useRef(false);
+
+  // Smart Window-Active Periodic Refresh & Instant Resume on Return
   useEffect(() => {
-    if (!selectedCity || refreshInterval <= 0) return;
+    if (!selectedCity) return;
 
-    const intervalMs = refreshInterval * 60 * 1000;
+    // Threshold when user returns to tab: if data is 5+ minutes old, refresh then and there!
+    const RETURN_STALE_THRESHOLD_MS = 5 * 60 * 1000;
+    const intervalMs = refreshInterval > 0 ? refreshInterval * 60 * 1000 : null;
 
-    const performPeriodicRefresh = () => {
-      // 1. Guard against hidden background tab polling (saves battery & API quota)
-      if (document.visibilityState === 'hidden') return;
-      // 2. Guard against offline state
-      if (!navigator.onLine) return;
+    // 1. Instant sync when user comes back to the application (tab or window becomes active)
+    const checkAndSyncOnActive = (reason = 'tab_resume') => {
+      // Guard: must be visible and online
+      if (document.visibilityState === 'hidden' || document.hidden || !navigator.onLine) {
+        return;
+      }
 
-      loadWeatherData(selectedCity, false, true);
-    };
+      // Check age of current weather data
+      const timeSinceLast = lastUpdated ? Date.now() - lastUpdated.getTime() : Infinity;
 
-    const intervalId = setInterval(performPeriodicRefresh, intervalMs);
-
-    // 3. Page Visibility Resumption: When user returns to tab after being away, sync if stale
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const timeSinceLast = lastUpdated ? Date.now() - lastUpdated.getTime() : Infinity;
-        if (timeSinceLast >= intervalMs) {
-          loadWeatherData(selectedCity, false, true);
-        }
+      // If user was away and returned with data 5+ mins old, refresh immediately!
+      if (timeSinceLast >= RETURN_STALE_THRESHOLD_MS && !isRefreshingRef.current) {
+        console.log(`[Sync on Return] User returned (${reason}). Data is ${Math.round(timeSinceLast / 60000)}m old (threshold: 5m). Refreshing immediately.`);
+        isRefreshingRef.current = true;
+        loadWeatherData(selectedCity, true, true).finally(() => {
+          setTimeout(() => {
+            isRefreshingRef.current = false;
+          }, 1500);
+        });
       }
     };
 
+    // 2. Periodic background refresh: STRICTLY only runs while window is actively visible
+    let intervalId = null;
+    if (intervalMs) {
+      intervalId = setInterval(() => {
+        // STRICT GUARD: If window/tab is hidden or minimized, DO NOT refresh (saves API limits & battery)
+        if (document.visibilityState === 'hidden' || document.hidden) {
+          return;
+        }
+        if (!navigator.onLine) {
+          return;
+        }
+
+        console.log(`[Active Window Sync] Periodic refresh firing (${refreshInterval}m interval)`);
+        loadWeatherData(selectedCity, false, true);
+      }, intervalMs);
+    }
+
+    // Event listeners for window becoming active again
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndSyncOnActive('visibilitychange');
+      }
+    };
+
+    const handleWindowFocus = () => {
+      checkAndSyncOnActive('window_focus');
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
 
     return () => {
-      clearInterval(intervalId);
+      if (intervalId) clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, [selectedCity, refreshInterval, lastUpdated, loadWeatherData]);
 
