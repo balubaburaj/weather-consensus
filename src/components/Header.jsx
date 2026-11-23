@@ -10,6 +10,8 @@ export default function Header({
   onRefresh,
   loading,
   lastUpdated,
+  refreshInterval = 10,
+  onChangeRefreshInterval,
   onOpenExplainer,
   onOpenApiKeyModal,
 }) {
@@ -17,13 +19,35 @@ export default function Header({
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showRefreshMenu, setShowRefreshMenu] = useState(false);
   const dropdownRef = useRef(null);
+  const refreshMenuRef = useRef(null);
+
+  // Time-ago ticker: updates relative timestamp display every 30 seconds
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTimeAgo = (date) => {
+    if (!date) return 'Syncing...';
+    const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diffSec < 45) return 'Just now';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    return `${diffHr}h ago`;
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
+      }
+      if (refreshMenuRef.current && !refreshMenuRef.current.contains(e.target)) {
+        setShowRefreshMenu(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -178,15 +202,82 @@ export default function Header({
               </button>
             </div>
 
-            {/* Refresh */}
-            <button
-              onClick={onRefresh}
-              disabled={loading}
-              title="Refresh All Forecasts"
-              className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 transition-all disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
-            </button>
+            {/* Refresh & Auto-Sync Control */}
+            <div className="relative" ref={refreshMenuRef}>
+              <div className="flex items-center rounded-xl bg-slate-900 border border-slate-700/80 p-0.5 shadow-sm">
+                
+                {/* Manual Refresh Button */}
+                <button
+                  onClick={onRefresh}
+                  disabled={loading}
+                  title={`Manual Refresh (Last updated: ${lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'})`}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-all disabled:opacity-50 cursor-pointer"
+                  aria-label="Refresh All Forecasts"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+                </button>
+
+                {/* Auto-Sync Badge / Menu Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setShowRefreshMenu((prev) => !prev)}
+                  title={`Auto-refresh interval: ${refreshInterval > 0 ? `every ${refreshInterval}m` : 'Off'}. Click to adjust.`}
+                  className="px-2 py-1 flex items-center gap-1.5 text-xs text-slate-300 hover:text-white rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer border-l border-slate-800"
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      refreshInterval > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                    }`}
+                  />
+                  <span className="hidden sm:inline font-mono text-[11px] text-slate-400">
+                    {formatTimeAgo(lastUpdated)}
+                  </span>
+                  <span className="text-[10px] font-bold font-mono px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                    {refreshInterval > 0 ? `${refreshInterval}m` : 'Off'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Auto-Refresh Options Dropdown */}
+              {showRefreshMenu && (
+                <div className="absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 text-xs">
+                  <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Auto-Refresh Interval
+                  </div>
+                  <div className="mt-1 space-y-1">
+                    {[
+                      { label: '5 minutes', value: 5, badge: 'High frequency' },
+                      { label: '10 minutes', value: 10, badge: 'Recommended' },
+                      { label: '15 minutes', value: 15, badge: 'Light bandwidth' },
+                      { label: '30 minutes', value: 30, badge: 'Conservative' },
+                      { label: 'Manual Only', value: 0, badge: 'No background calls' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          if (onChangeRefreshInterval) onChangeRefreshInterval(opt.value);
+                          setShowRefreshMenu(false);
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-xl flex items-center justify-between transition-colors cursor-pointer ${
+                          refreshInterval === opt.value
+                            ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30'
+                            : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-medium text-xs">{opt.label}</div>
+                          <div className="text-[9px] text-slate-400">{opt.badge}</div>
+                        </div>
+                        {refreshInterval === opt.value && <span className="text-cyan-400 font-bold text-xs">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-slate-800 px-2 text-[10px] text-slate-400 leading-tight">
+                    Pauses automatically when tab is hidden or offline. Rate-limit protected.
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* API Keys Modal */}
             <button

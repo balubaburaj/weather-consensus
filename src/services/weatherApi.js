@@ -56,10 +56,26 @@ function calculateFeelsLike(tempC, windKmh, humidityPct) {
   return Math.round(at * 10) / 10;
 }
 
+// Client-side in-memory cache to prevent overwhelming external APIs (10k daily / 60 min limit)
+const weatherCache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+
 /**
  * Fetch comprehensive multi-model forecast and ground-truth observations
+ * with in-memory caching and rate-limit fallback
  */
-export async function fetchMultiModelWeather(lat, lon, timezone = 'auto') {
+export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceRefresh = false) {
+  const cacheKey = `${Number(lat).toFixed(3)}_${Number(lon).toFixed(3)}`;
+  const now = Date.now();
+
+  // Return cached data if valid and not explicitly forced
+  if (!forceRefresh) {
+    const cached = weatherCache.get(cacheKey);
+    if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+  }
+
   const modelsParam = PROVIDER_KEYS.join(',');
   const hourlyVariables = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
   const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,is_day';
@@ -76,6 +92,16 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto') {
       fetch(actualUrl),
     ]);
 
+    // Handle rate limiting (HTTP 429) gracefully by returning cache if available
+    if (modelsRes.status === 429 || actualRes.status === 429) {
+      const cached = weatherCache.get(cacheKey);
+      if (cached) {
+        console.warn(`[Weather API] Rate limit reached (HTTP 429). Serving cached data from ${new Date(cached.timestamp).toLocaleTimeString()}`);
+        return cached.data;
+      }
+      throw new Error('API rate limit reached (HTTP 429). Please wait a moment before refreshing.');
+    }
+
     if (!modelsRes.ok || !actualRes.ok) {
       throw new Error(`Weather API failed: models ${modelsRes.status}, actual ${actualRes.status}`);
     }
@@ -83,8 +109,16 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto') {
     const modelsData = await modelsRes.json();
     const actualData = await actualRes.json();
 
-    return parseWeatherData(modelsData, actualData);
+    const parsed = parseWeatherData(modelsData, actualData);
+    weatherCache.set(cacheKey, { data: parsed, timestamp: now });
+    return parsed;
   } catch (err) {
+    // If network fails but we have cached data, serve it instead of failing
+    const cached = weatherCache.get(cacheKey);
+    if (cached) {
+      console.warn('[Weather API] Serving cached data after network error:', err);
+      return cached.data;
+    }
     console.error('Failed to fetch multi-model weather:', err);
     throw err;
   }

@@ -35,6 +35,17 @@ export default function App() {
   const [weightingStrategy, setWeightingStrategy] = useState('accuracy'); // 'accuracy' | 'benchmark' | 'equal'
   const [activeTab, setActiveTab] = useState('matrix'); // 'matrix' | 'chart' | 'accuracy'
 
+  // Auto-refresh interval (in minutes): 5, 10 (recommended default), 15, 30, or 0 (manual only)
+  const [refreshInterval, setRefreshInterval] = useState(() => {
+    const saved = localStorage.getItem('omni_refresh_interval');
+    return saved !== null ? Number(saved) : 10;
+  });
+
+  const handleSetRefreshInterval = (mins) => {
+    setRefreshInterval(mins);
+    localStorage.setItem('omni_refresh_interval', mins);
+  };
+
   // Provider visibility toggle
   const [activeProviders, setActiveProviders] = useState(() => {
     const initial = {};
@@ -64,31 +75,73 @@ export default function App() {
     handleSelectAllProviders();
   };
 
-  // Fetch weather data for selected city
-  const loadWeatherData = useCallback(async (city) => {
-    setLoading(true);
+  // Fetch weather data for selected city with cache & background refresh support
+  const loadWeatherData = useCallback(async (city, forceRefresh = false, isBackground = false) => {
+    if (!isBackground) {
+      setLoading(true);
+    }
     setError(null);
     try {
-      const data = await fetchMultiModelWeather(city.latitude, city.longitude, city.timezone);
+      const data = await fetchMultiModelWeather(city.latitude, city.longitude, city.timezone, forceRefresh);
       setRawWeatherData(data);
       setLastUpdated(new Date());
 
-      // Auto-select today from current observation time
+      // Auto-select today from current observation time if not already chosen
       const todayDate = data.current?.time ? data.current.time.split('T')[0] : new Date().toISOString().split('T')[0];
-      setSelectedDate(todayDate);
+      setSelectedDate((prev) => prev || todayDate);
     } catch (err) {
       console.error(err);
-      setError('Unable to load weather forecast models. Please check your network connection.');
+      if (!isBackground) {
+        setError('Unable to load weather forecast models. Please check your network connection.');
+      }
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
   }, []);
 
+  // Initial load when city changes
   useEffect(() => {
     if (selectedCity) {
-      loadWeatherData(selectedCity);
+      loadWeatherData(selectedCity, false, false);
     }
   }, [selectedCity, loadWeatherData]);
+
+  // Smart Periodic Background Refresh with Visibility & Rate-Limit Safeguards
+  useEffect(() => {
+    if (!selectedCity || refreshInterval <= 0) return;
+
+    const intervalMs = refreshInterval * 60 * 1000;
+
+    const performPeriodicRefresh = () => {
+      // 1. Guard against hidden background tab polling (saves battery & API quota)
+      if (document.visibilityState === 'hidden') return;
+      // 2. Guard against offline state
+      if (!navigator.onLine) return;
+
+      loadWeatherData(selectedCity, false, true);
+    };
+
+    const intervalId = setInterval(performPeriodicRefresh, intervalMs);
+
+    // 3. Page Visibility Resumption: When user returns to tab after being away, sync if stale
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const timeSinceLast = lastUpdated ? Date.now() - lastUpdated.getTime() : Infinity;
+        if (timeSinceLast >= intervalMs) {
+          loadWeatherData(selectedCity, false, true);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [selectedCity, refreshInterval, lastUpdated, loadWeatherData]);
 
   // Compute accuracy report from ground truth & past hours
   const accuracyReport = useMemo(() => {
@@ -188,9 +241,11 @@ export default function App() {
         onSelectCity={(city) => setSelectedCity(city)}
         unit={unit}
         onToggleUnit={handleToggleUnit}
-        onRefresh={() => loadWeatherData(selectedCity)}
+        onRefresh={() => loadWeatherData(selectedCity, true, false)}
         loading={loading}
         lastUpdated={lastUpdated}
+        refreshInterval={refreshInterval}
+        onChangeRefreshInterval={handleSetRefreshInterval}
         onOpenExplainer={() => setShowExplainer(true)}
         onOpenApiKeyModal={() => setShowApiKeyModal(true)}
       />
