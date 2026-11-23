@@ -4,3 +4,9 @@ dist-ssr
 *.local
 .vscode
 .DS_Store
+
+# Local User Reference Files (3D models, code snippets, reference assets)
+user_references/
+*.blend
+*.gltf
+*.glb
