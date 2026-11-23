@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key } from 'lucide-react';
+import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key, Settings, X, Thermometer, Clock } from 'lucide-react';
 import { searchLocations, DEFAULT_CITIES } from '../services/weatherApi';
 import { formatTime } from '../utils/units';
 
@@ -22,9 +22,9 @@ export default function Header({
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showRefreshMenu, setShowRefreshMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const dropdownRef = useRef(null);
-  const refreshMenuRef = useRef(null);
+  const settingsRef = useRef(null);
 
   // Time-ago ticker: updates relative timestamp display every 30 seconds
   const [, setTick] = useState(0);
@@ -43,14 +43,14 @@ export default function Header({
     return `${diffHr}h ago`;
   };
 
-  // Close dropdown on outside click
+  // Close dropdown or settings on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
-      if (refreshMenuRef.current && !refreshMenuRef.current.contains(e.target)) {
-        setShowRefreshMenu(false);
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
+        setShowSettings(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -185,145 +185,227 @@ export default function Header({
               <Navigation className="w-4 h-4" />
             </button>
 
-            {/* Unit Toggle */}
-            <div className="flex rounded-xl bg-slate-900 border border-slate-700/80 p-0.5">
+            {/* Quick Actions: Manual Refresh & Settings Gear */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Manual Refresh Button */}
               <button
-                onClick={() => onToggleUnit('C')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  unit === 'C' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
-                }`}
+                onClick={onRefresh}
+                disabled={loading}
+                title={`Manual Refresh • Last updated: ${lastUpdated ? formatTime(lastUpdated, timeFormat) : 'Never'}`}
+                className="px-2.5 sm:px-3 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-300 hover:text-cyan-300 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm group"
+                aria-label="Refresh All Forecasts"
               >
-                °C
+                <RefreshCw className={`w-3.5 h-3.5 transition-transform ${loading ? 'animate-spin text-cyan-400' : 'group-hover:rotate-180 text-slate-400'}`} />
+                <span className="hidden sm:inline font-mono text-[11px] text-slate-400">
+                  {formatTimeAgo(lastUpdated)}
+                </span>
               </button>
-              <button
-                onClick={() => onToggleUnit('F')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  unit === 'F' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                °F
-              </button>
-            </div>
 
-            {/* 24h / 12h Time Format Toggle */}
-            <div className="flex rounded-xl bg-slate-900 border border-slate-700/80 p-0.5 shadow-sm">
-              <button
-                onClick={() => onToggleTimeFormat && onToggleTimeFormat('24h')}
-                title="24-hour time format (13:00, 23:00)"
-                className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                  timeFormat === '24h' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                24h
-              </button>
-              <button
-                onClick={() => onToggleTimeFormat && onToggleTimeFormat('12h')}
-                title="12-hour AM/PM time format (1:00 PM, 11:00 PM)"
-                className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                  timeFormat === '12h' ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                12h
-              </button>
-            </div>
-
-            {/* Refresh & Auto-Sync Control */}
-            <div className="relative" ref={refreshMenuRef}>
-              <div className="flex items-center rounded-xl bg-slate-900 border border-slate-700/80 p-0.5 shadow-sm">
-                
-                {/* Manual Refresh Button */}
-                <button
-                  onClick={onRefresh}
-                  disabled={loading}
-                  title={`Manual Refresh (Last updated: ${lastUpdated ? formatTime(lastUpdated, timeFormat) : 'Never'})`}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-all disabled:opacity-50 cursor-pointer"
-                  aria-label="Refresh All Forecasts"
-                >
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
-                </button>
-
-                {/* Auto-Sync Badge / Menu Trigger */}
+              {/* Settings Gear Popover Menu Trigger */}
+              <div className="relative" ref={settingsRef}>
                 <button
                   type="button"
-                  onClick={() => setShowRefreshMenu((prev) => !prev)}
-                  title={`Auto-refresh interval: ${refreshInterval > 0 ? `every ${refreshInterval}m` : 'Off'}. Click to adjust.`}
-                  className="px-2 py-1 flex items-center gap-1.5 text-xs text-slate-300 hover:text-white rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer border-l border-slate-800"
+                  onClick={() => setShowSettings((prev) => !prev)}
+                  className={`px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                    showSettings
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-md shadow-cyan-500/10'
+                      : 'bg-slate-900/90 hover:bg-slate-800 border-slate-700/80 text-slate-300 hover:text-white'
+                  }`}
+                  title="Preferences & Settings"
+                  aria-label="Settings"
                 >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      refreshInterval > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
-                    }`}
-                  />
-                  <span className="hidden sm:inline font-mono text-[11px] text-slate-400">
-                    {formatTimeAgo(lastUpdated)}
-                  </span>
-                  <span className="text-[10px] font-bold font-mono px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                    {refreshInterval > 0 ? `${refreshInterval}m` : 'Off'}
+                  <Settings className={`w-4 h-4 transition-transform duration-300 ${showSettings ? 'rotate-90 text-cyan-400' : 'text-slate-400'}`} />
+                  <span className="hidden sm:inline">Settings</span>
+                  <span className="hidden md:inline text-[10px] font-mono text-cyan-400/90 px-1.5 py-0.5 rounded bg-slate-950/80 border border-slate-800">
+                    {unit === 'C' ? '°C' : '°F'} • {timeFormat}
                   </span>
                 </button>
-              </div>
 
-              {/* Auto-Refresh Options Dropdown */}
-              {showRefreshMenu && (
-                <div className="absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 text-xs">
-                  <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                    Auto-Refresh Interval
-                  </div>
-                  <div className="mt-1 space-y-1">
-                    {[
-                      { label: '5 minutes', value: 5, badge: 'High frequency' },
-                      { label: '10 minutes', value: 10, badge: 'Recommended' },
-                      { label: '15 minutes', value: 15, badge: 'Light bandwidth' },
-                      { label: '30 minutes', value: 30, badge: 'Conservative' },
-                      { label: 'Manual Only', value: 0, badge: 'No background calls' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          if (onChangeRefreshInterval) onChangeRefreshInterval(opt.value);
-                          setShowRefreshMenu(false);
-                        }}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-xl flex items-center justify-between transition-colors cursor-pointer ${
-                          refreshInterval === opt.value
-                            ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30'
-                            : 'text-slate-300 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <div className="font-medium text-xs">{opt.label}</div>
-                          <div className="text-[9px] text-slate-400">{opt.badge}</div>
+                {/* Comprehensive Settings Flyout */}
+                {showSettings && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-92 bg-slate-900/95 border border-slate-700 rounded-2xl shadow-2xl p-4 z-50 text-xs backdrop-blur-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                    {/* Popover Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                          <Settings className="w-4 h-4" />
                         </div>
-                        {refreshInterval === opt.value && <span className="text-cyan-400 font-bold text-xs">✓</span>}
+                        <div>
+                          <div className="font-bold text-white text-sm">Preferences &amp; Settings</div>
+                          <div className="text-[10px] text-slate-400">Personalize weather units &amp; data sync</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                        aria-label="Close Settings"
+                      >
+                        <X className="w-4 h-4" />
                       </button>
-                    ))}
+                    </div>
+
+                    {/* SECTION 1: Units & Display */}
+                    <div className="space-y-2.5">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        Units &amp; Display
+                      </div>
+
+                      {/* Temperature Unit */}
+                      <div className="flex items-center justify-between bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <Thermometer className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span className="font-medium text-xs">Temperature</span>
+                        </div>
+                        <div className="flex rounded-lg bg-slate-900 border border-slate-700/80 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => onToggleUnit('C')}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                              unit === 'C' ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            °C Celsius
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onToggleUnit('F')}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                              unit === 'F' ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            °F Fahrenheit
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Time Format */}
+                      <div className="flex items-center justify-between bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span className="font-medium text-xs">Time Format</span>
+                        </div>
+                        <div className="flex rounded-lg bg-slate-900 border border-slate-700/80 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => onToggleTimeFormat && onToggleTimeFormat('24h')}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                              timeFormat === '24h' ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            24h (13:00)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onToggleTimeFormat && onToggleTimeFormat('12h')}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                              timeFormat === '12h' ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            12h AM/PM
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION 2: Auto-Sync & Refresh Interval */}
+                    <div className="space-y-2 pt-2 border-t border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                          Background Auto-Refresh
+                        </span>
+                        <span className="text-[10px] font-mono text-cyan-400 font-bold">
+                          {refreshInterval > 0 ? `Every ${refreshInterval}m` : 'Off'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { label: '5 min', value: 5 },
+                          { label: '10 min (Rec.)', value: 10 },
+                          { label: '15 min', value: 15 },
+                          { label: '30 min', value: 30 },
+                          { label: 'Manual Only', value: 0 },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => onChangeRefreshInterval && onChangeRefreshInterval(opt.value)}
+                            className={`px-2 py-1.5 rounded-xl text-center text-xs font-semibold transition-all cursor-pointer border ${
+                              refreshInterval === opt.value
+                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-sm font-bold'
+                                : 'bg-slate-950/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
+                            } ${opt.value === 0 ? 'col-span-2' : ''}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-snug">
+                        • Pauses when tab is hidden. Syncs on return if away 5+ mins.
+                      </p>
+                    </div>
+
+                    {/* SECTION 3: Models & Feeds Setup */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                        Models &amp; Data Feeds
+                      </div>
+
+                      {/* Consensus Model Weighting Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSettings(false);
+                          if (onOpenExplainer) onOpenExplainer();
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 text-left flex items-center justify-between group transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-105 transition-transform">
+                            <Sparkles className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-xs text-slate-200 group-hover:text-cyan-300 transition-colors">
+                              Consensus Model &amp; AI Weights
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              View 8 NWP model blending &amp; weights
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-slate-400 group-hover:text-white transition-colors text-xs font-bold">→</span>
+                      </button>
+
+                      {/* API Keys & Providers Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSettings(false);
+                          if (onOpenApiKeyModal) onOpenApiKeyModal();
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 text-left flex items-center justify-between group transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform">
+                            <Key className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-xs text-slate-200 group-hover:text-emerald-300 transition-colors">
+                              API Keys &amp; Data Status
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Free feeds active • Configure provider keys
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-slate-400 group-hover:text-white transition-colors text-xs font-bold">→</span>
+                      </button>
+                    </div>
+
                   </div>
-                  <div className="mt-2 pt-2 border-t border-slate-800 px-2 text-[10px] text-slate-400 leading-tight space-y-1">
-                    <div>• Only runs while window is active.</div>
-                    <div>• Instantly updates on return if away 5+ mins.</div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-
-            {/* API Keys Modal */}
-            <button
-              onClick={onOpenApiKeyModal}
-              title="API Keys & Data Status"
-              className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-emerald-400 transition-all flex items-center gap-1.5"
-            >
-              <Key className="w-4 h-4" />
-              <span className="hidden xl:inline text-xs font-medium">Free Feeds Active</span>
-            </button>
-
-            {/* How it Works / Consensus Settings */}
-            <button
-              onClick={onOpenExplainer}
-              title="How TrueCast Consensus Works"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-300 hover:text-cyan-400 transition-all"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Consensus Model</span>
-            </button>
           </div>
         </div>
 
