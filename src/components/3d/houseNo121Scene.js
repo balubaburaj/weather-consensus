@@ -790,7 +790,6 @@ export function createHouseNo121Scene(container, options = {}) {
   controls.target.set(0.05, 2.55, 0.0);
   controls.enableDamping = true;
   controls.dampingFactor = 0.065;
-  controls.enablePan = true;
   controls.screenSpacePanning = true;
   controls.maxPolarAngle = Math.PI * 0.492;
   controls.minPolarAngle = Math.PI * 0.12;
@@ -798,6 +797,18 @@ export function createHouseNo121Scene(container, options = {}) {
   controls.maxDistance = 21.0;
   controls.maxAzimuthAngle = Math.PI * 0.47;
   controls.minAzimuthAngle = -Math.PI * 0.47;
+
+  // Selective gesture control:
+  // Desktop: Only rotate/zoom when Ctrl/Cmd is held (prevents hijacking mouse wheel page scroll)
+  // Mobile: Only two-finger gestures (pinch/pan/orbit) change the 3D model; 1-finger scrolls page smoothly
+  controls.enableZoom = false;
+  controls.enableRotate = false;
+  controls.enablePan = false;
+  controls.touches = {
+    ONE: null, // No single-finger rotate or pan on touch devices; permits natural page scrolling!
+    TWO: THREE.TOUCH.DOLLY_PAN, // Two fingers pinch to zoom & drag to pan/orbit
+  };
+  renderer.domElement.style.touchAction = 'pan-y';
   controls.update();
 
       // 3. SKY DOME, STARS & LIGHTING RIG
@@ -3336,12 +3347,41 @@ export function createHouseNo121Scene(container, options = {}) {
       }
 
     // =======================================================================
-    // 13. INTERACTIVE RAYCASTER (TAP COUPLE FOR CHEERFUL BOUNCE & WAVE!)
+    // 13. INTERACTIVE RAYCASTER & SELECTIVE GESTURE CONTROL
     // =======================================================================
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let happyBoost = 0.0;
     let pointerDownPos = { x: 0, y: 0 };
+    let isMouseDown = false;
+    let lastHintTime = 0;
+
+    // Capture-phase wheel listener:
+    // Only enables zoom when Ctrl or Cmd is held. Otherwise, lets the page scroll naturally!
+    const handleWheelCapture = (e) => {
+      const hasCtrl = e.ctrlKey || e.metaKey;
+      controls.enableZoom = hasCtrl;
+      if (!hasCtrl && options.onControlHint) {
+        options.onControlHint('Hold Ctrl + scroll to zoom the 3D scene');
+      }
+    };
+    renderer.domElement.addEventListener('wheel', handleWheelCapture, { passive: true, capture: true });
+
+    // Capture-phase pointerdown listener:
+    // On desktop, requires Ctrl to rotate or pan. On mobile, 2 fingers handle zoom/orbit.
+    const handlePointerDownCapture = (e) => {
+      if (e.pointerType === 'mouse') {
+        const hasCtrl = e.ctrlKey || e.metaKey;
+        controls.enableRotate = hasCtrl;
+        controls.enablePan = hasCtrl;
+        isMouseDown = true;
+      } else if (e.pointerType === 'touch') {
+        controls.enableRotate = true;
+        controls.enablePan = true;
+        controls.enableZoom = true;
+      }
+    };
+    renderer.domElement.addEventListener('pointerdown', handlePointerDownCapture, { capture: true });
 
     const handlePointerDown = (e) => {
       pointerDownPos.x = e.clientX;
@@ -3349,6 +3389,7 @@ export function createHouseNo121Scene(container, options = {}) {
     };
 
     const handlePointerUp = (e) => {
+      isMouseDown = false;
       const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
       if (dist > 8) return;
 
@@ -3372,12 +3413,57 @@ export function createHouseNo121Scene(container, options = {}) {
       pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
       const hits = raycaster.intersectObjects([coupleGroup], true);
-      renderer.domElement.style.cursor = hits.length > 0 ? 'pointer' : 'grab';
+
+      // Check if user is attempting to drag mouse without holding Ctrl
+      if (e.pointerType === 'mouse' && isMouseDown && !e.ctrlKey && !e.metaKey) {
+        const dragDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        const now = performance.now();
+        if (dragDist > 12 && now - lastHintTime > 2500) {
+          lastHintTime = now;
+          if (options.onControlHint) {
+            options.onControlHint('Hold Ctrl + drag to orbit the 3D scene');
+          }
+        }
+      }
+
+      // Cursor styling
+      if (hits.length > 0) {
+        renderer.domElement.style.cursor = 'pointer';
+      } else if (e.ctrlKey || e.metaKey) {
+        renderer.domElement.style.cursor = isMouseDown ? 'grabbing' : 'grab';
+      } else {
+        renderer.domElement.style.cursor = 'default';
+      }
+    };
+
+    // Keyboard Ctrl tracking to adjust cursor and controls actively
+    const handleKeyDown = (e) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        controls.enableRotate = true;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        if (renderer.domElement.style.cursor === 'default') {
+          renderer.domElement.style.cursor = 'grab';
+        }
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        controls.enableRotate = false;
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        if (renderer.domElement.style.cursor === 'grab' || renderer.domElement.style.cursor === 'grabbing') {
+          renderer.domElement.style.cursor = 'default';
+        }
+      }
     };
 
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
     let isAnimating = true;
     let elapsedAnimTime = 0;
@@ -3599,9 +3685,13 @@ export function createHouseNo121Scene(container, options = {}) {
       if (loadTimeoutId) clearTimeout(loadTimeoutId);
       resizeObserver.disconnect();
       window.removeEventListener('resize', onWindowResize);
+      renderer.domElement.removeEventListener('wheel', handleWheelCapture, { capture: true });
+      renderer.domElement.removeEventListener('pointerdown', handlePointerDownCapture, { capture: true });
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
       controls.dispose();
 
       scene.traverse((obj) => {

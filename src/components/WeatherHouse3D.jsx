@@ -38,6 +38,8 @@ export default function WeatherHouse3D({
   const [lightingMode, setLightingMode] = useState('auto'); // 'auto' | 'noon' | 'afternoon' | 'rainy' | 'dusk'
   const [isMotionActive, setIsMotionActive] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
+  const [controlHint, setControlHint] = useState(null);
+  const hintTimeoutRef = useRef(null);
 
   const showToast = useCallback((msg) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -45,6 +47,14 @@ export default function WeatherHouse3D({
     toastTimeoutRef.current = setTimeout(() => {
       setToastMessage(null);
     }, 3200);
+  }, []);
+
+  const showControlHint = useCallback((hint) => {
+    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+    setControlHint(hint);
+    hintTimeoutRef.current = setTimeout(() => {
+      setControlHint(null);
+    }, 2200);
   }, []);
 
   // Initialize Three.js scene
@@ -63,6 +73,7 @@ export default function WeatherHouse3D({
         onStepChange: (stepKey) => {
           setActiveCam(stepKey);
         },
+        onControlHint: (hint) => showControlHint(hint),
         onLoaded: () => setIsLoaded(true),
         onToast: (msg) => showToast(msg),
       });
@@ -351,13 +362,29 @@ export default function WeatherHouse3D({
           </div>
         )}
 
+        {/* Floating Ctrl Gesture Helper Badge */}
+        {controlHint && (
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-fade-in">
+            <div className="px-4 py-2 rounded-full bg-slate-950/90 border border-cyan-500/50 shadow-xl shadow-cyan-500/20 text-cyan-200 text-xs font-semibold backdrop-blur-md flex items-center gap-2">
+              <span className="text-[10px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">Shortcut</span>
+              <span>{controlHint}</span>
+            </div>
+          </div>
+        )}
+
         {/* Three.js DOM Container */}
         <div ref={mountRef} className="w-full h-full overflow-hidden relative cursor-grab active:cursor-grabbing select-none" />
 
         {/* Interactive Helper Banner at Bottom */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-          <div className="px-3.5 py-1.5 rounded-full bg-slate-950/70 border border-slate-800/80 backdrop-blur-md text-[11px] text-slate-400 font-medium whitespace-nowrap shadow-md">
-            Drag to orbit &bull; Pinch/Scroll to zoom &bull; Tap couple to wave
+          <div className="px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-slate-800/80 backdrop-blur-md text-[11px] text-slate-400 font-medium whitespace-nowrap shadow-md flex items-center gap-1.5">
+            <span className="hidden sm:inline">
+              Hold <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-mono">Ctrl</kbd> + drag to orbit &bull; <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-mono">Ctrl</kbd> + scroll to zoom
+            </span>
+            <span className="sm:hidden">
+              Use two fingers to rotate &bull; pinch to zoom
+            </span>
+            <span>&bull; Tap couple to wave</span>
           </div>
         </div>
       </div>
