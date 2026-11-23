@@ -18,6 +18,7 @@ import {
 import { WeatherIcon } from '../utils/weatherIcons';
 import { formatTemp, formatWind, formatPrecip, formatTime } from '../utils/units';
 import { getWeatherInfo, resolveSmartWeatherInfo, getRainHumanType, WEATHER_PROVIDERS } from '../constants/providers';
+import WeatherHouse3D from './WeatherHouse3D';
 
 /**
  * Quick modest gear & wear checklist generator
@@ -139,6 +140,13 @@ export default function CurrentOverview({
           </div>
         </div>
       )}
+
+      {/* 🏡 Procedural 3D Live Weather Scene: House No. 121 & Animated Couple */}
+      <WeatherHouse3D
+        currentWeather={current}
+        isCurrentlyRaining={isCurrentlyRaining}
+        selectedCity={selectedCity}
+      />
 
       {/* ⭐ UNIFIED LIVE GROUND OBSERVATION & CURRENT CONDITIONS MASTER HUB */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950/95 border border-slate-800 p-6 shadow-xl backdrop-blur-md">
