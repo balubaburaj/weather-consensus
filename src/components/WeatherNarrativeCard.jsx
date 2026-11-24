@@ -19,6 +19,7 @@ export default function WeatherNarrativeCard({
   selectedCity,
   unit = 'C',
   timeFormat = '24h',
+  isMobile = false,
 }) {
   const [activeStyle, setActiveStyle] = useState(() => {
     return localStorage.getItem('omni_narrative_style') || 'natural';
@@ -39,6 +40,81 @@ export default function WeatherNarrativeCard({
   });
 
   if (!narrative) return null;
+
+  if (isMobile) {
+    return (
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+        {/* Hero Narrative Headline */}
+        <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 mb-3 shadow-inner">
+          <p className="text-sm sm:text-base leading-relaxed text-slate-100 font-medium tracking-wide">
+            {narrative.naturalHero}
+          </p>
+        </div>
+
+        {/* 3 Full-Width Vertically Stacked Micro-Cards: NOW, LATER, HEADS-UP */}
+        <div className="flex flex-col gap-2.5">
+          {/* Slot A: NOW */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+            <div>
+              <div className="flex items-center gap-2 text-cyan-400 mb-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-extrabold uppercase tracking-wider">
+                  Now
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-200 leading-snug">
+                {narrative.microFields.now}
+              </p>
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Observed condition</span>
+              <span className="font-semibold text-cyan-300">{narrative.temperature}</span>
+            </div>
+          </div>
+
+          {/* Slot B: LATER */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
+            <div>
+              <div className="flex items-center gap-2 text-amber-400 mb-1.5">
+                <Compass className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-extrabold uppercase tracking-wider">
+                  Later
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-200 leading-snug">
+                {narrative.microFields.later}
+              </p>
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Rest of day shift</span>
+              <span className="font-semibold text-amber-300">
+                {narrative.nextShiftMeta.time ? `@ ${narrative.nextShiftMeta.time}` : 'Tonight'}
+              </span>
+            </div>
+          </div>
+
+          {/* Slot C: HEADS-UP */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
+            <div>
+              <div className="flex items-center gap-2 text-emerald-400 mb-1.5">
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-extrabold uppercase tracking-wider">
+                  Heads-up
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-200 leading-snug">
+                {narrative.microFields.headsUp}
+              </p>
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Practical advice</span>
+              <span className="font-semibold text-emerald-300">Next 12-14 hrs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/95 via-indigo-950/20 to-slate-950/95 border border-slate-700/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">

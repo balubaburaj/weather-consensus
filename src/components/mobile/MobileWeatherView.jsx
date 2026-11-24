@@ -260,11 +260,13 @@ export default function MobileWeatherView({
           selectedCity={selectedCity}
           unit={unit}
           timeFormat={timeFormat}
+          isMobile={true}
         />
 
         {/* 3. Hourly Forecast (Curve Graph with Temperature / Precipitation / Wind Pills) */}
         <MobileHourlyForecast
           hours={hours}
+          dailySummary={dailySummary}
           unit={unit}
           timeFormat={timeFormat}
         />

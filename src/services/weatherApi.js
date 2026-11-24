@@ -119,13 +119,13 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceR
 
   const modelsParam = PROVIDER_KEYS.join(',');
   const hourlyVariables = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
-  const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure,dew_point_2m,cloud_cover,is_day';
+  const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,is_day';
 
   // 1. Multi-model call (past 2 days + next 6 days)
   const modelsUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourlyVariables}&models=${modelsParam}&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   // 2. Actual observations & astronomical daylight call (past 2 days + next 6 days)
-  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,surface_pressure,dew_point_2m,cloud_cover,visibility,is_day,sunshine_duration,uv_index&daily=sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
+  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,visibility,is_day,sunshine_duration,uv_index&daily=sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   // 3. Air Quality call (European AQI & particulates)
   const aqiUrl = `${AIR_QUALITY_BASE_URL}?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,ozone&hourly=european_aqi&timezone=${encodeURIComponent(timezone)}`;
@@ -279,6 +279,7 @@ function parseWeatherData(modelsPayload, actualPayload, aqiPayload = null) {
       weatherCode: actualHourly.weather_code ? actualHourly.weather_code[idx] : 0,
       humidity: actualHumidity,
       windSpeed: actualWind,
+      windDirection: actualHourly.wind_direction_10m ? actualHourly.wind_direction_10m[idx] : 160,
     };
 
     // Providers values for this hour
@@ -365,6 +366,7 @@ function parseWeatherData(modelsPayload, actualPayload, aqiPayload = null) {
       precipitation: current.precipitation,
       weatherCode: current.weather_code,
       windSpeed: current.wind_speed_10m,
+      windDirection: current.wind_direction_10m !== undefined ? current.wind_direction_10m : 160,
       windGusts: current.wind_gusts_10m !== undefined ? current.wind_gusts_10m : Math.round((current.wind_speed_10m || 15) * 1.35 * 10) / 10,
       surfacePressure: current.surface_pressure !== undefined ? Math.round(current.surface_pressure) : 1013,
       dewPoint: current.dew_point_2m !== undefined ? Math.round(current.dew_point_2m * 10) / 10 : Math.round((current.temperature_2m - ((100 - current.relative_humidity_2m) / 5)) * 10) / 10,

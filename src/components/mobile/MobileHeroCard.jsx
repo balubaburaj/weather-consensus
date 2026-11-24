@@ -39,12 +39,14 @@ export default function MobileHeroCard({
           isCurrentlyRaining={isCurrentlyRaining}
           selectedCity={selectedCity}
           showControls={false}
+          initialCamera="front"
+          playIntro={false}
           className="w-full h-full border-none rounded-none"
         />
 
         {/* Gradient shadow overlay for crystal-clear readability */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-        <div className="absolute top-0 inset-x-0 h-16 pointer-events-none bg-gradient-to-b from-slate-950/70 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-28 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+        <div className="absolute top-0 inset-x-0 h-12 pointer-events-none bg-gradient-to-b from-slate-950/60 to-transparent" />
 
         {/* Bottom-left Hero Information Overlay (Matching Reference Design) */}
         <div className="absolute bottom-3 left-4 right-4 pointer-events-none flex items-end justify-between">

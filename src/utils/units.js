@@ -109,3 +109,13 @@ export function formatTime(timeInput, timeFormat = '24h', includeMinutes = true)
   const m24 = minutes < 10 ? `0${minutes}` : minutes;
   return includeMinutes ? `${h24}:${m24}` : `${h24}:00`;
 }
+
+/**
+ * Convert wind degree to 16-point cardinal compass direction (e.g. SSE, WNW)
+ */
+export function getCardinalWindDirection(degrees) {
+  if (degrees === undefined || degrees === null) return 'SSE';
+  const val = Math.floor((degrees / 22.5) + 0.5);
+  const arr = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  return arr[val % 16];
+}

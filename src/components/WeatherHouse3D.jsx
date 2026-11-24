@@ -157,6 +157,8 @@ export default function WeatherHouse3D({
   selectedCity,
   className = '',
   showControls = false,
+  initialCamera = 'iso',
+  playIntro = true,
 }) {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
@@ -203,8 +205,8 @@ export default function WeatherHouse3D({
 
     try {
       sceneInstance = createHouseNo121Scene(mountRef.current, {
-        initialCamera: 'iso',
-        playIntro: true,
+        initialCamera,
+        playIntro,
         onStepChange: (stepKey) => {
           setActiveCam(stepKey);
         },

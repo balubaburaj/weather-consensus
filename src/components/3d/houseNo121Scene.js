@@ -2507,7 +2507,7 @@ export function createHouseNo121Scene(container, options = {}) {
       // 10. STYLIZED ANIMATED COUPLE — CLEAN FACES & ZERO HAIR BLEEDING
       // =======================================================================
       const coupleGroup = new THREE.Group();
-      coupleGroup.position.set(1.44, 0.0, 0.94);
+      coupleGroup.position.set(2.40, 0.0, 0.94);
       neighborhood.add(coupleGroup);
 
       const skinMat = new THREE.MeshStandardMaterial({
@@ -3725,8 +3725,8 @@ export function createHouseNo121Scene(container, options = {}) {
       const cameraPresets = {
         front: {
           // Full house front view zoomed in slightly
-          pos: new THREE.Vector3(0.05, 2.95, 9.4),
-          target: new THREE.Vector3(0.05, 2.45, 0.0),
+          pos: new THREE.Vector3(0.25, 2.05, 8.2),
+          target: new THREE.Vector3(0.25, 1.45, 0.0),
         },
         iso: {
           pos: new THREE.Vector3(-8.2, 5.8, 9.8),
@@ -3737,8 +3737,8 @@ export function createHouseNo121Scene(container, options = {}) {
           target: new THREE.Vector3(-0.25, 3.05, -0.35),
         },
         couple: {
-          pos: new THREE.Vector3(1.46, 1.48, 3.65),
-          target: new THREE.Vector3(1.42, 1.16, 0.88),
+          pos: new THREE.Vector3(2.42, 1.48, 3.65),
+          target: new THREE.Vector3(2.38, 1.16, 0.88),
         },
       };
 
