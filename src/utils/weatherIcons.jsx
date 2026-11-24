@@ -126,7 +126,7 @@ export function WeatherIcon({
   code,
   iconName,
   isNight = false,
-  className = 'w-6 h-6',
+  className = 'w-8 h-8',
   alt,
   ...props
 }) {

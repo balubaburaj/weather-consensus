@@ -446,14 +446,14 @@ export default function WeatherHouse3D({
                 <button
                   key={s.id}
                   onClick={() => handleScenarioSelect(s.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition border shrink-0 ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition border shrink-0 ${
                     isSelected
                       ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md shadow-cyan-500/20 font-bold scale-[1.02]'
                       : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
                   }`}
                   title={`${s.label} (${s.temp}): ${s.weatherDesc}`}
                 >
-                  <WeatherIcon iconName={s.iconName} className="w-4 h-4 shrink-0" />
+                  <WeatherIcon iconName={s.iconName} className="w-6 h-6 shrink-0" />
                   <span>{s.label}</span>
                 </button>
               );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key, Settings, X, Thermometer, Clock } from 'lucide-react';
 import { searchLocations, DEFAULT_CITIES } from '../services/weatherApi';
 import { formatTime } from '../utils/units';
+import { WeatherIcon } from '../utils/weatherIcons';
 
 export default function Header({
   selectedCity,
@@ -111,7 +112,7 @@ export default function Header({
           {/* Logo & Subtitle */}
           <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20 text-white font-black text-xl">
-              <span>🌤️</span>
+              <WeatherIcon iconName="partly-cloudy-day" className="w-8 h-8 drop-shadow-md" alt="WeatherConsensus Logo" />
             </div>
             <div>
               <div className="flex items-center gap-2">

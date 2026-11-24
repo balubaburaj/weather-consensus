@@ -116,8 +116,8 @@ export default function DaySelector({
 
               {/* Weather Icon & Temperatures */}
               <div className="my-2 flex items-center justify-between">
-                <div className="p-1 rounded-xl bg-slate-950/40 border border-slate-800/60">
-                  <WeatherIcon iconName={dailyIcon} className="w-6 h-6" />
+                <div className="p-1.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 shadow-inner">
+                  <WeatherIcon iconName={dailyIcon} className="w-10 h-10 sm:w-11 sm:h-11" />
                 </div>
                 <div className="text-right">
                   <div className="text-xs sm:text-sm font-black text-white font-mono">
