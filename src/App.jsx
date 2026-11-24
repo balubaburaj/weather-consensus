@@ -73,10 +73,14 @@ export default function App() {
     localStorage.setItem('omni_view_mode', mode);
   };
 
-  // Auto-refresh interval (in minutes): 5, 10 (recommended default), 15, 30, or 0 (manual only)
+  // Auto-refresh interval (in minutes): 15, 30 (default), 60 (1 hour), or 0 (manual only)
   const [refreshInterval, setRefreshInterval] = useState(() => {
     const saved = localStorage.getItem('omni_refresh_interval');
-    return saved !== null ? Number(saved) : 10;
+    if (saved !== null) {
+      const val = Number(saved);
+      if ([15, 30, 60, 0].includes(val)) return val;
+    }
+    return 30; // Default to 30 minutes
   });
 
   const handleSetRefreshInterval = (mins) => {
@@ -319,6 +323,8 @@ export default function App() {
         onToggleTimeFormat={handleToggleTimeFormat}
         onRefresh={() => loadWeatherData(selectedCity, true, false)}
         isRefreshing={loading}
+        refreshInterval={refreshInterval}
+        onChangeRefreshInterval={handleSetRefreshInterval}
         onSwitchToDesktop={() => handleSetViewMode('desktop')}
       />
     );

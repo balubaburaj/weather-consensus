@@ -329,16 +329,15 @@ export default function Header({
                           Background Auto-Refresh
                         </span>
                         <span className="text-[10px] font-mono text-cyan-400 font-bold">
-                          {refreshInterval > 0 ? `Every ${refreshInterval}m` : 'Off'}
+                          {refreshInterval === 60 ? 'Every 1h' : (refreshInterval > 0 ? `Every ${refreshInterval}m` : 'Off')}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-3 gap-1.5">
                         {[
-                          { label: '5 min', value: 5 },
-                          { label: '10 min (Rec.)', value: 10 },
                           { label: '15 min', value: 15 },
-                          { label: '30 min', value: 30 },
+                          { label: '30 min (Def)', value: 30 },
+                          { label: '1 hour', value: 60 },
                           { label: 'Manual Only', value: 0 },
                         ].map((opt) => (
                           <button
@@ -349,7 +348,7 @@ export default function Header({
                               refreshInterval === opt.value
                                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-sm font-bold'
                                 : 'bg-slate-950/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
-                            } ${opt.value === 0 ? 'col-span-2' : ''}`}
+                            } ${opt.value === 0 ? 'col-span-3' : ''}`}
                           >
                             {opt.label}
                           </button>

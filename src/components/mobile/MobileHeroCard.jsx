@@ -1,5 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { Sliders, X, Copy, Check, RotateCcw, Compass, Eye, Maximize } from 'lucide-react';
+import {
+  Sliders,
+  X,
+  Copy,
+  Check,
+  RotateCcw,
+  Compass,
+  Eye,
+  Maximize,
+  MapPin,
+  RefreshCw,
+  Search,
+  Settings,
+  ChevronDown,
+} from 'lucide-react';
 import { formatTemp, formatTime } from '../../utils/units';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo, getRainHumanType } from '../../constants/providers';
@@ -25,6 +39,10 @@ export default function MobileHeroCard({
   dailySummary,
   unit = 'C',
   timeFormat = '24h',
+  onOpenCitySearch,
+  onOpenSettings,
+  onRefresh,
+  isRefreshing = false,
 }) {
   const [tuning, setTuning] = useState(() => {
     try {
@@ -133,27 +151,51 @@ export default function MobileHeroCard({
 
         {/* Gradient shadow overlay for crystal-clear readability */}
         <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-        <div className="absolute top-0 inset-x-0 h-14 pointer-events-none bg-gradient-to-b from-slate-950/60 to-transparent" />
+        <div className="absolute top-0 inset-x-0 h-20 pointer-events-none bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent" />
 
-        {/* Top-Right Badges: LIVE pulse indicator + Temporary Position Tuner Button */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
+        {/* Top Controls Overlay inside the 3D card (City Selection, Refresh, Search, Settings) */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-auto">
+          {/* Quick city switch menu button */}
           <button
             type="button"
-            onClick={() => setIsTunerOpen(!isTunerOpen)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border backdrop-blur-md transition-all shadow-md ${
-              isTunerOpen
-                ? 'bg-amber-400 text-slate-950 border-amber-300'
-                : 'bg-slate-900/80 text-amber-300 hover:text-white border-amber-500/40 hover:bg-slate-800'
-            }`}
-            title="Adjust 3D Couple position, Camera perspective width & Height sliders"
+            onClick={onOpenCitySearch}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-xs font-bold text-white shadow-md active:scale-95 transition cursor-pointer"
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Tune 3D</span>
+            <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="truncate max-w-[125px]">{selectedCity?.name || 'Cork'}</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
 
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/80 backdrop-blur-md text-[10px] text-emerald-400 font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>LIVE</span>
+          {/* Action Icons: Refresh, Search & Settings */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onRefresh}
+              className={`p-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-slate-300 hover:text-white transition active:scale-95 shadow-md cursor-pointer ${
+                isRefreshing ? 'animate-spin text-cyan-400' : ''
+              }`}
+              title="Refresh weather"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenCitySearch}
+              className="p-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-slate-300 hover:text-white transition active:scale-95 shadow-md cursor-pointer"
+              title="Search city"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="p-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-slate-300 hover:text-white transition active:scale-95 shadow-md cursor-pointer"
+              title="Settings & Preferences"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
           </div>
         </div>
 

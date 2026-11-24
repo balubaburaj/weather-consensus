@@ -44,6 +44,23 @@ export default function WeatherNarrativeCard({
   if (isMobile) {
     return (
       <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+        {/* Section Header: Live Day Story with desktop Sparkles icon */}
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white tracking-wide">
+                Live Day Story
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                {narrative.cityName} &bull; Now through Tonight
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Hero Narrative Headline */}
         <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 mb-3 shadow-inner">
           <p className="text-sm sm:text-base leading-relaxed text-slate-100 font-medium tracking-wide">
