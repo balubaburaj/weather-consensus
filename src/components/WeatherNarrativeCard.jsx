@@ -55,7 +55,7 @@ export default function WeatherNarrativeCard({
                 Live Day Story
               </h3>
               <p className="text-[11px] text-slate-400">
-                {narrative.cityName} &bull; Now through Tonight
+                {narrative.subHeader || `${narrative.cityName} • Today's Outlook`}
               </p>
             </div>
           </div>
@@ -68,7 +68,7 @@ export default function WeatherNarrativeCard({
           </p>
         </div>
 
-        {/* 3 Full-Width Vertically Stacked Micro-Cards: NOW, LATER, HEADS-UP */}
+        {/* 3 Full-Width Vertically Stacked Micro-Cards: NOW, NEXT SHIFT, HEADS-UP */}
         <div className="flex flex-col gap-2.5">
           {/* Slot A: NOW */}
           <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
@@ -76,7 +76,7 @@ export default function WeatherNarrativeCard({
               <div className="flex items-center gap-2 text-cyan-400 mb-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 <span className="text-[11px] font-extrabold uppercase tracking-wider">
-                  Now
+                  {narrative.microFields.nowTitle || 'Right Now'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-snug">
@@ -84,18 +84,18 @@ export default function WeatherNarrativeCard({
               </p>
             </div>
             <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-              <span>Observed condition</span>
-              <span className="font-semibold text-cyan-300">{narrative.temperature}</span>
+              <span>{narrative.microFields.nowFooterLabel || 'Observed condition'}</span>
+              <span className="font-semibold text-cyan-300">{narrative.microFields.nowFooterValue || narrative.temperature}</span>
             </div>
           </div>
 
-          {/* Slot B: LATER */}
+          {/* Slot B: LATER / NEXT SHIFT */}
           <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
             <div>
               <div className="flex items-center gap-2 text-amber-400 mb-1.5">
                 <Compass className="w-3.5 h-3.5" />
                 <span className="text-[11px] font-extrabold uppercase tracking-wider">
-                  Later
+                  {narrative.microFields.laterTitle || 'Next Shift'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-snug">
@@ -103,9 +103,9 @@ export default function WeatherNarrativeCard({
               </p>
             </div>
             <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-              <span>Rest of day shift</span>
+              <span>{narrative.microFields.laterFooterLabel || 'Expected outlook'}</span>
               <span className="font-semibold text-amber-300">
-                {narrative.nextShiftMeta.time ? `@ ${narrative.nextShiftMeta.time}` : 'Tonight'}
+                {narrative.microFields.laterFooterValue || 'Overnight'}
               </span>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function WeatherNarrativeCard({
               <div className="flex items-center gap-2 text-emerald-400 mb-1.5">
                 <Lightbulb className="w-3.5 h-3.5" />
                 <span className="text-[11px] font-extrabold uppercase tracking-wider">
-                  Heads-up
+                  {narrative.microFields.headsUpTitle || 'Heads-up'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-snug">
@@ -124,8 +124,10 @@ export default function WeatherNarrativeCard({
               </p>
             </div>
             <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-              <span>Practical advice</span>
-              <span className="font-semibold text-emerald-300">Next 12-14 hrs</span>
+              <span>{narrative.microFields.headsUpFooterLabel || 'Practical advice'}</span>
+              <span className="font-semibold text-emerald-300">
+                {narrative.microFields.headsUpFooterValue || 'For tonight'}
+              </span>
             </div>
           </div>
         </div>
@@ -152,7 +154,7 @@ export default function WeatherNarrativeCard({
               </span>
               <span className="text-[11px] text-slate-400">·</span>
               <span className="text-xs font-semibold text-slate-300">
-                {narrative.cityName} (Now through Tonight)
+                {narrative.subHeader || `${narrative.cityName} • Today's Outlook`}
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
@@ -247,7 +249,7 @@ export default function WeatherNarrativeCard({
             <div className="flex items-center gap-2 text-cyan-400 mb-1.5">
               <Clock className="w-3.5 h-3.5" />
               <span className="text-[11px] font-extrabold uppercase tracking-wider">
-                Now
+                {narrative.microFields.nowTitle || 'Right Now'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-200 leading-snug">
@@ -255,8 +257,8 @@ export default function WeatherNarrativeCard({
             </p>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-            <span>Observed condition</span>
-            <span className="font-semibold text-cyan-300">{narrative.temperature}</span>
+            <span>{narrative.microFields.nowFooterLabel || 'Observed condition'}</span>
+            <span className="font-semibold text-cyan-300">{narrative.microFields.nowFooterValue || narrative.temperature}</span>
           </div>
         </div>
 
@@ -266,7 +268,7 @@ export default function WeatherNarrativeCard({
             <div className="flex items-center gap-2 text-amber-400 mb-1.5">
               <Compass className="w-3.5 h-3.5" />
               <span className="text-[11px] font-extrabold uppercase tracking-wider">
-                Later
+                {narrative.microFields.laterTitle || 'Next Shift'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-200 leading-snug">
@@ -274,9 +276,9 @@ export default function WeatherNarrativeCard({
             </p>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-            <span>Rest of day shift</span>
+            <span>{narrative.microFields.laterFooterLabel || 'Expected outlook'}</span>
             <span className="font-semibold text-amber-300">
-              {narrative.nextShiftMeta.time ? `@ ${narrative.nextShiftMeta.time}` : 'Tonight'}
+              {narrative.microFields.laterFooterValue || 'Overnight'}
             </span>
           </div>
         </div>
@@ -287,7 +289,7 @@ export default function WeatherNarrativeCard({
             <div className="flex items-center gap-2 text-emerald-400 mb-1.5">
               <Lightbulb className="w-3.5 h-3.5" />
               <span className="text-[11px] font-extrabold uppercase tracking-wider">
-                Heads-up
+                {narrative.microFields.headsUpTitle || 'Heads-up'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-200 leading-snug">
@@ -295,8 +297,10 @@ export default function WeatherNarrativeCard({
             </p>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-            <span>Practical rule</span>
-            <span className="font-semibold text-emerald-300">Gear & Safety</span>
+            <span>{narrative.microFields.headsUpFooterLabel || 'Practical advice'}</span>
+            <span className="font-semibold text-emerald-300">
+              {narrative.microFields.headsUpFooterValue || 'For tonight'}
+            </span>
           </div>
         </div>
       </div>
