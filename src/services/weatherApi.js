@@ -280,6 +280,12 @@ function parseWeatherData(modelsPayload, actualPayload, aqiPayload = null) {
       humidity: actualHumidity,
       windSpeed: actualWind,
       windDirection: actualHourly.wind_direction_10m ? actualHourly.wind_direction_10m[idx] : 160,
+      windGusts: actualHourly.wind_gusts_10m ? actualHourly.wind_gusts_10m[idx] : Math.round((actualWind || 10) * 1.35 * 10) / 10,
+      surfacePressure: actualHourly.surface_pressure ? Math.round(actualHourly.surface_pressure[idx]) : 1013,
+      dewPoint: actualHourly.dew_point_2m !== undefined && actualHourly.dew_point_2m[idx] !== null ? Math.round(actualHourly.dew_point_2m[idx] * 10) / 10 : (actualTemp !== null && actualHumidity !== null ? Math.round((actualTemp - ((100 - actualHumidity) / 5)) * 10) / 10 : null),
+      cloudCover: actualHourly.cloud_cover ? actualHourly.cloud_cover[idx] : 0,
+      visibility: actualHourly.visibility ? (actualHourly.visibility[idx] !== null ? Math.round(actualHourly.visibility[idx] / 1000) : 10) : 10,
+      uvIndex,
     };
 
     // Providers values for this hour

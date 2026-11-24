@@ -16,6 +16,7 @@ import MobilePrecipitationGraph from './MobilePrecipitationGraph';
 import MobileWeatherGrid from './MobileWeatherGrid';
 import MobileAirQualityCard from './MobileAirQualityCard';
 import MobileSunMoonCard from './MobileSunMoonCard';
+import MobileDetailedHourlyModal from './MobileDetailedHourlyModal';
 import WeatherNarrativeCard from '../WeatherNarrativeCard';
 import { DEFAULT_CITIES, searchLocations } from '../../services/weatherApi';
 
@@ -40,6 +41,7 @@ export default function MobileWeatherView({
   const [isSearching, setIsSearching] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDetailedHourlyOpen, setIsDetailedHourlyOpen] = useState(false);
 
   // Pull-to-refresh state
   const [pullY, setPullY] = useState(0);
@@ -381,6 +383,7 @@ export default function MobileWeatherView({
           dailySummary={dailySummary}
           unit={unit}
           timeFormat={timeFormat}
+          onOpenDetailedHourly={() => setIsDetailedHourlyOpen(true)}
         />
 
         {/* 4. Daily Forecast (7-Day Vertical Range Bars) */}
@@ -428,6 +431,17 @@ export default function MobileWeatherView({
             WeatherConsensus &bull; Multi-Model Consensus & Accuracy Engine &bull; Ireland Edition
           </p>
         </div>
+
+        {/* Comprehensive 24h Detailed Hourly Modal (Weawow Reference Style) */}
+        {isDetailedHourlyOpen && (
+          <MobileDetailedHourlyModal
+            hours={hours}
+            selectedCity={selectedCity}
+            unit={unit}
+            timeFormat={timeFormat}
+            onClose={() => setIsDetailedHourlyOpen(false)}
+          />
+        )}
 
       </div>
     </div>

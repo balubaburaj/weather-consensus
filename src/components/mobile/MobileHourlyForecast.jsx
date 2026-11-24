@@ -9,6 +9,7 @@ export default function MobileHourlyForecast({
   dailySummary,
   unit = 'C',
   timeFormat = '24h',
+  onOpenDetailedHourly,
 }) {
   const [activeMetric, setActiveMetric] = useState('temperature'); // 'temperature' | 'precipitation' | 'wind'
   const [selectedHourIndex, setSelectedHourIndex] = useState(0);
@@ -212,9 +213,14 @@ export default function MobileHourlyForecast({
             </span>
           )}
         </div>
-        <div className="p-1.5 rounded-full bg-slate-800/80 text-slate-400 hover:text-white transition">
+        <button
+          type="button"
+          onClick={onOpenDetailedHourly}
+          className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer active:scale-95"
+          title="View comprehensive 24h hourly breakdown"
+        >
           <ChevronRight className="w-4 h-4" />
-        </div>
+        </button>
       </div>
 
       {/* Top Inspector Box (Live Updates as user scrolls / taps hours) */}
