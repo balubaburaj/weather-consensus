@@ -3956,6 +3956,7 @@ export function createHouseNo121Scene(container, options = {}) {
     // =======================================================================
     let lastW = 0;
     let lastH = 0;
+    let customFov = null;
     function onWindowResize() {
       if (!container || !renderer || !camera || !isRunning) return;
       const w = container.clientWidth || 800;
@@ -3965,7 +3966,7 @@ export function createHouseNo121Scene(container, options = {}) {
       lastW = w;
       lastH = h;
       camera.aspect = w / h;
-      camera.fov = w < 640 ? 46 : (w < h ? 42 : 38);
+      camera.fov = customFov !== null ? customFov : (w < 640 ? 46 : (w < h ? 42 : 38));
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
     }
@@ -4643,13 +4644,18 @@ export function createHouseNo121Scene(container, options = {}) {
         y: coupleGroup.position.y,
         z: coupleGroup.position.z,
       }),
-      setCameraSettings: ({ posX, posY, posZ, targetX, targetY, targetZ } = {}) => {
+      setCameraSettings: ({ posX, posY, posZ, targetX, targetY, targetZ, fov } = {}) => {
         if (typeof posX === 'number') camera.position.x = posX;
         if (typeof posY === 'number') camera.position.y = posY;
         if (typeof posZ === 'number') camera.position.z = posZ;
         if (typeof targetX === 'number') controls.target.x = targetX;
         if (typeof targetY === 'number') controls.target.y = targetY;
         if (typeof targetZ === 'number') controls.target.z = targetZ;
+        if (typeof fov === 'number') {
+          customFov = fov;
+          camera.fov = fov;
+          camera.updateProjectionMatrix();
+        }
         controls.update();
       },
       getCameraSettings: () => ({
@@ -4659,6 +4665,7 @@ export function createHouseNo121Scene(container, options = {}) {
         targetX: controls.target.x,
         targetY: controls.target.y,
         targetZ: controls.target.z,
+        fov: camera.fov,
       }),
       playIntroSequence,
       cancelIntroSequence,

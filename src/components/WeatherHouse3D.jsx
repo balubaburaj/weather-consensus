@@ -277,6 +277,7 @@ export default function WeatherHouse3D({
     cameraSettings?.targetX,
     cameraSettings?.targetY,
     cameraSettings?.targetZ,
+    cameraSettings?.fov,
   ]);
 
   // Sync live weather state when activeScenario === 'live'
