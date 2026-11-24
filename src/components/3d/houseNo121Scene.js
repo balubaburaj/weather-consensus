@@ -2507,7 +2507,7 @@ export function createHouseNo121Scene(container, options = {}) {
       // 10. STYLIZED ANIMATED COUPLE — CLEAN FACES & ZERO HAIR BLEEDING
       // =======================================================================
       const coupleGroup = new THREE.Group();
-      coupleGroup.position.set(1.44, 0.0, 0.94);
+      coupleGroup.position.set(1.45, 0.00, 1.05);
       neighborhood.add(coupleGroup);
 
       const skinMat = new THREE.MeshStandardMaterial({
@@ -3725,8 +3725,8 @@ export function createHouseNo121Scene(container, options = {}) {
       const cameraPresets = {
         front: {
           // Full house front view zoomed in slightly
-          pos: new THREE.Vector3(0.05, 2.95, 9.4),
-          target: new THREE.Vector3(0.05, 2.45, 0.0),
+          pos: new THREE.Vector3(0.50, 2.00, 7.00),
+          target: new THREE.Vector3(0.30, 1.40, 0.0),
         },
         iso: {
           pos: new THREE.Vector3(-8.2, 5.8, 9.8),
@@ -3737,8 +3737,8 @@ export function createHouseNo121Scene(container, options = {}) {
           target: new THREE.Vector3(-0.25, 3.05, -0.35),
         },
         couple: {
-          pos: new THREE.Vector3(1.46, 1.48, 3.65),
-          target: new THREE.Vector3(1.42, 1.16, 0.88),
+          pos: new THREE.Vector3(1.47, 1.48, 3.65),
+          target: new THREE.Vector3(1.45, 1.16, 1.05),
         },
       };
 
@@ -3956,6 +3956,7 @@ export function createHouseNo121Scene(container, options = {}) {
     // =======================================================================
     let lastW = 0;
     let lastH = 0;
+    let customFov = null;
     function onWindowResize() {
       if (!container || !renderer || !camera || !isRunning) return;
       const w = container.clientWidth || 800;
@@ -3965,7 +3966,7 @@ export function createHouseNo121Scene(container, options = {}) {
       lastW = w;
       lastH = h;
       camera.aspect = w / h;
-      camera.fov = w < 640 ? 46 : (w < h ? 42 : 38);
+      camera.fov = customFov !== null ? customFov : (w < 640 ? 46 : (w < h ? 42 : 38));
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
     }
@@ -4633,6 +4634,39 @@ export function createHouseNo121Scene(container, options = {}) {
       setWeatherScenario,
       getActiveScenarioKey: () => activeScenarioKey,
       setCameraPreset,
+      setCouplePosition: (x, y, z) => {
+        if (typeof x === 'number') coupleGroup.position.x = x;
+        if (typeof y === 'number') coupleGroup.position.y = y;
+        if (typeof z === 'number') coupleGroup.position.z = z;
+      },
+      getCouplePosition: () => ({
+        x: coupleGroup.position.x,
+        y: coupleGroup.position.y,
+        z: coupleGroup.position.z,
+      }),
+      setCameraSettings: ({ posX, posY, posZ, targetX, targetY, targetZ, fov } = {}) => {
+        if (typeof posX === 'number') camera.position.x = posX;
+        if (typeof posY === 'number') camera.position.y = posY;
+        if (typeof posZ === 'number') camera.position.z = posZ;
+        if (typeof targetX === 'number') controls.target.x = targetX;
+        if (typeof targetY === 'number') controls.target.y = targetY;
+        if (typeof targetZ === 'number') controls.target.z = targetZ;
+        if (typeof fov === 'number') {
+          customFov = fov;
+          camera.fov = fov;
+          camera.updateProjectionMatrix();
+        }
+        controls.update();
+      },
+      getCameraSettings: () => ({
+        posX: camera.position.x,
+        posY: camera.position.y,
+        posZ: camera.position.z,
+        targetX: controls.target.x,
+        targetY: controls.target.y,
+        targetZ: controls.target.z,
+        fov: camera.fov,
+      }),
       playIntroSequence,
       cancelIntroSequence,
       setLightingPreset,

@@ -4,6 +4,7 @@ import CurrentOverview from './components/CurrentOverview';
 import WhatToWearCard from './components/WhatToWearCard';
 import DaySelector from './components/DaySelector';
 import HourlyMatrix from './components/HourlyMatrix';
+import MobileWeatherView from './components/mobile/MobileWeatherView';
 
 // Performance optimization: code-split heavy secondary tabs and modals
 const HourlyChart = lazy(() => import('./components/HourlyChart'));
@@ -47,6 +48,30 @@ export default function App() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [weightingStrategy, setWeightingStrategy] = useState('accuracy'); // 'accuracy' | 'benchmark' | 'equal'
   const [activeTab, setActiveTab] = useState('matrix'); // 'matrix' | 'chart' | 'accuracy'
+
+  // View Mode: 'auto' (viewport < 768px -> mobile), 'mobile', or 'desktop'
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('omni_view_mode') || 'auto';
+  });
+
+  const [isNarrowScreen, setIsNarrowScreen] = useState(() => {
+    return typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsNarrowScreen(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobileLayout = viewMode === 'mobile' || (viewMode === 'auto' && isNarrowScreen);
+
+  const handleSetViewMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('omni_view_mode', mode);
+  };
 
   // Auto-refresh interval (in minutes): 5, 10 (recommended default), 15, 30, or 0 (manual only)
   const [refreshInterval, setRefreshInterval] = useState(() => {
@@ -280,6 +305,25 @@ export default function App() {
     return generateDailySummary(currentDayHours, selectedDate, timeFormat);
   }, [currentDayHours, selectedDate, timeFormat]);
 
+  // If Mobile Layout is active, render the dedicated mobile feed
+  if (isMobileLayout && processedWeatherData) {
+    return (
+      <MobileWeatherView
+        weatherData={processedWeatherData}
+        selectedCity={selectedCity}
+        onSelectCity={(city) => setSelectedCity(city)}
+        dailySummary={dailySummary}
+        unit={unit}
+        onToggleUnit={handleToggleUnit}
+        timeFormat={timeFormat}
+        onToggleTimeFormat={handleToggleTimeFormat}
+        onRefresh={() => loadWeatherData(selectedCity, true, false)}
+        isRefreshing={loading}
+        onSwitchToDesktop={() => handleSetViewMode('desktop')}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       
@@ -298,6 +342,7 @@ export default function App() {
         onChangeRefreshInterval={handleSetRefreshInterval}
         onOpenExplainer={() => setShowExplainer(true)}
         onOpenApiKeyModal={() => setShowApiKeyModal(true)}
+        onSwitchToMobile={() => handleSetViewMode('mobile')}
       />
 
       {/* Main Container */}

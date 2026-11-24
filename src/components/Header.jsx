@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key, Settings, X, Thermometer, Clock } from 'lucide-react';
+import { Search, MapPin, Navigation, RefreshCw, Sparkles, Key, Settings, X, Thermometer, Clock, Smartphone } from 'lucide-react';
 import { searchLocations, DEFAULT_CITIES } from '../services/weatherApi';
 import { formatTime } from '../utils/units';
 import { WeatherIcon } from '../utils/weatherIcons';
@@ -18,6 +18,7 @@ export default function Header({
   onChangeRefreshInterval,
   onOpenExplainer,
   onOpenApiKeyModal,
+  onSwitchToMobile,
 }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -201,6 +202,19 @@ export default function Header({
                   {formatTimeAgo(lastUpdated)}
                 </span>
               </button>
+
+              {/* Mobile View Switcher Shortcut */}
+              {onSwitchToMobile && (
+                <button
+                  type="button"
+                  onClick={onSwitchToMobile}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white text-xs font-semibold transition cursor-pointer"
+                  title="Switch to Mobile View"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Mobile View</span>
+                </button>
+              )}
 
               {/* Settings Gear Popover Menu Trigger */}
               <div className="relative" ref={settingsRef}>
@@ -401,6 +415,29 @@ export default function Header({
                         </div>
                         <span className="text-slate-400 group-hover:text-white transition-colors text-xs font-bold">→</span>
                       </button>
+
+                      {/* Switch to Mobile View */}
+                      {onSwitchToMobile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSettings(false);
+                            onSwitchToMobile();
+                          }}
+                          className="w-full p-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-left flex items-center justify-between group transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 group-hover:scale-105 transition-transform">
+                              <Smartphone className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-xs text-white">Switch to Mobile Layout</div>
+                              <div className="text-[10px] text-slate-400">Preview smartphone vertical feed</div>
+                            </div>
+                          </div>
+                          <span className="text-cyan-400 group-hover:text-white transition-colors text-xs font-bold">→</span>
+                        </button>
+                      )}
                     </div>
 
                   </div>
