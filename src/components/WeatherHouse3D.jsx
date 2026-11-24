@@ -159,6 +159,9 @@ export default function WeatherHouse3D({
   showControls = false,
   initialCamera = 'iso',
   playIntro = true,
+  couplePosition,
+  cameraSettings,
+  onSceneReady,
 }) {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
@@ -216,6 +219,15 @@ export default function WeatherHouse3D({
       });
 
       sceneRef.current = sceneInstance;
+      if (couplePosition && sceneInstance.setCouplePosition) {
+        sceneInstance.setCouplePosition(couplePosition.x, couplePosition.y, couplePosition.z);
+      }
+      if (cameraSettings && sceneInstance.setCameraSettings) {
+        sceneInstance.setCameraSettings(cameraSettings);
+      }
+      if (onSceneReady) {
+        onSceneReady(sceneInstance);
+      }
     } catch (err) {
       console.error('Failed to initialize House 121 3D scene:', err);
     }
@@ -244,7 +256,28 @@ export default function WeatherHouse3D({
         mountRef.current.innerHTML = '';
       }
     };
-  }, [showToast]);
+  }, [showToast, initialCamera, playIntro]);
+
+  // Dynamically update couple position when sliders change
+  useEffect(() => {
+    if (sceneRef.current && couplePosition && sceneRef.current.setCouplePosition) {
+      sceneRef.current.setCouplePosition(couplePosition.x, couplePosition.y, couplePosition.z);
+    }
+  }, [couplePosition?.x, couplePosition?.y, couplePosition?.z]);
+
+  // Dynamically update camera settings when sliders change
+  useEffect(() => {
+    if (sceneRef.current && cameraSettings && sceneRef.current.setCameraSettings) {
+      sceneRef.current.setCameraSettings(cameraSettings);
+    }
+  }, [
+    cameraSettings?.posX,
+    cameraSettings?.posY,
+    cameraSettings?.posZ,
+    cameraSettings?.targetX,
+    cameraSettings?.targetY,
+    cameraSettings?.targetZ,
+  ]);
 
   // Sync live weather state when activeScenario === 'live'
   useEffect(() => {

@@ -4633,6 +4633,33 @@ export function createHouseNo121Scene(container, options = {}) {
       setWeatherScenario,
       getActiveScenarioKey: () => activeScenarioKey,
       setCameraPreset,
+      setCouplePosition: (x, y, z) => {
+        if (typeof x === 'number') coupleGroup.position.x = x;
+        if (typeof y === 'number') coupleGroup.position.y = y;
+        if (typeof z === 'number') coupleGroup.position.z = z;
+      },
+      getCouplePosition: () => ({
+        x: coupleGroup.position.x,
+        y: coupleGroup.position.y,
+        z: coupleGroup.position.z,
+      }),
+      setCameraSettings: ({ posX, posY, posZ, targetX, targetY, targetZ } = {}) => {
+        if (typeof posX === 'number') camera.position.x = posX;
+        if (typeof posY === 'number') camera.position.y = posY;
+        if (typeof posZ === 'number') camera.position.z = posZ;
+        if (typeof targetX === 'number') controls.target.x = targetX;
+        if (typeof targetY === 'number') controls.target.y = targetY;
+        if (typeof targetZ === 'number') controls.target.z = targetZ;
+        controls.update();
+      },
+      getCameraSettings: () => ({
+        posX: camera.position.x,
+        posY: camera.position.y,
+        posZ: camera.position.z,
+        targetX: controls.target.x,
+        targetY: controls.target.y,
+        targetZ: controls.target.z,
+      }),
       playIntroSequence,
       cancelIntroSequence,
       setLightingPreset,
