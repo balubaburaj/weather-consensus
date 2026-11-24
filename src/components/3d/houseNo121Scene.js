@@ -2735,17 +2735,18 @@ export function createHouseNo121Scene(container, options = {}) {
         backSkullHair.castShadow = true;
         headGroup.add(backSkullHair);
 
+        let crownHairGroup = null;
+        let clipGroup = null;
+
         if (!isGirl) {
-          // BOY'S STYLIZED SWEPT QUIFF — every tuft sits strictly at y >= 0.195 (well above forehead!)
+          // BOY'S STYLIZED SWEPT QUIFF (encapsulated in crownHairGroup so it hides cleanly under cap or beanie!)
+          crownHairGroup = new THREE.Group();
           const boyTufts = [
             // Soft swept front quiff proudly on top of crown
             [0.02, 0.235, 0.075, 0.125, 0.068, 0.095, 0.12, 0.10, -0.26],
             [-0.085, 0.224, 0.068, 0.098, 0.058, 0.085, 0.08, -0.15, 0.28],
             [0.115, 0.215, 0.042, 0.092, 0.055, 0.082, -0.06, 0.18, -0.34],
             [0.0, 0.258, -0.015, 0.145, 0.062, 0.125, -0.14, 0.0, 0.06],
-            // Clean side temples strictly behind the face plane (z = -0.035)
-            [-0.195, 0.105, -0.035, 0.052, 0.095, 0.078, 0, 0, 0.18],
-            [0.195, 0.105, -0.035, 0.052, 0.095, 0.078, 0, 0, -0.18],
           ];
           for (const [x, y, z, sx, sy, sz, rx, ry, rz] of boyTufts) {
             const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 14), hairBrownMat);
@@ -2753,11 +2754,26 @@ export function createHouseNo121Scene(container, options = {}) {
             tuft.scale.set(sx, sy, sz);
             tuft.rotation.set(rx, ry, rz);
             tuft.castShadow = true;
+            crownHairGroup.add(tuft);
+          }
+          headGroup.add(crownHairGroup);
+
+          // Clean side temples / sideburns strictly behind face plane (always visible with or without hat!)
+          const boyTemples = [
+            [-0.195, 0.105, -0.035, 0.052, 0.095, 0.078, 0, 0, 0.18],
+            [0.195, 0.105, -0.035, 0.052, 0.095, 0.078, 0, 0, -0.18],
+          ];
+          for (const [x, y, z, sx, sy, sz, rx, ry, rz] of boyTemples) {
+            const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 12), hairBrownMat);
+            tuft.position.set(x, y, z);
+            tuft.scale.set(sx, sy, sz);
+            tuft.rotation.set(rx, ry, rz);
+            tuft.castShadow = true;
             headGroup.add(tuft);
           }
         } else {
-          // GIRL'S SMOOTH PARTED CROWN + LONG FLOWING BACK HAIR (STRICTLY BEHIND FACE!)
-          // Soft parted crown waves high above the forehead (y >= 0.19)
+          // GIRL'S SMOOTH PARTED CROWN (tucked under when wearing beanie)
+          crownHairGroup = new THREE.Group();
           const waveL = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), hairBrownMat);
           waveL.position.set(-0.092, 0.212, 0.052);
           waveL.scale.set(0.122, 0.058, 0.098);
@@ -2773,16 +2789,17 @@ export function createHouseNo121Scene(container, options = {}) {
           const crownFill = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 14), hairBrownMat);
           crownFill.position.set(0, 0.242, -0.02);
           crownFill.scale.set(0.165, 0.052, 0.135);
-          headGroup.add(waveL, waveR, crownFill);
+          crownHairGroup.add(waveL, waveR, crownFill);
+          headGroup.add(crownHairGroup);
 
-          // Flowing long back hair curtain positioned strictly behind head/shoulders (z = -0.15)
+          // Flowing long back hair curtain positioned strictly behind head/shoulders
           const backCurtain = new THREE.Mesh(new THREE.CapsuleGeometry(0.215, 0.38, 12, 20), hairBrownMat);
           backCurtain.position.set(0, -0.16, -0.155);
           backCurtain.scale.set(1.12, 1.0, 0.52);
           backCurtain.castShadow = true;
           headGroup.add(backCurtain);
 
-          // Smooth framing side locks tucked cleanly BEHIND the ears (z = -0.085, zero overlap with cheeks!)
+          // Smooth framing side locks tucked cleanly BEHIND the ears
           for (const sx of [-1, 1]) {
             const sideLock = new THREE.Mesh(new THREE.CapsuleGeometry(0.068, 0.34, 10, 14), hairBrownMat);
             sideLock.position.set(sx * 0.208, -0.14, -0.088);
@@ -2791,7 +2808,6 @@ export function createHouseNo121Scene(container, options = {}) {
             sideLock.castShadow = true;
             headGroup.add(sideLock);
 
-            // Upper temple sweep connecting crown to side locks (strictly behind z = -0.02)
             const temple = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 12), hairBrownMat);
             temple.position.set(sx * 0.195, 0.105, -0.035);
             temple.scale.set(0.062, 0.098, 0.085);
@@ -2800,7 +2816,7 @@ export function createHouseNo121Scene(container, options = {}) {
           }
 
           // Cute Small Pink 5-Petal Flower with Yellow Center tucked cleanly above her right ear
-          const clipGroup = new THREE.Group();
+          clipGroup = new THREE.Group();
           clipGroup.position.set(0.188, 0.135, 0.082);
           clipGroup.rotation.set(-0.18, 0.62, -0.16);
           const clipPetalMat = new THREE.MeshStandardMaterial({ color: 0xff7fb0, roughness: 0.42 });
@@ -2818,7 +2834,7 @@ export function createHouseNo121Scene(container, options = {}) {
           headGroup.add(clipGroup);
         }
 
-        return { headGroup, eyeGroups };
+        return { headGroup, eyeGroups, crownHair: crownHairGroup, clipGroup };
       }
 
       /**
@@ -2886,25 +2902,51 @@ export function createHouseNo121Scene(container, options = {}) {
       boyCollar.position.set(0, 1.08, 0.01);
       boyBody.add(boyCollar);
 
-      // Boy Outerwear Detail Meshes (Puffy baffles, Fleece pouch, and Zipper)
-      const puffyMat = new THREE.MeshStandardMaterial({ color: 0x182534, roughness: 0.42, metalness: 0.2 });
+      // Redesigned Boy Puffy Down Jacket (Cozy, full-torso continuous quilted chambers + insulated sleeves)
+      const puffyMat = new THREE.MeshStandardMaterial({
+        color: 0x1b2838, // rich charcoal/midnight navy down nylon
+        roughness: 0.38,
+        metalness: 0.18,
+      });
       const boyPuffyGroup = new THREE.Group();
-      for (const [y, r1, r2] of [
-        [0.72, 0.165, 0.028],
-        [0.81, 0.170, 0.030],
-        [0.90, 0.168, 0.030],
-        [0.99, 0.155, 0.028],
-      ]) {
-        const baffle = new THREE.Mesh(new THREE.TorusGeometry(r1, r2, 8, 24), puffyMat);
-        baffle.position.set(0, y, 0);
-        baffle.rotation.x = Math.PI / 2;
-        baffle.castShadow = true;
-        boyPuffyGroup.add(baffle);
+
+      // 4 Full Continuous Insulated Puffer Torso Chambers forming a seamless down jacket
+      const pufferChambers = [
+        [0.72, 0.182, 0.07, 1.14, 0.86], // Hem / waist baffle
+        [0.81, 0.194, 0.07, 1.16, 0.88], // Mid abdomen baffle
+        [0.90, 0.198, 0.07, 1.18, 0.90], // Upper chest baffle
+        [0.99, 0.188, 0.07, 1.18, 0.88], // Shoulder / yoke baffle
+      ];
+      for (const [y, r, h, sx, sz] of pufferChambers) {
+        const chamber = new THREE.Mesh(new THREE.CapsuleGeometry(r, h, 10, 16), puffyMat);
+        chamber.position.set(0, y, 0.005);
+        chamber.scale.set(sx, 1.0, sz);
+        chamber.castShadow = true;
+        chamber.receiveShadow = true;
+        boyPuffyGroup.add(chamber);
       }
-      const puffyCollar = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.032, 8, 20), puffyMat);
-      puffyCollar.position.set(0, 1.08, 0.01);
+
+      // Stand-up Thermal Collar (plump insulated neck ring)
+      const puffyCollar = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.038, 10, 24), puffyMat);
+      puffyCollar.position.set(0, 1.09, 0.01);
       puffyCollar.rotation.x = Math.PI / 2;
+      puffyCollar.castShadow = true;
       boyPuffyGroup.add(puffyCollar);
+
+      // Front Storm Flap with Silver Snap Fasteners
+      const stormFlap = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.37, 0.016), puffyMat);
+      stormFlap.position.set(0, 0.855, 0.170);
+      stormFlap.castShadow = true;
+      boyPuffyGroup.add(stormFlap);
+
+      const snapMat = new THREE.MeshStandardMaterial({ color: 0xc4cdd8, metalness: 0.8, roughness: 0.25 });
+      for (let s = 0; s < 4; s++) {
+        const snap = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.004, 12), snapMat);
+        snap.rotation.x = Math.PI / 2;
+        snap.position.set(0, 0.72 + s * 0.09, 0.179);
+        boyPuffyGroup.add(snap);
+      }
+
       boyPuffyGroup.visible = false;
       boyBody.add(boyPuffyGroup);
 
@@ -2970,39 +3012,72 @@ export function createHouseNo121Scene(container, options = {}) {
       boyHeadData.headGroup.add(boySunglassesGroup);
 
       // Boy Headwear: Baseball Cap vs Knit Beanie
-      // 3. Baseball Cap (default on)
-      const capMat = new THREE.MeshStandardMaterial({ color: 0x1c2b3d, roughness: 0.72 });
+      // 3. Deep 6-panel Baseball Cap with curved arched visor and patch
+      const capMat = new THREE.MeshStandardMaterial({ color: 0x1c2b3d, roughness: 0.75 });
       const boyCapGroup = new THREE.Group();
+
       const capDome = new THREE.Mesh(
-        new THREE.SphereGeometry(0.238, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.48),
+        new THREE.SphereGeometry(0.248, 32, 22, 0, Math.PI * 2, 0, Math.PI * 0.52),
         capMat
       );
-      capDome.position.set(0, 0.06, -0.02);
-      capDome.rotation.x = -0.42;
+      capDome.position.set(0, 0.07, -0.015);
+      capDome.rotation.x = -0.32;
+      capDome.scale.set(1.02, 1.04, 1.02);
       capDome.castShadow = true;
-      const capBtn = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 8), capMat);
-      capBtn.position.set(0, 0.27, -0.05);
-      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.012, 0.14), capMat);
-      visor.position.set(0, 0.125, 0.175);
-      visor.rotation.x = -0.22;
-      visor.castShadow = true;
-      boyCapGroup.add(capDome, capBtn, visor);
-      boyHeadData.headGroup.add(boyCapGroup);
 
-      // 4. Knit Beanie (for cold, chilly, snow)
-      const beanieMat = new THREE.MeshStandardMaterial({ color: 0x7a2c2c, roughness: 0.92 });
+      const capBtn = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 10), capMat);
+      capBtn.position.set(0, 0.31, -0.05);
+
+      const visorShape = new THREE.Shape();
+      visorShape.moveTo(-0.11, 0);
+      visorShape.quadraticCurveTo(0, 0.025, 0.11, 0);
+      visorShape.quadraticCurveTo(0.125, 0.09, 0.08, 0.16);
+      visorShape.quadraticCurveTo(0, 0.19, -0.08, 0.16);
+      visorShape.quadraticCurveTo(-0.125, 0.09, -0.11, 0);
+
+      const visorGeo = new THREE.ExtrudeGeometry(visorShape, {
+        depth: 0.008,
+        bevelEnabled: true,
+        bevelThickness: 0.003,
+        bevelSize: 0.003,
+        bevelSegments: 2,
+      });
+      const visor = new THREE.Mesh(visorGeo, capMat);
+      visor.rotation.x = Math.PI / 2 + 0.16;
+      visor.position.set(0, 0.118, 0.138);
+      visor.castShadow = true;
+
+      const capPatchMat = new THREE.MeshStandardMaterial({ color: 0xe6dfd3, roughness: 0.5 });
+      const capPatch = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.004, 16), capPatchMat);
+      capPatch.position.set(0, 0.18, 0.215);
+      capPatch.rotation.x = Math.PI / 2 - 0.32;
+
+      boyCapGroup.add(capDome, capBtn, visor, capPatch);
+      boyHeadData.headGroup.add(boyCapGroup);
+      if (boyHeadData.crownHair) boyHeadData.crownHair.visible = false;
+
+      // 4. Chunky Knit Beanie (for cold, chilly, snow)
+      const beanieMat = new THREE.MeshStandardMaterial({ color: 0x7a2c2c, roughness: 0.95 });
       const boyBeanieGroup = new THREE.Group();
-      const beanieCuff = new THREE.Mesh(new THREE.TorusGeometry(0.226, 0.038, 10, 24), beanieMat);
-      beanieCuff.position.set(0, 0.138, 0.01);
-      beanieCuff.rotation.x = Math.PI / 2 - 0.12;
+
+      const beanieCuff = new THREE.Mesh(new THREE.TorusGeometry(0.238, 0.046, 12, 28), beanieMat);
+      beanieCuff.position.set(0, 0.135, 0.015);
+      beanieCuff.rotation.x = Math.PI / 2 - 0.14;
+      beanieCuff.scale.set(1.02, 1.05, 0.98);
+
       const beanieDome = new THREE.Mesh(
-        new THREE.SphereGeometry(0.232, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.52),
+        new THREE.SphereGeometry(0.248, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.54),
         beanieMat
       );
-      beanieDome.position.set(0, 0.09, -0.03);
-      beanieDome.rotation.x = -0.32;
+      beanieDome.position.set(0, 0.085, -0.025);
+      beanieDome.rotation.x = -0.28;
+      beanieDome.scale.set(1.02, 1.10, 1.04);
       beanieDome.castShadow = true;
-      boyBeanieGroup.add(beanieCuff, beanieDome);
+
+      const beanieTop = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 10), beanieMat);
+      beanieTop.position.set(0, 0.33, -0.07);
+
+      boyBeanieGroup.add(beanieCuff, beanieDome, beanieTop);
       boyBeanieGroup.visible = false;
       boyHeadData.headGroup.add(boyBeanieGroup);
 
@@ -3013,9 +3088,13 @@ export function createHouseNo121Scene(container, options = {}) {
       const bhSleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.32, 8, 10), sweaterMat);
       bhSleeve.position.y = -0.17;
       bhSleeve.castShadow = true;
+      const bhPuffySleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.072, 0.30, 10, 14), puffyMat);
+      bhPuffySleeve.position.y = -0.17;
+      bhPuffySleeve.castShadow = true;
+      bhPuffySleeve.visible = false;
       const bhHand = new THREE.Mesh(new THREE.SphereGeometry(0.044, 10, 10), skinMat);
       bhHand.position.y = -0.37;
-      boyHoldArm.add(bhSleeve, bhHand);
+      boyHoldArm.add(bhSleeve, bhPuffySleeve, bhHand);
       boyBody.add(boyHoldArm);
 
       // Boy's Outer Arm (raised & waving cheerfully)
@@ -3027,7 +3106,12 @@ export function createHouseNo121Scene(container, options = {}) {
       bwUpper.position.set(-0.09, 0.04, 0);
       bwUpper.rotation.z = Math.PI * 0.38;
       bwUpper.castShadow = true;
-      boyWaveShoulder.add(bwUpper);
+      const bwPuffyUpper = new THREE.Mesh(new THREE.CapsuleGeometry(0.072, 0.17, 10, 14), puffyMat);
+      bwPuffyUpper.position.set(-0.09, 0.04, 0);
+      bwPuffyUpper.rotation.z = Math.PI * 0.38;
+      bwPuffyUpper.castShadow = true;
+      bwPuffyUpper.visible = false;
+      boyWaveShoulder.add(bwUpper, bwPuffyUpper);
 
       const boyWaveForearm = new THREE.Group();
       boyWaveForearm.position.set(-0.19, 0.09, 0.02);
@@ -3036,9 +3120,13 @@ export function createHouseNo121Scene(container, options = {}) {
       const bwLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.044, 0.18, 8, 10), sweaterMat);
       bwLower.position.set(0, 0.11, 0);
       bwLower.castShadow = true;
+      const bwPuffyLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.066, 0.17, 10, 14), puffyMat);
+      bwPuffyLower.position.set(0, 0.11, 0);
+      bwPuffyLower.castShadow = true;
+      bwPuffyLower.visible = false;
       const bwHand = createCuteHand(1);
       bwHand.position.set(0, 0.24, 0);
-      boyWaveForearm.add(bwLower, bwHand);
+      boyWaveForearm.add(bwLower, bwPuffyLower, bwHand);
 
       // ---- BUILD GIRL CHARACTER (RIGHT) ----
       const girlGroup = new THREE.Group();
@@ -3097,9 +3185,13 @@ export function createHouseNo121Scene(container, options = {}) {
       const ghArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.036, 0.27, 8, 10), skinMat);
       ghArm.position.y = -0.19;
       ghArm.castShadow = true;
+      const ghCoatSleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.28, 8, 12), dressMat);
+      ghCoatSleeve.position.y = -0.19;
+      ghCoatSleeve.castShadow = true;
+      ghCoatSleeve.visible = false;
       const ghHand = new THREE.Mesh(new THREE.SphereGeometry(0.040, 10, 10), skinMat);
       ghHand.position.y = -0.35;
-      girlHoldArm.add(ghSleeve, ghArm, ghHand);
+      girlHoldArm.add(ghSleeve, ghArm, ghCoatSleeve, ghHand);
       girlBody.add(girlHoldArm);
 
       // Girl's Outer Arm (raised & waving cheerfully)
@@ -3114,7 +3206,12 @@ export function createHouseNo121Scene(container, options = {}) {
       gwUpper.position.set(0.10, 0.05, 0);
       gwUpper.rotation.z = -Math.PI * 0.36;
       gwUpper.castShadow = true;
-      girlWaveShoulder.add(gwSleeve, gwUpper);
+      const gwCoatUpper = new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.16, 8, 10), dressMat);
+      gwCoatUpper.position.set(0.10, 0.05, 0);
+      gwCoatUpper.rotation.z = -Math.PI * 0.36;
+      gwCoatUpper.castShadow = true;
+      gwCoatUpper.visible = false;
+      girlWaveShoulder.add(gwSleeve, gwUpper, gwCoatUpper);
 
       const girlWaveForearm = new THREE.Group();
       girlWaveForearm.position.set(0.18, 0.10, 0.02);
@@ -3123,9 +3220,13 @@ export function createHouseNo121Scene(container, options = {}) {
       const gwLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.033, 0.16, 8, 10), skinMat);
       gwLower.position.set(0, 0.10, 0);
       gwLower.castShadow = true;
+      const gwCoatLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.044, 0.16, 8, 10), dressMat);
+      gwCoatLower.position.set(0, 0.10, 0);
+      gwCoatLower.castShadow = true;
+      gwCoatLower.visible = false;
       const gwHand = createCuteHand(-1);
       gwHand.position.set(0, 0.22, 0);
-      girlWaveForearm.add(gwLower, gwHand);
+      girlWaveForearm.add(gwLower, gwCoatLower, gwHand);
 
       // Girl Eyewear: Cat-Eye Sunglasses (for sunny weather)
       const girlSunglasses = new THREE.Group();
@@ -3145,21 +3246,25 @@ export function createHouseNo121Scene(container, options = {}) {
       girlHeadData.headGroup.add(girlSunglasses);
 
       // Girl Knit Beanie with Fluffy Pom-Pom (for cold, snow)
-      const girlBeanieMat = new THREE.MeshStandardMaterial({ color: 0x8a3250, roughness: 0.92 });
+      const girlBeanieMat = new THREE.MeshStandardMaterial({ color: 0x8a3250, roughness: 0.95 });
       const pomPomMat = new THREE.MeshStandardMaterial({ color: 0xf5edf0, roughness: 0.98 });
       const girlBeanieGroup = new THREE.Group();
-      const gCuff = new THREE.Mesh(new THREE.TorusGeometry(0.220, 0.036, 10, 24), girlBeanieMat);
-      gCuff.position.set(0, 0.132, 0.01);
-      gCuff.rotation.x = Math.PI / 2 - 0.10;
+      const gCuff = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.044, 12, 28), girlBeanieMat);
+      gCuff.position.set(0, 0.132, 0.012);
+      gCuff.rotation.x = Math.PI / 2 - 0.12;
+      gCuff.scale.set(1.02, 1.05, 0.98);
+
       const gDome = new THREE.Mesh(
-        new THREE.SphereGeometry(0.225, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.52),
+        new THREE.SphereGeometry(0.244, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.54),
         girlBeanieMat
       );
-      gDome.position.set(0, 0.08, -0.03);
-      gDome.rotation.x = -0.30;
+      gDome.position.set(0, 0.080, -0.025);
+      gDome.rotation.x = -0.28;
+      gDome.scale.set(1.02, 1.09, 1.04);
       gDome.castShadow = true;
-      const pomPom = new THREE.Mesh(new THREE.SphereGeometry(0.046, 12, 12), pomPomMat);
-      pomPom.position.set(0, 0.29, -0.07);
+
+      const pomPom = new THREE.Mesh(new THREE.SphereGeometry(0.048, 14, 14), pomPomMat);
+      pomPom.position.set(0, 0.32, -0.08);
       pomPom.castShadow = true;
       girlBeanieGroup.add(gCuff, gDome, pomPom);
       girlBeanieGroup.visible = false;
@@ -3484,29 +3589,44 @@ export function createHouseNo121Scene(container, options = {}) {
         },
       };
 
-    // Rain particle system
-    const rainCount = 1200;
+    // Rain particle system (high-velocity driving rain streaks)
+    const rainCount = 1400;
     const rainGeo = new THREE.BufferGeometry();
-    const rainPositions = new Float32Array(rainCount * 3);
+    const rainPositions = new Float32Array(rainCount * 2 * 3); // 2 vertices per line streak
     const rainSpeeds = new Float32Array(rainCount);
+    const rainStreakLens = new Float32Array(rainCount);
+
+    const rainWindX = -0.16;
+    const rainWindZ = 0.04;
 
     for (let i = 0; i < rainCount; i++) {
-      rainPositions[i * 3 + 0] = (Math.random() - 0.5) * 26;
-      rainPositions[i * 3 + 1] = Math.random() * 16;
-      rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-      rainSpeeds[i] = 12.0 + Math.random() * 8.0;
+      const x = (Math.random() - 0.5) * 28;
+      const y = Math.random() * 18;
+      const z = (Math.random() - 0.5) * 22;
+      const len = 0.45 + Math.random() * 0.25;
+      rainStreakLens[i] = len;
+      rainSpeeds[i] = 18.0 + Math.random() * 8.0;
+
+      // Vertex 0 (head / bottom)
+      rainPositions[i * 6 + 0] = x;
+      rainPositions[i * 6 + 1] = y;
+      rainPositions[i * 6 + 2] = z;
+
+      // Vertex 1 (tail / top, slanted along wind)
+      rainPositions[i * 6 + 3] = x - rainWindX * len;
+      rainPositions[i * 6 + 4] = y + len;
+      rainPositions[i * 6 + 5] = z - rainWindZ * len;
     }
     rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
 
-    const rainMat = new THREE.PointsMaterial({
-      color: 0x9bc8eb,
-      size: 0.08,
+    const rainMat = new THREE.LineBasicMaterial({
+      color: 0x98caeb,
       transparent: true,
       opacity: 0.0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    const rainParticles = new THREE.Points(rainGeo, rainMat);
+    const rainParticles = new THREE.LineSegments(rainGeo, rainMat);
     scene.add(rainParticles);
 
     // Snow particle system (for winter snow flurries & blizzards)
@@ -3943,16 +4063,36 @@ export function createHouseNo121Scene(container, options = {}) {
 
       // Rain & Dynamic Puddles animation
       if (isRaining) {
-        rainMat.opacity = THREE.MathUtils.lerp(rainMat.opacity, targetRainOpacity > 0 ? targetRainOpacity : 0.75, dt * 2.5);
+        rainMat.opacity = THREE.MathUtils.lerp(rainMat.opacity, targetRainOpacity > 0 ? targetRainOpacity : 0.75, dt * 3.0);
         puddleMat.opacity = THREE.MathUtils.lerp(puddleMat.opacity, targetPuddleOpacity > 0 ? targetPuddleOpacity : 0.65, dt * 2.0);
         const posArr = rainGeo.attributes.position.array;
         for (let i = 0; i < rainCount; i++) {
-          posArr[i * 3 + 1] -= rainSpeeds[i] * dt;
-          posArr[i * 3 + 0] -= 1.2 * dt;
-          if (posArr[i * 3 + 1] < 0.1) {
-            posArr[i * 3 + 1] = 16.0;
-            posArr[i * 3 + 0] = (Math.random() - 0.5) * 26;
-            posArr[i * 3 + 2] = (Math.random() - 0.5) * 20;
+          const spd = rainSpeeds[i];
+          const len = rainStreakLens[i];
+          const dy = spd * dt;
+          const dx = rainWindX * spd * dt;
+          const dz = rainWindZ * spd * dt;
+
+          posArr[i * 6 + 0] += dx;
+          posArr[i * 6 + 1] -= dy;
+          posArr[i * 6 + 2] += dz;
+
+          posArr[i * 6 + 3] += dx;
+          posArr[i * 6 + 4] -= dy;
+          posArr[i * 6 + 5] += dz;
+
+          if (posArr[i * 6 + 1] < 0.05) {
+            const nx = (Math.random() - 0.5) * 28;
+            const ny = 16.0 + Math.random() * 2.5;
+            const nz = (Math.random() - 0.5) * 22;
+
+            posArr[i * 6 + 0] = nx;
+            posArr[i * 6 + 1] = ny;
+            posArr[i * 6 + 2] = nz;
+
+            posArr[i * 6 + 3] = nx - rainWindX * len;
+            posArr[i * 6 + 4] = ny + len;
+            posArr[i * 6 + 5] = nz - rainWindZ * len;
           }
         }
         rainGeo.attributes.position.needsUpdate = true;
@@ -4134,6 +4274,47 @@ export function createHouseNo121Scene(container, options = {}) {
       }
     }
 
+    function setBoyPuffy(active) {
+      boyPuffyGroup.visible = active;
+      bhPuffySleeve.visible = active;
+      bhSleeve.visible = !active;
+      bwPuffyUpper.visible = active;
+      bwUpper.visible = !active;
+      bwPuffyLower.visible = active;
+      bwLower.visible = !active;
+      boyTorso.visible = !active;
+      boyCollar.visible = !active;
+      boyZipMesh.visible = !active;
+    }
+
+    function setBoyHeadwear({ cap = false, beanie = false }) {
+      boyCapGroup.visible = cap;
+      boyBeanieGroup.visible = beanie;
+      if (boyHeadData && boyHeadData.crownHair) {
+        // Tucks crown hair tufts inside cap or beanie so ZERO hair overflows or clips through!
+        boyHeadData.crownHair.visible = !(cap || beanie);
+      }
+    }
+
+    function setGirlHeadwear({ beanie = false }) {
+      girlBeanieGroup.visible = beanie;
+      if (girlHeadData && girlHeadData.crownHair) {
+        girlHeadData.crownHair.visible = !beanie;
+      }
+      if (girlHeadData && girlHeadData.clipGroup) {
+        girlHeadData.clipGroup.visible = !beanie;
+      }
+    }
+
+    function setGirlLongSleeves(isLong) {
+      ghCoatSleeve.visible = isLong;
+      ghArm.visible = !isLong;
+      gwCoatUpper.visible = isLong;
+      gwUpper.visible = !isLong;
+      gwCoatLower.visible = isLong;
+      gwLower.visible = !isLong;
+    }
+
     function setWeatherScenario(key) {
       activeScenarioKey = key;
 
@@ -4144,21 +4325,20 @@ export function createHouseNo121Scene(container, options = {}) {
           isSnowing = false;
           targetRainOpacity = 0.0;
           targetPuddleOpacity = 0.0;
-          // Boy: Sunglasses, baseball cap, summer light windbreaker over tee
+          // Boy: Sunglasses, baseball cap (hair tucked), summer windbreaker over tee
+          setBoyHeadwear({ cap: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = true;
           boyGlassesGroup.visible = false;
-          boyCapGroup.visible = true;
-          boyBeanieGroup.visible = false;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
-          sweaterMat.color.setHex(0x3a88c2); // fresh summer windbreaker
+          sweaterMat.color.setHex(0x3a88c2);
           sweaterMat.roughness = 0.55;
           umbrellaGroup.visible = false;
-          // Girl: Sunglasses, summer dress
+          // Girl: Sunglasses, summer dress, bare arms
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = true;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = false;
+          setGirlLongSleeves(false);
           dressMat.color.setHex(0xe86194);
           break;
 
@@ -4168,21 +4348,20 @@ export function createHouseNo121Scene(container, options = {}) {
           isSnowing = false;
           targetRainOpacity = 0.0;
           targetPuddleOpacity = 0.0;
-          // Boy: Clear glasses, baseball cap, casual track/sport jacket
+          // Boy: Clear glasses, baseball cap (hair tucked), casual sport jacket
+          setBoyHeadwear({ cap: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = true;
-          boyBeanieGroup.visible = false;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
-          sweaterMat.color.setHex(0x235b87); // marine sport jacket
+          sweaterMat.color.setHex(0x235b87);
           sweaterMat.roughness = 0.65;
           umbrellaGroup.visible = false;
           // Girl: Chic denim/sport jacket & dress
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = false;
+          setGirlLongSleeves(false);
           dressMat.color.setHex(0x3e6892);
           break;
 
@@ -4191,22 +4370,21 @@ export function createHouseNo121Scene(container, options = {}) {
           isRaining = false;
           isSnowing = false;
           targetRainOpacity = 0.0;
-          targetPuddleOpacity = 0.15; // damp sidewalk sheen
-          // Boy: Clear glasses, knit beanie, hard fleece hoodie with kangaroo pocket!
+          targetPuddleOpacity = 0.15;
+          // Boy: Clear glasses, knit beanie (hair tucked), hard fleece hoodie
+          setBoyHeadwear({ beanie: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = true;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = false;
-          boyBeanieGroup.visible = true;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = true;
-          boyZipMesh.visible = false;
-          sweaterMat.color.setHex(0x3d4f5e); // hard slate fleece
+          sweaterMat.color.setHex(0x3d4f5e);
           sweaterMat.roughness = 0.95;
           umbrellaGroup.visible = false;
           // Girl: Cozy knit scarf & fleece coat
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = true;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0x8a4568);
           break;
 
@@ -4216,21 +4394,18 @@ export function createHouseNo121Scene(container, options = {}) {
           isSnowing = false;
           targetRainOpacity = 0.0;
           targetPuddleOpacity = 0.0;
-          // Boy: Clear glasses, knit beanie, quilted puffy down jacket (4 horizontal baffles)
+          // Boy: Knit beanie (hair tucked), full continuous quilted down puffer jacket & insulated puffy sleeves!
+          setBoyHeadwear({ beanie: true });
+          setBoyPuffy(true);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = false;
-          boyBeanieGroup.visible = true;
-          boyPuffyGroup.visible = true;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
-          sweaterMat.color.setHex(0x182534); // dark down jacket
-          sweaterMat.roughness = 0.42;
           umbrellaGroup.visible = false;
-          // Girl: Pom-pom beanie, scarf, winter coat
+          // Girl: Pom-pom beanie (hair tucked), cozy cable scarf, winter coat
+          setGirlHeadwear({ beanie: true });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = true;
           girlScarfGroup.visible = true;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0xa53258);
           break;
 
@@ -4240,21 +4415,18 @@ export function createHouseNo121Scene(container, options = {}) {
           isSnowing = true;
           targetRainOpacity = 0.0;
           targetPuddleOpacity = 0.0;
-          // Boy: Beanie, puffy jacket, clear glasses
+          // Boy: Knit beanie (hair tucked), quilted down puffer jacket & puffy sleeves, clear glasses
+          setBoyHeadwear({ beanie: true });
+          setBoyPuffy(true);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = false;
-          boyBeanieGroup.visible = true;
-          boyPuffyGroup.visible = true;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
-          sweaterMat.color.setHex(0x182534);
-          sweaterMat.roughness = 0.42;
           umbrellaGroup.visible = false;
           // Girl: Pom-pom beanie, scarf, winter coat
+          setGirlHeadwear({ beanie: true });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = true;
           girlScarfGroup.visible = true;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0xa53258);
           break;
 
@@ -4262,23 +4434,22 @@ export function createHouseNo121Scene(container, options = {}) {
           targetLighting = lightingPresets.rainy;
           isRaining = true;
           isSnowing = false;
-          targetRainOpacity = 0.45;
+          targetRainOpacity = 0.50;
           targetPuddleOpacity = 0.50;
           // Boy: Baseball cap, rain jacket, clear glasses, umbrella raised!
+          setBoyHeadwear({ cap: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = true;
-          boyBeanieGroup.visible = false;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
-          sweaterMat.color.setHex(0x23687a); // waterproof teal
+          sweaterMat.color.setHex(0x23687a);
           sweaterMat.roughness = 0.40;
           umbrellaGroup.visible = true;
-          // Girl: Classic yellow raincoat!
+          // Girl: Classic yellow raincoat & long sleeves!
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = false;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0xf5a623);
           break;
 
@@ -4289,20 +4460,19 @@ export function createHouseNo121Scene(container, options = {}) {
           targetRainOpacity = 0.85;
           targetPuddleOpacity = 0.85;
           // Boy: Rain jacket, umbrella raised!
+          setBoyHeadwear({ cap: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = true;
-          boyBeanieGroup.visible = false;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
           sweaterMat.color.setHex(0x1a4e5d);
           sweaterMat.roughness = 0.35;
           umbrellaGroup.visible = true;
-          // Girl: Heavy yellow raincoat!
+          // Girl: Heavy yellow raincoat & long sleeves!
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = false;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0xf5a623);
           break;
 
@@ -4313,20 +4483,19 @@ export function createHouseNo121Scene(container, options = {}) {
           targetRainOpacity = 1.0;
           targetPuddleOpacity = 1.0;
           // Boy: Beanie, heavy storm jacket, umbrella raised!
+          setBoyHeadwear({ beanie: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = false;
-          boyBeanieGroup.visible = true;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
           sweaterMat.color.setHex(0x133d49);
           sweaterMat.roughness = 0.30;
           umbrellaGroup.visible = true;
-          // Girl: Heavy raincoat, beanie, scarf!
+          // Girl: Heavy raincoat, beanie, scarf & long sleeves!
+          setGirlHeadwear({ beanie: true });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = true;
           girlScarfGroup.visible = true;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0xd48812);
           break;
 
@@ -4337,20 +4506,19 @@ export function createHouseNo121Scene(container, options = {}) {
           targetRainOpacity = 0.0;
           targetPuddleOpacity = 0.0;
           // Boy: Baseball cap, casual evening jacket, clear glasses
+          setBoyHeadwear({ cap: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = true;
-          boyBeanieGroup.visible = false;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
           sweaterMat.color.setHex(0x283b4c);
           sweaterMat.roughness = 0.70;
           umbrellaGroup.visible = false;
           // Girl: Evening jacket & dress
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = false;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0x752b48);
           break;
 
@@ -4361,20 +4529,19 @@ export function createHouseNo121Scene(container, options = {}) {
           targetRainOpacity = 0.65;
           targetPuddleOpacity = 0.80;
           // Boy: Rain jacket, umbrella raised!
+          setBoyHeadwear({ cap: true });
+          setBoyPuffy(false);
+          boyFleeceGroup.visible = false;
           boySunglassesGroup.visible = false;
           boyGlassesGroup.visible = true;
-          boyCapGroup.visible = true;
-          boyBeanieGroup.visible = false;
-          boyPuffyGroup.visible = false;
-          boyFleeceGroup.visible = false;
-          boyZipMesh.visible = true;
           sweaterMat.color.setHex(0x1d4d5e);
           sweaterMat.roughness = 0.38;
           umbrellaGroup.visible = true;
           // Girl: Yellow raincoat!
+          setGirlHeadwear({ beanie: false });
           girlSunglasses.visible = false;
-          girlBeanieGroup.visible = false;
           girlScarfGroup.visible = false;
+          setGirlLongSleeves(true);
           dressMat.color.setHex(0xf5a623);
           break;
 
