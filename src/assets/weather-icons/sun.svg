@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
   <path d="M43.21,32.01 C43.21,38.19 38.20,43.21 32.01,43.21 C25.83,43.21 20.81,38.19 20.81,32.01 C20.81,25.82 25.83,20.81 32.01,20.81 C38.20,20.81 43.21,25.82 43.21,32.01" fill="#ffcc00" />
   <path d="M32.01,20.81 C28.31,20.81 25.03,22.62 22.99,25.39 C24.85,24.02 27.13,23.21 29.61,23.21 C35.80,23.21 40.81,28.22 40.81,34.41 C40.81,36.89 39.99,39.17 38.63,41.03 C41.40,38.99 43.21,35.71 43.21,32.01 C43.21,25.82 38.20,20.81 32.01,20.81" fill="#ffffff" />
-  <path d="M43.21,32.01 C43.21,38.19 38.20,43.21 32.01,43.21 C25.83,43.21 20.81,38.19 20.81,32.01 C20.81,25.82 25.83,20.81 32.01,20.81 C38.20,20.81 43.21,25.82 43.21,32.01" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M32.00,8.00 L32.00,14.40" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M32.00,49.60 L32.00,56.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M56.00,32.00 L49.60,32.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M14.40,32.00 L8.00,32.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M15.03,15.03 L19.55,19.55" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M44.45,44.45 L48.97,48.97" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M48.97,15.03 L44.45,19.55" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M19.55,44.45 L15.03,48.97" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M43.21,32.01 C43.21,38.19 38.20,43.21 32.01,43.21 C25.83,43.21 20.81,38.19 20.81,32.01 C20.81,25.82 25.83,20.81 32.01,20.81 C38.20,20.81 43.21,25.82 43.21,32.01" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M32.00,8.00 L32.00,14.40" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M32.00,49.60 L32.00,56.00" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M56.00,32.00 L49.60,32.00" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M14.40,32.00 L8.00,32.00" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M15.03,15.03 L19.55,19.55" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M44.45,44.45 L48.97,48.97" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M48.97,15.03 L44.45,19.55" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M19.55,44.45 L15.03,48.97" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

@@ -60,7 +60,7 @@ function getHourMetrics(h, unit) {
     });
   }
 
-  const smartInfo = resolveSmartWeatherInfo(code, precipProb, precipMm);
+  const smartInfo = resolveSmartWeatherInfo(code, precipMm > 0 || precipProb >= 40 ? precipProb : 0, precipMm);
 
   return {
     temp: convertTemp(tempC, unit),
@@ -72,8 +72,9 @@ function getHourMetrics(h, unit) {
     wind: convertWind(windKmh, unit),
     windDir,
     pressure: Math.round(pressure),
+    code,
     icon: smartInfo.icon || 'Cloud',
-    isDay: h.isDay,
+    isDay: h.isDay !== undefined ? Boolean(h.isDay) : (getHourNumber(h) >= 7 && getHourNumber(h) < 18),
   };
 }
 
@@ -159,15 +160,31 @@ export default function MobileDetailedDailyModal({
           const metricsList = slotHours.map((h) => getHourMetrics(h, unit));
           const maxTemp = Math.max(...metricsList.map((m) => m.temp ?? 0));
           const totalPrecip = Math.round(metricsList.reduce((sum, m) => sum + (m.precip || 0), 0) * 10) / 10;
+          const maxHourlyPrecipMm = Math.max(...metricsList.map((m) => m.precipMm || 0));
+          const maxProb = Math.max(...metricsList.map((m) => m.precipProb || 0));
           const maxWind = Math.max(...metricsList.map((m) => m.wind || 0));
 
-          // Pick representative icon (wettest or midday/middle slot)
-          const wettest = metricsList.find((m) => m.precip >= 0.2 || m.precipProb >= 50);
-          const repIcon = wettest ? wettest.icon : metricsList[Math.floor(metricsList.length / 2)].icon;
+          // Period is night if the majority of hours in this 6h slot are dark
+          const nightHoursCount = metricsList.filter((m) => !m.isDay).length;
+          const periodIsNight = nightHoursCount > metricsList.length / 2;
+
+          // Pick representative weather icon matching actual precip & sky state
+          let repIcon = metricsList[Math.floor(metricsList.length / 2)].icon;
+          const specialSevere = metricsList.find((m) => m.code >= 71);
+          if (specialSevere) {
+            repIcon = specialSevere.icon;
+          } else if (totalPrecip >= 2.5 || maxHourlyPrecipMm >= 1.5) {
+            repIcon = 'CloudRainWind';
+          } else if (totalPrecip >= 0.5 || maxProb >= 60) {
+            repIcon = 'CloudRain';
+          } else if (totalPrecip >= 0.1 || maxProb >= 40) {
+            repIcon = 'CloudDrizzle';
+          }
 
           return {
             label: p.label,
             icon: repIcon,
+            isNight: periodIsNight,
             temp: maxTemp,
             precip: totalPrecip,
             wind: maxWind,
@@ -310,7 +327,7 @@ export default function MobileDetailedDailyModal({
                             {hr.timeStr}
                           </span>
                           <div className="flex items-center justify-center">
-                            <WeatherIcon iconName={hr.icon} className="w-5 h-5 text-slate-100" />
+                            <WeatherIcon iconName={hr.icon} isNight={!hr.isDay} className="w-5 h-5 text-slate-100" />
                           </div>
                           <span
                             className={`text-center font-bold font-mono ${
@@ -351,7 +368,7 @@ export default function MobileDetailedDailyModal({
                             {p.label}
                           </span>
                           <div className="flex items-center justify-center">
-                            <WeatherIcon iconName={p.icon} className="w-5 h-5 text-slate-100" />
+                            <WeatherIcon iconName={p.icon} isNight={p.isNight} className="w-5 h-5 text-slate-100" />
                           </div>
                           <span
                             className={`text-center font-bold font-mono ${
@@ -563,7 +580,7 @@ function DailyGraphView({
                   style={{ width: `${colWidth}px` }}
                   className="shrink-0 flex items-center justify-center h-6"
                 >
-                  <WeatherIcon iconName={item.icon} className="w-5 h-5 text-slate-100" />
+                  <WeatherIcon iconName={item.icon} isNight={!item.isDay} className="w-5 h-5 text-slate-100" />
                 </div>
               ))}
             </div>

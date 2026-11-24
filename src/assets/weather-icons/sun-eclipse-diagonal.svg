@@ -2,11 +2,11 @@
   <path d="M27.69,43.53 C25.66,41.50 24.41,38.70 24.41,35.61 C24.41,29.42 29.43,24.41 35.61,24.41 C38.70,24.41 41.49,25.66 43.52,27.68 L27.69,43.53" fill="#ffcc00" />
   <path d="M43.52,27.68 C41.49,25.66 38.70,24.41 35.61,24.41 C31.90,24.41 28.63,26.22 26.59,28.99 C28.45,27.62 30.73,26.81 33.21,26.81 C36.30,26.81 39.09,28.06 41.12,30.08 L43.52,27.68" fill="#ffffff" />
   <path d="M43.44,27.61 C45.47,29.63 46.72,32.44 46.72,35.53 C46.72,41.72 41.70,46.73 35.52,46.73 C32.43,46.73 29.64,45.48 27.61,43.46 L43.44,27.61" fill="#ebf5ff" />
-  <path d="M45.51,30.49 C44.99,29.45 44.32,28.51 43.51,27.69 L27.68,43.52 C28.50,44.33 29.44,45.00 30.48,45.52 L45.51,30.49" fill="#000064" />
-  <path d="M46.43,32.72 C46.68,33.64 46.81,34.61 46.81,35.61 C46.81,41.79 41.80,46.81 35.61,46.81 C34.69,46.81 33.79,46.70 32.93,46.49" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M27.69,43.53 C25.66,41.50 24.41,38.70 24.41,35.61 C24.41,29.42 29.43,24.41 35.61,24.41 C38.70,24.41 41.49,25.66 43.52,27.68" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M35.60,11.60 L35.60,18.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M18.00,35.60 L11.60,35.60" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M18.00,18.00 L23.60,23.60" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M52.40,18.80 L18.80,52.40" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M45.51,30.49 C44.99,29.45 44.32,28.51 43.51,27.69 L27.68,43.52 C28.50,44.33 29.44,45.00 30.48,45.52 L45.51,30.49" fill="#334155" />
+  <path d="M46.43,32.72 C46.68,33.64 46.81,34.61 46.81,35.61 C46.81,41.79 41.80,46.81 35.61,46.81 C34.69,46.81 33.79,46.70 32.93,46.49" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M27.69,43.53 C25.66,41.50 24.41,38.70 24.41,35.61 C24.41,29.42 29.43,24.41 35.61,24.41 C38.70,24.41 41.49,25.66 43.52,27.68" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M35.60,11.60 L35.60,18.00" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M18.00,35.60 L11.60,35.60" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M18.00,18.00 L23.60,23.60" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M52.40,18.80 L18.80,52.40" fill="none" stroke="#fbbf24" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

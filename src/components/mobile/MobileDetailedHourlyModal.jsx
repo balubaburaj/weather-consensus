@@ -155,6 +155,7 @@ export default function MobileDetailedHourlyModal({
         dayLabel,
         isNewDay,
         icon: smartInfo.icon || 'Cloud',
+        isDay: h.isDay !== undefined ? Boolean(h.isDay) : true,
         x,
         tempVal,
         feelsVal,
@@ -267,6 +268,7 @@ export default function MobileDetailedHourlyModal({
                 >
                   <WeatherIcon
                     iconName={p.icon}
+                    isNight={!p.isDay}
                     className="w-5 h-5 text-cyan-300 drop-shadow-sm"
                   />
                 </div>

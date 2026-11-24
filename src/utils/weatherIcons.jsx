@@ -49,35 +49,35 @@ export const WMO_SVG_MAPPING = {
   99: { day: 'severe-thunderstorm', night: 'night-severe-thunderstorm' },
 };
 
-// Legacy Lucide and semantic names to icon-pack SVG file names
+// Legacy Lucide and semantic names to icon-pack SVG file names (with day/night support)
 export const SEMANTIC_SVG_MAPPING = {
   // Lucide icon names
-  Sun: 'sun',
-  SunDim: 'partly-cloudy-day',
-  CloudSun: 'partly-cloudy-day',
-  CloudSunRain: 'day-rain-showers',
-  Cloud: 'cloudy',
-  CloudFog: 'dense-fog',
-  CloudDrizzle: 'drizzle',
-  CloudRain: 'moderate-rain',
-  CloudRainWind: 'heavy-rain',
-  CloudLightning: 'thunder-rain',
-  CloudHail: 'hailstones',
-  CloudSnow: 'mixed-rain-snow',
-  Snowflake: 'snowflake',
-  Wind: 'wind',
+  Sun: { day: 'sun', night: 'crescent-moon' },
+  SunDim: { day: 'partly-cloudy-day', night: 'partly-cloudy-night' },
+  CloudSun: { day: 'partly-cloudy-day', night: 'partly-cloudy-night' },
+  CloudSunRain: { day: 'day-rain-showers', night: 'night-rain-showers' },
+  Cloud: { day: 'cloudy', night: 'cloudy' },
+  CloudFog: { day: 'dense-fog', night: 'dense-fog' },
+  CloudDrizzle: { day: 'day-drizzle', night: 'night-drizzle' },
+  CloudRain: { day: 'day-moderate-rain', night: 'night-moderate-rain' },
+  CloudRainWind: { day: 'day-heavy-rain', night: 'night-heavy-rain' },
+  CloudLightning: { day: 'day-thunder-rain', night: 'night-thunder-rain' },
+  CloudHail: { day: 'day-hailstones', night: 'night-hailstones' },
+  CloudSnow: { day: 'day-snow-crystals', night: 'night-snow-crystals' },
+  Snowflake: { day: 'snowflake', night: 'snowflake' },
+  Wind: { day: 'wind', night: 'wind' },
 
   // Human rain classification types
-  dry: 'sun',
-  drizzle: 'drizzle',
-  light_rain: 'light-rain',
-  moderate_rain: 'moderate-rain',
-  heavy_rain: 'heavy-rain',
-  torrential: 'rain-splashes',
-  thunderstorm: 'thunder-rain',
-  hail: 'hailstones',
-  snow: 'snow-crystals',
-  heavy_snow: 'snowflake',
+  dry: { day: 'sun', night: 'crescent-moon' },
+  drizzle: { day: 'day-drizzle', night: 'night-drizzle' },
+  light_rain: { day: 'light-rain', night: 'night-drizzle' },
+  moderate_rain: { day: 'day-moderate-rain', night: 'night-moderate-rain' },
+  heavy_rain: { day: 'day-heavy-rain', night: 'night-heavy-rain' },
+  torrential: { day: 'rain-splashes', night: 'night-rain-splashes' },
+  thunderstorm: { day: 'day-thunder-rain', night: 'night-thunder-rain' },
+  hail: { day: 'day-hailstones', night: 'night-hailstones' },
+  snow: { day: 'day-snow-crystals', night: 'night-snow-crystals' },
+  heavy_snow: { day: 'snowflake', night: 'snowflake' },
 };
 
 /**
@@ -85,7 +85,7 @@ export const SEMANTIC_SVG_MAPPING = {
  */
 export function getWeatherIconUrl(identifier, isNight = false) {
   if (identifier === undefined || identifier === null) {
-    return WEATHER_ICON_MAP['sun'] || '';
+    return WEATHER_ICON_MAP[isNight ? 'crescent-moon' : 'sun'] || '';
   }
 
   // 1. Numeric WMO Code
@@ -98,15 +98,18 @@ export function getWeatherIconUrl(identifier, isNight = false) {
     }
   }
 
-  // 2. Direct exact filename match
-  if (WEATHER_ICON_MAP[identifier]) {
-    return WEATHER_ICON_MAP[identifier];
+  // 2. Semantic / Lucide mapping (checked before raw filenames so day/night swaps work)
+  const mappedEntry = SEMANTIC_SVG_MAPPING[identifier];
+  if (mappedEntry) {
+    const iconKey = typeof mappedEntry === 'string'
+      ? mappedEntry
+      : (isNight ? mappedEntry.night : mappedEntry.day);
+    if (WEATHER_ICON_MAP[iconKey]) return WEATHER_ICON_MAP[iconKey];
   }
 
-  // 3. Semantic / Lucide mapping
-  const mappedKey = SEMANTIC_SVG_MAPPING[identifier];
-  if (mappedKey && WEATHER_ICON_MAP[mappedKey]) {
-    return WEATHER_ICON_MAP[mappedKey];
+  // 3. Direct exact filename match
+  if (WEATHER_ICON_MAP[identifier]) {
+    return WEATHER_ICON_MAP[identifier];
   }
 
   // 4. Try kebab-case or lowercase fallback
@@ -115,8 +118,8 @@ export function getWeatherIconUrl(identifier, isNight = false) {
     return WEATHER_ICON_MAP[lower];
   }
 
-  // Fallback to sun or cloudy
-  return WEATHER_ICON_MAP['sun'] || Object.values(WEATHER_ICON_MAP)[0] || '';
+  // Fallback to sun or moon
+  return WEATHER_ICON_MAP[isNight ? 'crescent-moon' : 'sun'] || Object.values(WEATHER_ICON_MAP)[0] || '';
 }
 
 /**

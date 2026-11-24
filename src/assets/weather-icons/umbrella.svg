@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
   <path d="M50.00,32.00 C52.48,32.00 54.71,33.29 56.00,35.20 C56.00,21.95 45.25,11.20 32.00,11.20 C18.75,11.20 8.00,21.95 8.00,35.20 C9.29,33.27 11.50,32.00 14.00,32.00 C16.49,32.00 18.71,33.29 20.00,35.20 C21.29,33.27 23.50,32.00 26.00,32.00 C28.52,32.00 30.71,33.25 32.00,35.20 C33.29,33.26 35.49,32.00 38.00,32.00 C40.49,32.00 42.71,33.29 44.00,35.20 C45.29,33.27 47.50,32.00 50.00,32.00" fill="#3b99ff" />
-  <path d="M32.00,11.20 C18.75,11.20 8.00,21.95 8.00,35.20 C9.29,33.27 11.50,32.00 14.00,32.00 C16.49,32.00 18.71,33.29 20.00,35.20 C20.00,21.95 25.37,11.20 32.00,11.20" fill="#000064" />
+  <path d="M32.00,11.20 C18.75,11.20 8.00,21.95 8.00,35.20 C9.29,33.27 11.50,32.00 14.00,32.00 C16.49,32.00 18.71,33.29 20.00,35.20 C20.00,21.95 25.37,11.20 32.00,11.20" fill="#334155" />
   <path d="M32.00,11.20 C38.63,11.20 44.00,21.95 44.00,35.20 C45.29,33.27 47.50,32.00 50.00,32.00 C52.48,32.00 54.71,33.29 56.00,35.20 C56.00,21.95 45.25,11.20 32.00,11.20" fill="#ffffff" />
-  <path d="M32.00,11.20 L32.00,8.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M38.40,52.80 C38.40,54.57 36.97,56.00 35.20,56.00 C33.43,56.00 32.00,54.57 32.00,52.80 L32.00,35.24" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M8.00,35.20 C8.00,21.94 18.75,11.20 32.00,11.20 C45.25,11.20 56.00,21.94 56.00,35.20" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M8.01,35.20 C9.30,33.27 11.50,32.00 14.00,32.00 C16.49,32.00 18.68,33.26 19.97,35.17" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M20.01,35.20 C21.30,33.27 23.50,32.00 26.00,32.00 C28.51,32.00 30.73,33.29 32.02,35.24" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M31.99,35.22 C33.28,33.28 35.49,32.00 38.00,32.00 C40.49,32.00 42.68,33.26 43.97,35.17" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M44.01,35.20 C45.30,33.27 47.50,32.00 50.00,32.00 C52.49,32.00 54.68,33.26 55.97,35.17" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M32.00,11.20 L32.00,8.00" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M38.40,52.80 C38.40,54.57 36.97,56.00 35.20,56.00 C33.43,56.00 32.00,54.57 32.00,52.80 L32.00,35.24" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M8.00,35.20 C8.00,21.94 18.75,11.20 32.00,11.20 C45.25,11.20 56.00,21.94 56.00,35.20" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M8.01,35.20 C9.30,33.27 11.50,32.00 14.00,32.00 C16.49,32.00 18.68,33.26 19.97,35.17" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M20.01,35.20 C21.30,33.27 23.50,32.00 26.00,32.00 C28.51,32.00 30.73,33.29 32.02,35.24" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M31.99,35.22 C33.28,33.28 35.49,32.00 38.00,32.00 C40.49,32.00 42.68,33.26 43.97,35.17" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M44.01,35.20 C45.30,33.27 47.50,32.00 50.00,32.00 C52.49,32.00 54.68,33.26 55.97,35.17" fill="none" stroke="#94a3b8" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

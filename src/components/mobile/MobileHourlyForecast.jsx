@@ -77,6 +77,7 @@ export default function MobileHourlyForecast({
       feelsVal,
       feelsLabel,
       icon,
+      isDay: h.isDay !== undefined ? Boolean(h.isDay) : true,
       isNow: i === 0 && h.isCurrent,
       rawHour: h,
     };
@@ -420,6 +421,7 @@ export default function MobileHourlyForecast({
                   <div className="w-6 h-6 flex items-center justify-center">
                     <WeatherIcon
                       iconName={p.icon}
+                      isNight={!p.isDay}
                       className={`w-5 h-5 transition-colors ${
                         isSelected ? 'text-amber-300' : 'text-slate-400'
                       }`}
