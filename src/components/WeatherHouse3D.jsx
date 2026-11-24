@@ -156,10 +156,17 @@ export default function WeatherHouse3D({
   isCurrentlyRaining = false,
   selectedCity,
   className = '',
+  showControls = false,
 }) {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
   const toastTimeoutRef = useRef(null);
+
+  const hasControlsQuery = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('studio') === '1' ||
+    new URLSearchParams(window.location.search).get('controls') === '1'
+  );
+  const effectiveShowControls = showControls || hasControlsQuery;
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -303,121 +310,123 @@ export default function WeatherHouse3D({
   return (
     <div className={`relative rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/95 to-slate-950/90 backdrop-blur-md shadow-xl overflow-hidden ${className}`}>
       
-      {/* Top Header & Interactive Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-slate-800/80 bg-slate-950/50">
-        
-        {/* Title & Live Status */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-            <Home className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-white text-sm tracking-tight">
-                No. 121 Sacre Coeur
-              </span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${currentScenarioObj.badgeColor}`}>
-                {currentScenarioObj.label} &bull; {currentScenarioObj.temp}
-              </span>
+      {/* Top Header & Interactive Controls Bar (Hidden when showControls=false) */}
+      {effectiveShowControls && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-slate-800/80 bg-slate-950/50">
+          
+          {/* Title & Live Status */}
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+              <Home className="w-4 h-4" />
             </div>
-            <p className="text-[11px] text-slate-400">
-              Interactive 3D Victorian Terraced House &bull; Adaptive Wardrobe & Weather Engine
-            </p>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Say Hi Button */}
-          <button
-            onClick={handleSayHi}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-rose-500/20 hover:from-pink-500/30 hover:to-rose-500/30 border border-pink-500/40 text-pink-300 text-xs font-semibold transition shadow-sm active:scale-95"
-            title="Tap the couple to wave and jump!"
-          >
-            <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400/40" />
-            <span>Say Hi!</span>
-          </button>
-
-          {/* Camera Presets */}
-          <div className="flex items-center bg-slate-900/80 p-0.5 rounded-xl border border-slate-800 text-xs">
-            <button
-              onClick={() => handleCameraChange('couple')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
-                activeCam === 'couple'
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Couple close-up view"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Couple</span>
-            </button>
-            <button
-              onClick={() => handleCameraChange('front')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
-                activeCam === 'front'
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Full house front view"
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Front</span>
-            </button>
-            <button
-              onClick={() => handleCameraChange('iso')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
-                activeCam === 'iso'
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Isometric street & neighborhood view"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Street</span>
-            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-white text-sm tracking-tight">
+                  No. 121 Sacre Coeur
+                </span>
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${currentScenarioObj.badgeColor}`}>
+                  {currentScenarioObj.label} &bull; {currentScenarioObj.temp}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Interactive 3D Victorian Terraced House &bull; Adaptive Wardrobe & Weather Engine
+              </p>
+            </div>
           </div>
 
-          {/* Weather Studio Toggle */}
-          <button
-            onClick={() => setIsStudioOpen(!isStudioOpen)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition ${
-              isStudioOpen
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-sm'
-                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-            title="Toggle Weather & Wardrobe Studio Testing Deck"
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Studio</span>
-          </button>
+          {/* Action Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Say Hi Button */}
+            <button
+              onClick={handleSayHi}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-rose-500/20 hover:from-pink-500/30 hover:to-rose-500/30 border border-pink-500/40 text-pink-300 text-xs font-semibold transition shadow-sm active:scale-95"
+              title="Tap the couple to wave and jump!"
+            >
+              <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400/40" />
+              <span>Say Hi!</span>
+            </button>
 
-          {/* Motion Toggle */}
-          <button
-            onClick={handleToggleMotion}
-            className={`p-1.5 rounded-xl border text-xs transition ${
-              isMotionActive
-                ? 'bg-slate-800/80 border-slate-700 text-emerald-400 hover:bg-slate-700'
-                : 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-            }`}
-            title={isMotionActive ? 'Pause 3D animation' : 'Resume 3D animation'}
-          >
-            {isMotionActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-          </button>
+            {/* Camera Presets */}
+            <div className="flex items-center bg-slate-900/80 p-0.5 rounded-xl border border-slate-800 text-xs">
+              <button
+                onClick={() => handleCameraChange('couple')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
+                  activeCam === 'couple'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Couple close-up view"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Couple</span>
+              </button>
+              <button
+                onClick={() => handleCameraChange('front')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
+                  activeCam === 'front'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Full house front view"
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Front</span>
+              </button>
+              <button
+                onClick={() => handleCameraChange('iso')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
+                  activeCam === 'iso'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Isometric street & neighborhood view"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Street</span>
+              </button>
+            </div>
 
-          {/* Collapse / Expand Toggle */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 transition"
-            title={isCollapsed ? 'Expand 3D view' : 'Collapse 3D view'}
-          >
-            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-          </button>
+            {/* Weather Studio Toggle */}
+            <button
+              onClick={() => setIsStudioOpen(!isStudioOpen)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition ${
+                isStudioOpen
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-sm'
+                  : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title="Toggle Weather & Wardrobe Studio Testing Deck"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Studio</span>
+            </button>
+
+            {/* Motion Toggle */}
+            <button
+              onClick={handleToggleMotion}
+              className={`p-1.5 rounded-xl border text-xs transition ${
+                isMotionActive
+                  ? 'bg-slate-800/80 border-slate-700 text-emerald-400 hover:bg-slate-700'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+              }`}
+              title={isMotionActive ? 'Pause 3D animation' : 'Resume 3D animation'}
+            >
+              {isMotionActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+            </button>
+
+            {/* Collapse / Expand Toggle */}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+              title={isCollapsed ? 'Expand 3D view' : 'Collapse 3D view'}
+            >
+              {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* WEATHER & WARDROBE STUDIO TEST HARNESS DECK */}
-      {isStudioOpen && !isCollapsed && (
+      {/* WEATHER & WARDROBE STUDIO TEST HARNESS DECK (Hidden when showControls=false) */}
+      {effectiveShowControls && isStudioOpen && !isCollapsed && (
         <div className="bg-slate-950/80 border-b border-slate-800/80 px-4 sm:px-5 py-2.5">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
@@ -492,7 +501,7 @@ export default function WeatherHouse3D({
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin mb-3" />
             <span className="text-xs font-semibold text-slate-300 tracking-wide">
-              Rendering No. 121 Sacre Coeur...
+              Rendering live 3D weather scene...
             </span>
           </div>
         )}
