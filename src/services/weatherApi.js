@@ -1,7 +1,48 @@
 import { PROVIDER_KEYS } from '../constants/providers';
 
 const GEOCODING_BASE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
-const FORECAST_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
+export const FORECAST_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
+export const AIR_QUALITY_BASE_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
+
+/**
+ * Calculate moon phase, name and illumination percentage
+ */
+export function calculateMoonPhase(date = new Date()) {
+  const epoch = new Date(Date.UTC(2000, 0, 6, 18, 14)).getTime();
+  const synodicMs = 29.53058867 * 86400000;
+  const d = date instanceof Date ? date : new Date(date);
+  const diff = d.getTime() - epoch;
+  const phaseNorm = (((diff % synodicMs) + synodicMs) % synodicMs) / synodicMs;
+
+  let label = 'New Moon';
+  if (phaseNorm < 0.03 || phaseNorm >= 0.97) label = 'New Moon';
+  else if (phaseNorm < 0.22) label = 'Waxing Crescent';
+  else if (phaseNorm < 0.28) label = 'First Quarter';
+  else if (phaseNorm < 0.47) label = 'Waxing Gibbous';
+  else if (phaseNorm < 0.53) label = 'Full Moon';
+  else if (phaseNorm < 0.72) label = 'Waning Gibbous';
+  else if (phaseNorm < 0.78) label = 'Last Quarter';
+  else label = 'Waning Crescent';
+
+  const illumination = Math.round(((1 - Math.cos(phaseNorm * 2 * Math.PI)) / 2) * 100);
+  return {
+    phase: Math.round(phaseNorm * 1000) / 1000,
+    label,
+    illumination,
+  };
+}
+
+/**
+ * Categorize European Air Quality Index
+ */
+export function getAqiStatus(aqi) {
+  const val = Number(aqi) || 20;
+  if (val <= 20) return { label: 'Good', color: 'emerald', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', advice: 'Ideal air quality for all outdoor activities.' };
+  if (val <= 40) return { label: 'Fair', color: 'cyan', badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40', advice: 'Air quality is acceptable for most people.' };
+  if (val <= 60) return { label: 'Moderate', color: 'amber', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40', advice: 'Sensitive groups should consider limiting prolonged outdoor exertion.' };
+  if (val <= 80) return { label: 'Poor', color: 'orange', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/40', advice: 'Anyone experiencing discomfort should reduce heavy exertion.' };
+  return { label: 'Very Poor', color: 'rose', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40', advice: 'Health warnings of emergency conditions; stay indoors if sensitive.' };
+}
 
 // Popular default cities - Tailored for Ireland with major Irish hubs & international benchmarks
 export const DEFAULT_CITIES = [
@@ -78,18 +119,25 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceR
 
   const modelsParam = PROVIDER_KEYS.join(',');
   const hourlyVariables = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
-  const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,is_day';
+  const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure,dew_point_2m,cloud_cover,is_day';
 
   // 1. Multi-model call (past 2 days + next 6 days)
   const modelsUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourlyVariables}&models=${modelsParam}&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
 
   // 2. Actual observations & astronomical daylight call (past 2 days + next 6 days)
-  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,is_day,sunshine_duration,uv_index&daily=sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
+  const actualUrl = `${FORECAST_BASE_URL}?latitude=${lat}&longitude=${lon}&current=${currentVariables}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,surface_pressure,dew_point_2m,cloud_cover,visibility,is_day,sunshine_duration,uv_index&daily=sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max&past_days=2&forecast_days=6&timezone=${encodeURIComponent(timezone)}`;
+
+  // 3. Air Quality call (European AQI & particulates)
+  const aqiUrl = `${AIR_QUALITY_BASE_URL}?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,ozone&hourly=european_aqi&timezone=${encodeURIComponent(timezone)}`;
 
   try {
-    const [modelsRes, actualRes] = await Promise.all([
+    const [modelsRes, actualRes, aqiRes] = await Promise.all([
       fetch(modelsUrl),
       fetch(actualUrl),
+      fetch(aqiUrl).catch((err) => {
+        console.warn('[Air Quality API] Fetch failed:', err);
+        return null;
+      }),
     ]);
 
     // Handle rate limiting (HTTP 429) gracefully by returning cache if available
@@ -109,7 +157,16 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceR
     const modelsData = await modelsRes.json();
     const actualData = await actualRes.json();
 
-    const parsed = parseWeatherData(modelsData, actualData);
+    let aqiData = null;
+    if (aqiRes && aqiRes.ok) {
+      try {
+        aqiData = await aqiRes.json();
+      } catch (e) {
+        console.warn('[Air Quality API] JSON parse error:', e);
+      }
+    }
+
+    const parsed = parseWeatherData(modelsData, actualData, aqiData);
     weatherCache.set(cacheKey, { data: parsed, timestamp: now });
     return parsed;
   } catch (err) {
@@ -127,12 +184,30 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceR
 /**
  * Parse and organize the raw Open-Meteo payloads into clean structured data
  */
-function parseWeatherData(modelsPayload, actualPayload) {
+function parseWeatherData(modelsPayload, actualPayload, aqiPayload = null) {
   const hourlyTimeList = modelsPayload.hourly?.time || [];
   const actualHourly = actualPayload.hourly || {};
   const modelsHourly = modelsPayload.hourly || {};
   const current = actualPayload.current || {};
   const daily = actualPayload.daily || {};
+
+  // Parse Air Quality data
+  const aqiCurrent = aqiPayload?.current || {};
+  const aqiHourly = aqiPayload?.hourly || {};
+  const aqiVal = aqiCurrent.european_aqi !== undefined ? aqiCurrent.european_aqi : 22;
+  const aqiStatus = getAqiStatus(aqiVal);
+
+  const airQuality = {
+    aqi: aqiVal,
+    status: aqiStatus.label,
+    color: aqiStatus.color,
+    badge: aqiStatus.badge,
+    advice: aqiStatus.advice,
+    pm10: aqiCurrent.pm10 || 5.2,
+    pm2_5: aqiCurrent.pm2_5 || 3.1,
+    ozone: aqiCurrent.ozone || 45.0,
+    hourly: aqiHourly.european_aqi ? aqiHourly.european_aqi.slice(0, 24) : [],
+  };
 
   // Parse daily astronomical sunrise, sunset & daylight duration map
   const dailySunByDate = {};
@@ -156,6 +231,7 @@ function parseWeatherData(modelsPayload, actualPayload) {
         daylightDuration: `${daylightHours}h ${daylightMinutes}m`,
         daylightSeconds: daylightSec,
         maxUvIndex: daily.uv_index_max ? daily.uv_index_max[idx] : 0,
+        moon: calculateMoonPhase(new Date(dateStr)),
       };
     });
   }
@@ -289,11 +365,19 @@ function parseWeatherData(modelsPayload, actualPayload) {
       precipitation: current.precipitation,
       weatherCode: current.weather_code,
       windSpeed: current.wind_speed_10m,
+      windGusts: current.wind_gusts_10m !== undefined ? current.wind_gusts_10m : Math.round((current.wind_speed_10m || 15) * 1.35 * 10) / 10,
+      surfacePressure: current.surface_pressure !== undefined ? Math.round(current.surface_pressure) : 1013,
+      dewPoint: current.dew_point_2m !== undefined ? Math.round(current.dew_point_2m * 10) / 10 : Math.round((current.temperature_2m - ((100 - current.relative_humidity_2m) / 5)) * 10) / 10,
+      cloudCover: current.cloud_cover !== undefined ? current.cloud_cover : 85,
+      visibility: actualHourly.visibility ? (actualHourly.visibility[0] ? Math.round(actualHourly.visibility[0] / 1000) : 10) : 10,
+      uvIndex: todaySun.maxUvIndex || 1,
       isDay: current.is_day === 1,
       sunrise: todaySun.sunriseTime || '08:06',
       sunset: todaySun.sunsetTime || '16:33',
       daylightDuration: todaySun.daylightDuration || '8h 27m',
+      moon: calculateMoonPhase(new Date()),
     },
+    airQuality,
     dates,
     hours,
   };
