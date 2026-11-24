@@ -26,8 +26,8 @@ export default function MobileHourlyForecast({
 
   const itemWidth = 62;
   const svgWidth = displayHours.length * itemWidth;
-  const svgHeight = 76;
-  const topPadding = 20;
+  const svgHeight = 82;
+  const topPadding = 24;
   const bottomPadding = 16;
   const usableHeight = svgHeight - topPadding - bottomPadding;
 
@@ -39,16 +39,23 @@ export default function MobileHourlyForecast({
 
     let val = 0;
     let label = '';
+    let feelsVal = null;
+    let feelsLabel = '';
+
     const code = consensus.weatherCode !== undefined ? consensus.weatherCode : (actual.weatherCode || 0);
     const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
     const rainMm = consensus.precipitation !== undefined ? consensus.precipitation : (actual.precipitation || 0);
     const smartInfo = resolveSmartWeatherInfo(code, prob, rainMm);
     let icon = smartInfo.icon || 'Cloud';
 
+    const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
+    const fRaw = consensus.apparentTemperature !== undefined ? consensus.apparentTemperature : (actual.apparentTemperature !== undefined ? actual.apparentTemperature : tRaw);
+
     if (activeMetric === 'temperature') {
-      const t = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
-      val = unit === 'F' ? Math.round((t * 9) / 5 + 32) : Math.round(t);
+      val = unit === 'F' ? Math.round((tRaw * 9) / 5 + 32) : Math.round(tRaw);
       label = `${val}°`;
+      feelsVal = unit === 'F' ? Math.round((fRaw * 9) / 5 + 32) : Math.round(fRaw);
+      feelsLabel = `${feelsVal}°`;
     } else if (activeMetric === 'precipitation') {
       val = Math.round(prob);
       label = `${val}%`;
@@ -66,6 +73,8 @@ export default function MobileHourlyForecast({
       hourLabel: timeLabel,
       val,
       label,
+      feelsVal,
+      feelsLabel,
       icon,
       isNow: i === 0 && h.isCurrent,
       rawHour: h,
@@ -186,7 +195,7 @@ export default function MobileHourlyForecast({
     <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
           <h3 className="text-sm font-bold text-white tracking-wide">
             Hourly
@@ -194,6 +203,14 @@ export default function MobileHourlyForecast({
           <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-bold text-slate-400">
             24h
           </span>
+          {activeMetric === 'temperature' && (
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 ml-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+              <span>Temp</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 ml-0.5" />
+              <span className="text-amber-400">Feels</span>
+            </span>
+          )}
         </div>
         <div className="p-1.5 rounded-full bg-slate-800/80 text-slate-400 hover:text-white transition">
           <ChevronRight className="w-4 h-4" />
@@ -223,13 +240,13 @@ export default function MobileHourlyForecast({
           </span>
         </div>
 
-        {/* Row 2: Big Temp + Feels Like + Wind Chill Badge */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-2.5">
+        {/* Row 2: Big Temp + Feels Like (Enlarged, same warm amber color as hero card) + Wind Chill */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <span className="text-3xl font-black text-white font-mono tracking-tight">
               {tDisp}{tempUnit}
             </span>
-            <span className="text-xs text-slate-400 font-medium">
+            <span className="text-sm sm:text-base font-extrabold px-3 py-1 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 shadow-sm drop-shadow-md">
               Feels {feelsDisp}{tempUnit}
             </span>
           </div>
@@ -324,16 +341,42 @@ export default function MobileHourlyForecast({
                     stroke="#0f172a"
                     strokeWidth="1.5"
                   />
-                  <text
-                    x={p.x}
-                    y={p.y - 7}
-                    textAnchor="middle"
-                    className={`text-[11px] font-mono font-bold ${
-                      isSelected ? 'fill-white' : 'fill-slate-300'
-                    }`}
-                  >
-                    {p.label}
-                  </text>
+                  {activeMetric === 'temperature' ? (
+                    <text
+                      x={p.x}
+                      y={p.y - 8}
+                      textAnchor="middle"
+                      className="font-mono select-none"
+                    >
+                      <tspan
+                        className={`text-[13px] font-black tracking-tight ${
+                          isSelected ? 'fill-white' : 'fill-slate-100'
+                        }`}
+                        fill={isSelected ? '#ffffff' : '#f1f5f9'}
+                      >
+                        {p.label}
+                      </tspan>
+                      <tspan
+                        dx="3.5"
+                        className="text-[11px] font-extrabold fill-amber-400"
+                        fill="#fbbf24"
+                      >
+                        {p.feelsLabel}
+                      </tspan>
+                    </text>
+                  ) : (
+                    <text
+                      x={p.x}
+                      y={p.y - 8}
+                      textAnchor="middle"
+                      className={`text-[12px] font-mono font-bold select-none ${
+                        isSelected ? 'fill-white' : 'fill-slate-300'
+                      }`}
+                      fill={isSelected ? '#ffffff' : '#cbd5e1'}
+                    >
+                      {p.label}
+                    </text>
+                  )}
                 </g>
               );
             })}
