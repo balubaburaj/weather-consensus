@@ -5,16 +5,17 @@ import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo, getRainHumanType } from '../../constants/providers';
 import WeatherHouse3D from '../WeatherHouse3D';
 
+const TUNING_VERSION = 'v2_user_coords';
 const DEFAULT_TUNING = {
-  cardHeight: 320,
-  coupleX: 2.40,
+  cardHeight: 390,
+  coupleX: 1.45,
   coupleY: 0.00,
-  coupleZ: 0.94,
-  cameraAngleX: 0.25, // Camera orbit angle: < 0 looks from left, > 0 looks from right
-  cameraPanX: 0.00,   // Camera lateral shift: moves both camera and target left/right
-  cameraY: 2.05,      // Camera vertical height
-  cameraZ: 8.20,      // Camera distance / zoom
-  cameraFov: 45,      // Camera lens angle width (FOV)
+  coupleZ: 1.05,
+  cameraAngleX: 0.20, // Camera orbit angle: < 0 looks from left, > 0 looks from right
+  cameraPanX: 0.30,   // Camera lateral shift: moves both camera and target left/right
+  cameraY: 2.00,      // Camera vertical height
+  cameraZ: 7.00,      // Camera distance / zoom
+  cameraFov: 61,      // Camera lens angle width (FOV)
 };
 
 export default function MobileHeroCard({
@@ -27,8 +28,14 @@ export default function MobileHeroCard({
 }) {
   const [tuning, setTuning] = useState(() => {
     try {
-      const saved = localStorage.getItem('omni_hero_card_tuning');
-      if (saved) return { ...DEFAULT_TUNING, ...JSON.parse(saved) };
+      const v = localStorage.getItem('omni_hero_tuning_ver');
+      if (v === TUNING_VERSION) {
+        const saved = localStorage.getItem('omni_hero_card_tuning');
+        if (saved) return { ...DEFAULT_TUNING, ...JSON.parse(saved) };
+      } else {
+        localStorage.setItem('omni_hero_tuning_ver', TUNING_VERSION);
+        localStorage.setItem('omni_hero_card_tuning', JSON.stringify(DEFAULT_TUNING));
+      }
     } catch (e) {}
     return DEFAULT_TUNING;
   });
@@ -163,9 +170,9 @@ export default function MobileHeroCard({
               </span>
             </div>
 
-            {/* Feels Like - Below current temp with distinct warm color */}
-            <div className="flex items-center gap-1.5 -mt-0.5 mb-1.5">
-              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/35 drop-shadow">
+            {/* Feels Like - Below current temp with distinct warm color & enlarged presence */}
+            <div className="flex items-center gap-1.5 -mt-0.5 mb-2">
+              <span className="text-sm sm:text-base font-extrabold px-3 py-1 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 shadow-sm drop-shadow-md">
                 Feels like {feels}°{unit === 'F' ? 'F' : 'C'}
               </span>
             </div>
