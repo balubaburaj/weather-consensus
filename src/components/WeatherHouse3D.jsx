@@ -12,15 +12,144 @@ import {
   Heart,
   Home,
   Users,
-  Maximize2
+  Maximize2,
+  Sliders,
+  RotateCcw,
+  Info
 } from 'lucide-react';
 import { createHouseNo121Scene } from './3d/houseNo121Scene';
+import { WeatherIcon } from '../utils/weatherIcons';
+
+export const WEATHER_SCENARIOS = [
+  {
+    id: 'summer',
+    label: 'Summer',
+    iconName: 'sun',
+    temp: '24°C',
+    weatherDesc: 'Sunny Warm Sky (> 20°C)',
+    boyOutfit: 'Baseball Cap, Sunglasses & Light Summer Windbreaker over tee',
+    girlOutfit: 'Chic Sunglasses & Soft Summer Dress',
+    atmosphere: 'High Noon Warm Sun, Dry Sidewalk & Pavement',
+    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  },
+  {
+    id: 'mild',
+    label: 'Mild Day',
+    iconName: 'partly-cloudy-day',
+    temp: '18°C',
+    weatherDesc: 'Partly Cloudy (16 - 20°C)',
+    boyOutfit: 'Clear Glasses, Baseball Cap & Sport Track Jacket',
+    girlOutfit: 'Denim / Bomber Jacket & Dress',
+    atmosphere: 'Golden Afternoon Sunlight, Clear Roads',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  },
+  {
+    id: 'chilly',
+    label: 'Chilly',
+    iconName: 'cloudy',
+    temp: '11°C',
+    weatherDesc: 'Cool Overcast & Breezy (7 - 16°C)',
+    boyOutfit: 'Clear Glasses, Knit Beanie & Hard Fleece Hoodie (Kangaroo Pocket)',
+    girlOutfit: 'Cozy Cable Knit Scarf & Mauve Fleece Coat',
+    atmosphere: 'Cool Diffuse Sky, Damp Sidewalk Sheen',
+    badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+  },
+  {
+    id: 'puffy_cold',
+    label: 'Puffy Cold',
+    iconName: 'snowflake',
+    temp: '3°C',
+    weatherDesc: 'Cold Crisp Air (< 7°C)',
+    boyOutfit: 'Knit Beanie & Quilted 4-Baffle Puffy Down Jacket',
+    girlOutfit: 'Cute Pom-Pom Beanie, Cable Scarf & Winter Coat',
+    atmosphere: 'Pale Crisp Winter Sky, Cold Ground Bounce',
+    badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+  },
+  {
+    id: 'snow',
+    label: 'Winter Snow',
+    iconName: 'snow-crystals',
+    temp: '0°C',
+    weatherDesc: 'Falling Snow Flurries',
+    boyOutfit: 'Knit Beanie, Puffy Jacket & Clear Glasses',
+    girlOutfit: 'Pom-Pom Beanie, Cozy Scarf & Winter Coat',
+    atmosphere: '750 Soft Drifting Snowflakes & Frosted Sidewalk',
+    badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+  },
+  {
+    id: 'light_rain',
+    label: 'Light Rain',
+    iconName: 'light-rain',
+    temp: '12°C',
+    weatherDesc: 'Gentle Pattering Rain',
+    boyOutfit: 'Baseball Cap, Rain Jacket & Raised Rain Umbrella',
+    girlOutfit: 'Classic Yellow Raincoat Under Umbrella',
+    atmosphere: 'Falling Rain Droplets & Reflective Sidewalk Puddles',
+    badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+  },
+  {
+    id: 'heavy_rain',
+    label: 'Downpour',
+    iconName: 'heavy-rain',
+    temp: '10°C',
+    weatherDesc: 'Heavy Soaking Rain',
+    boyOutfit: 'Waterproof Rain Parka & Raised Umbrella',
+    girlOutfit: 'Heavy Yellow Raincoat & Umbrella Protection',
+    atmosphere: 'Dense Driving Rain & Large Spreading Puddles with Ripples',
+    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  },
+  {
+    id: 'cold_deluge',
+    label: 'Cold Deluge',
+    iconName: 'rain-splashes',
+    temp: '5°C',
+    weatherDesc: 'Torrential Deluge & Squall',
+    boyOutfit: 'Knit Beanie, Heavy Rain Jacket & Storm Umbrella',
+    girlOutfit: 'Heavy Storm Coat, Pom-Pom Beanie & Scarf',
+    atmosphere: 'Cloudburst Driving Rain, Deep Rippling Puddles & Lightning Flashes',
+    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  },
+  {
+    id: 'clear_night',
+    label: 'Clear Night',
+    iconName: 'crescent-moon',
+    temp: '9°C',
+    weatherDesc: 'Calm Starlit Evening',
+    boyOutfit: 'Baseball Cap & Casual Evening Jacket',
+    girlOutfit: 'Evening Jacket & Dress',
+    atmosphere: 'Deep Midnight Navy Sky, Lit Victorian Street Lantern & Glowing Windows',
+    badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+  },
+  {
+    id: 'rain_night',
+    label: 'Rain Night',
+    iconName: 'night-rain-showers',
+    temp: '8°C',
+    weatherDesc: 'Nocturnal Rain Showers',
+    boyOutfit: 'Rain Jacket & Raised Umbrella',
+    girlOutfit: 'Yellow Raincoat Under Umbrella',
+    atmosphere: 'Raindrops Glistening Through Street Lantern Light & Wet Puddles',
+    badgeColor: 'bg-blue-600/20 text-blue-300 border-blue-500/30',
+  },
+  {
+    id: 'live',
+    label: 'Reset to Live',
+    iconName: 'weather-refresh',
+    temp: 'Live',
+    weatherDesc: 'Real-time Synchronized Weather',
+    boyOutfit: 'Smart Adaptive Wardrobe (Outer layer, Cap/Beanie, Umbrella)',
+    girlOutfit: 'Smart Adaptive Outfit (Dress/Cardigan/Coat, Umbrella)',
+    atmosphere: 'Live local atmospheric lighting, precipitation & puddles',
+    badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+  },
+];
 
 /**
  * WeatherHouse3D Component
  * 
  * Embeds a procedural Three.js 3D model of House No. 121 and its stylized couple.
- * Adapts lighting, sky atmosphere, and falling precipitation in real-time to the current weather.
+ * Adapts lighting, sky atmosphere, props, wardrobe, puddles, and precipitation in real-time.
+ * Features an interactive Weather Scenario Studio to test every condition and wardrobe change.
  */
 export default function WeatherHouse3D({
   currentWeather,
@@ -34,8 +163,9 @@ export default function WeatherHouse3D({
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeCam, setActiveCam] = useState('iso'); // Starts at isometric street view
-  const [lightingMode, setLightingMode] = useState('auto'); // 'auto' | 'noon' | 'afternoon' | 'rainy' | 'dusk'
+  const [activeCam, setActiveCam] = useState('iso');
+  const [activeScenario, setActiveScenario] = useState('live');
+  const [isStudioOpen, setIsStudioOpen] = useState(true);
   const [isMotionActive, setIsMotionActive] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
   const [controlHint, setControlHint] = useState(null);
@@ -61,9 +191,7 @@ export default function WeatherHouse3D({
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Clean any prior children (StrictMode safe)
     mountRef.current.innerHTML = '';
-
     let sceneInstance = null;
 
     try {
@@ -83,7 +211,6 @@ export default function WeatherHouse3D({
       console.error('Failed to initialize House 121 3D scene:', err);
     }
 
-    // IntersectionObserver to pause rendering when scrolled out of view
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (sceneRef.current) {
@@ -110,22 +237,31 @@ export default function WeatherHouse3D({
     };
   }, [showToast]);
 
-  // Sync weather state to 3D scene
+  // Sync live weather state when activeScenario === 'live'
   useEffect(() => {
     if (!sceneRef.current) return;
 
-    if (lightingMode === 'auto') {
+    if (activeScenario === 'live') {
       const isDay = currentWeather?.isDay !== undefined ? currentWeather.isDay : true;
       const precipitation = currentWeather?.precipitation || 0;
+      const temperature = currentWeather?.temperature || 14;
+      const weatherCode = currentWeather?.weatherCode || 0;
       sceneRef.current.setWeatherState({
         isDay,
         isRaining: isCurrentlyRaining,
         precipitation,
+        temperature,
+        weatherCode,
       });
-    } else {
-      sceneRef.current.setLightingPreset(lightingMode);
     }
-  }, [currentWeather?.isDay, currentWeather?.precipitation, isCurrentlyRaining, lightingMode]);
+  }, [
+    currentWeather?.isDay,
+    currentWeather?.precipitation,
+    currentWeather?.temperature,
+    currentWeather?.weatherCode,
+    isCurrentlyRaining,
+    activeScenario,
+  ]);
 
   // Handle camera preset changes
   const handleCameraChange = (presetKey) => {
@@ -135,20 +271,15 @@ export default function WeatherHouse3D({
     }
   };
 
-  // Handle lighting preset changes
-  const handleLightingChange = (modeKey) => {
-    setLightingMode(modeKey);
-    if (!sceneRef.current) return;
-
-    if (modeKey === 'auto') {
-      const isDay = currentWeather?.isDay !== undefined ? currentWeather.isDay : true;
-      sceneRef.current.setWeatherState({
-        isDay,
-        isRaining: isCurrentlyRaining,
-        precipitation: currentWeather?.precipitation || 0,
-      });
-    } else {
-      sceneRef.current.setLightingPreset(modeKey);
+  // Handle weather scenario selection in test harness
+  const handleScenarioSelect = (scenarioId) => {
+    setActiveScenario(scenarioId);
+    if (sceneRef.current) {
+      sceneRef.current.setWeatherScenario(scenarioId);
+    }
+    const s = WEATHER_SCENARIOS.find((item) => item.id === scenarioId);
+    if (s) {
+      showToast(`${s.label}: ${s.boyOutfit}`);
     }
   };
 
@@ -167,29 +298,13 @@ export default function WeatherHouse3D({
     showToast('👋 Hello from No. 121 Sacre Coeur!');
   };
 
-  // Weather status description label
-  const getWeatherBadge = () => {
-    if (lightingMode === 'auto') {
-      if (isCurrentlyRaining) return { text: 'Live: Rainy Day', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' };
-      if (!currentWeather?.isDay) return { text: 'Live: Cozy Night', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' };
-      return { text: 'Live: Sunny Day', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
-    }
-    const map = {
-      noon: { text: 'Mode: High Noon', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
-      afternoon: { text: 'Mode: Golden Afternoon', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-      rainy: { text: 'Mode: Overcast Rain', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-      dusk: { text: 'Mode: Cozy Dusk / Night', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
-    };
-    return map[lightingMode] || { text: '3D Active', color: 'bg-slate-700 text-slate-300 border-slate-600' };
-  };
-
-  const badge = getWeatherBadge();
+  const currentScenarioObj = WEATHER_SCENARIOS.find((s) => s.id === activeScenario) || WEATHER_SCENARIOS[0];
 
   return (
     <div className={`relative rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/95 to-slate-950/90 backdrop-blur-md shadow-xl overflow-hidden ${className}`}>
       
       {/* Top Header & Interactive Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-800/80 bg-slate-950/40">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-slate-800/80 bg-slate-950/50">
         
         {/* Title & Live Status */}
         <div className="flex items-center gap-3">
@@ -201,12 +316,12 @@ export default function WeatherHouse3D({
               <span className="font-extrabold text-white text-sm tracking-tight">
                 No. 121 Sacre Coeur
               </span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${badge.color}`}>
-                {badge.text}
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${currentScenarioObj.badgeColor}`}>
+                {currentScenarioObj.label} &bull; {currentScenarioObj.temp}
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Interactive 3D Victorian Terraced House &bull; Live Atmosphere
+              Interactive 3D Victorian Terraced House &bull; Adaptive Wardrobe & Weather Engine
             </p>
           </div>
         </div>
@@ -263,54 +378,19 @@ export default function WeatherHouse3D({
             </button>
           </div>
 
-          {/* Lighting Mode Selector */}
-          <div className="flex items-center bg-slate-900/80 p-0.5 rounded-xl border border-slate-800 text-xs">
-            <button
-              onClick={() => handleLightingChange('auto')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition ${
-                lightingMode === 'auto'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Sync atmosphere dynamically to live local weather"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Live</span>
-            </button>
-            <button
-              onClick={() => handleLightingChange('afternoon')}
-              className={`p-1.5 rounded-lg font-medium transition ${
-                lightingMode === 'afternoon'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Warm afternoon sun"
-            >
-              <Sun className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => handleLightingChange('rainy')}
-              className={`p-1.5 rounded-lg font-medium transition ${
-                lightingMode === 'rainy'
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Rainy overcast atmosphere"
-            >
-              <CloudRain className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => handleLightingChange('dusk')}
-              className={`p-1.5 rounded-lg font-medium transition ${
-                lightingMode === 'dusk'
-                  ? 'bg-purple-500 text-white font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Cozy dusk & glowing windows"
-            >
-              <Moon className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Weather Studio Toggle */}
+          <button
+            onClick={() => setIsStudioOpen(!isStudioOpen)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition ${
+              isStudioOpen
+                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-sm'
+                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+            title="Toggle Weather & Wardrobe Studio Testing Deck"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Studio</span>
+          </button>
 
           {/* Motion Toggle */}
           <button
@@ -335,6 +415,71 @@ export default function WeatherHouse3D({
           </button>
         </div>
       </div>
+
+      {/* WEATHER & WARDROBE STUDIO TEST HARNESS DECK */}
+      {isStudioOpen && !isCollapsed && (
+        <div className="bg-slate-950/80 border-b border-slate-800/80 px-4 sm:px-5 py-2.5">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Weather & Wardrobe Studio</span>
+              <span className="text-[10px] text-slate-500 font-normal hidden sm:inline">
+                &bull; One-click testing for all weather scenarios, outfits, props & puddles
+              </span>
+            </div>
+            {activeScenario !== 'live' && (
+              <button
+                onClick={() => handleScenarioSelect('live')}
+                className="flex items-center gap-1 text-[11px] font-bold text-pink-400 hover:text-pink-300 transition"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset Live</span>
+              </button>
+            )}
+          </div>
+
+          {/* Scenario Buttons Grid / Strip */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800">
+            {WEATHER_SCENARIOS.map((s) => {
+              const isSelected = activeScenario === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => handleScenarioSelect(s.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition border shrink-0 ${
+                    isSelected
+                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md shadow-cyan-500/20 font-bold scale-[1.02]'
+                      : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                  }`}
+                  title={`${s.label} (${s.temp}): ${s.weatherDesc}`}
+                >
+                  <WeatherIcon iconName={s.iconName} className="w-4 h-4 shrink-0" />
+                  <span>{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Wardrobe & Atmosphere Breakdown Card */}
+          <div className="mt-2 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/60 text-[11px] text-slate-300 flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div className="flex items-start md:items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase border shrink-0 ${currentScenarioObj.badgeColor}`}>
+                {currentScenarioObj.temp}
+              </span>
+              <div className="leading-snug">
+                <span className="font-bold text-white mr-1.5">Boy:</span>
+                <span className="text-slate-300 mr-3">{currentScenarioObj.boyOutfit}</span>
+                <span className="font-bold text-white mr-1.5">Girl:</span>
+                <span className="text-slate-300">{currentScenarioObj.girlOutfit}</span>
+              </div>
+            </div>
+            <div className="text-slate-400 text-[10px] flex items-center gap-1 shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-slate-800/60">
+              <Info className="w-3 h-3 text-cyan-400" />
+              <span>{currentScenarioObj.atmosphere}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3D Canvas Body */}
       <div

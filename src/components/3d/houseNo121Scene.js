@@ -2886,6 +2886,47 @@ export function createHouseNo121Scene(container, options = {}) {
       boyCollar.position.set(0, 1.08, 0.01);
       boyBody.add(boyCollar);
 
+      // Boy Outerwear Detail Meshes (Puffy baffles, Fleece pouch, and Zipper)
+      const puffyMat = new THREE.MeshStandardMaterial({ color: 0x182534, roughness: 0.42, metalness: 0.2 });
+      const boyPuffyGroup = new THREE.Group();
+      for (const [y, r1, r2] of [
+        [0.72, 0.165, 0.028],
+        [0.81, 0.170, 0.030],
+        [0.90, 0.168, 0.030],
+        [0.99, 0.155, 0.028],
+      ]) {
+        const baffle = new THREE.Mesh(new THREE.TorusGeometry(r1, r2, 8, 24), puffyMat);
+        baffle.position.set(0, y, 0);
+        baffle.rotation.x = Math.PI / 2;
+        baffle.castShadow = true;
+        boyPuffyGroup.add(baffle);
+      }
+      const puffyCollar = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.032, 8, 20), puffyMat);
+      puffyCollar.position.set(0, 1.08, 0.01);
+      puffyCollar.rotation.x = Math.PI / 2;
+      boyPuffyGroup.add(puffyCollar);
+      boyPuffyGroup.visible = false;
+      boyBody.add(boyPuffyGroup);
+
+      // Hard Fleece Hoodie details (kangaroo front pocket + hood draped behind neck)
+      const fleeceMat = new THREE.MeshStandardMaterial({ color: 0x3d4f5e, roughness: 0.95 });
+      const boyFleeceGroup = new THREE.Group();
+      const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.08, 0.04), fleeceMat);
+      pouch.position.set(0, 0.76, 0.118);
+      pouch.castShadow = true;
+      const drapedHood = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.032, 8, 16, Math.PI), fleeceMat);
+      drapedHood.position.set(0, 1.04, -0.08);
+      drapedHood.rotation.x = -0.4;
+      boyFleeceGroup.add(pouch, drapedHood);
+      boyFleeceGroup.visible = false;
+      boyBody.add(boyFleeceGroup);
+
+      // Outerwear Zipper strip
+      const zipMat = new THREE.MeshStandardMaterial({ color: 0xd0d8e0, roughness: 0.3, metalness: 0.6 });
+      const boyZipMesh = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.38, 0.015), zipMat);
+      boyZipMesh.position.set(0, 0.86, 0.125);
+      boyBody.add(boyZipMesh);
+
       const boyNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.056, 0.10, 12), skinMat);
       boyNeck.position.set(0, 1.13, 0);
       boyBody.add(boyNeck);
@@ -2893,6 +2934,77 @@ export function createHouseNo121Scene(container, options = {}) {
       const boyHeadData = createStylizedHead({ isGirl: false });
       boyHeadData.headGroup.position.set(0, 1.36, 0.02);
       boyBody.add(boyHeadData.headGroup);
+
+      // Boy Eyewear: Clear Glasses vs Dark Sunglasses
+      const glassesFrameMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35 });
+      const clearLensMat = new THREE.MeshStandardMaterial({ color: 0xe8f4f8, transparent: true, opacity: 0.32, roughness: 0.05 });
+      const sunLensMat = new THREE.MeshStandardMaterial({ color: 0x111624, transparent: true, opacity: 0.90, roughness: 0.12, metalness: 0.4 });
+
+      // 1. Clear Glasses (default on)
+      const boyGlassesGroup = new THREE.Group();
+      for (const sx of [-1, 1]) {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.040, 0.0055, 8, 20), glassesFrameMat);
+        rim.position.set(sx * 0.074, 0.022, 0.218);
+        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.038, 16), clearLensMat);
+        lens.position.set(sx * 0.074, 0.022, 0.219);
+        boyGlassesGroup.add(rim, lens);
+      }
+      const gBridge = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.006, 0.006), glassesFrameMat);
+      gBridge.position.set(0, 0.026, 0.222);
+      boyGlassesGroup.add(gBridge);
+      boyHeadData.headGroup.add(boyGlassesGroup);
+
+      // 2. Sunglasses (for sunny scenarios)
+      const boySunglassesGroup = new THREE.Group();
+      for (const sx of [-1, 1]) {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.006, 8, 20), glassesFrameMat);
+        rim.position.set(sx * 0.074, 0.022, 0.218);
+        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.040, 16), sunLensMat);
+        lens.position.set(sx * 0.074, 0.022, 0.219);
+        boySunglassesGroup.add(rim, lens);
+      }
+      const sBridge = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.007, 0.006), glassesFrameMat);
+      sBridge.position.set(0, 0.026, 0.222);
+      boySunglassesGroup.add(sBridge);
+      boySunglassesGroup.visible = false;
+      boyHeadData.headGroup.add(boySunglassesGroup);
+
+      // Boy Headwear: Baseball Cap vs Knit Beanie
+      // 3. Baseball Cap (default on)
+      const capMat = new THREE.MeshStandardMaterial({ color: 0x1c2b3d, roughness: 0.72 });
+      const boyCapGroup = new THREE.Group();
+      const capDome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.238, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.48),
+        capMat
+      );
+      capDome.position.set(0, 0.06, -0.02);
+      capDome.rotation.x = -0.42;
+      capDome.castShadow = true;
+      const capBtn = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 8), capMat);
+      capBtn.position.set(0, 0.27, -0.05);
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.012, 0.14), capMat);
+      visor.position.set(0, 0.125, 0.175);
+      visor.rotation.x = -0.22;
+      visor.castShadow = true;
+      boyCapGroup.add(capDome, capBtn, visor);
+      boyHeadData.headGroup.add(boyCapGroup);
+
+      // 4. Knit Beanie (for cold, chilly, snow)
+      const beanieMat = new THREE.MeshStandardMaterial({ color: 0x7a2c2c, roughness: 0.92 });
+      const boyBeanieGroup = new THREE.Group();
+      const beanieCuff = new THREE.Mesh(new THREE.TorusGeometry(0.226, 0.038, 10, 24), beanieMat);
+      beanieCuff.position.set(0, 0.138, 0.01);
+      beanieCuff.rotation.x = Math.PI / 2 - 0.12;
+      const beanieDome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.232, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.52),
+        beanieMat
+      );
+      beanieDome.position.set(0, 0.09, -0.03);
+      beanieDome.rotation.x = -0.32;
+      beanieDome.castShadow = true;
+      boyBeanieGroup.add(beanieCuff, beanieDome);
+      boyBeanieGroup.visible = false;
+      boyHeadData.headGroup.add(boyBeanieGroup);
 
       // Boy's Inner Arm (holding girl's hand)
       const boyHoldArm = new THREE.Group();
@@ -3014,6 +3126,92 @@ export function createHouseNo121Scene(container, options = {}) {
       const gwHand = createCuteHand(-1);
       gwHand.position.set(0, 0.22, 0);
       girlWaveForearm.add(gwLower, gwHand);
+
+      // Girl Eyewear: Cat-Eye Sunglasses (for sunny weather)
+      const girlSunglasses = new THREE.Group();
+      const gFrameMat = new THREE.MeshStandardMaterial({ color: 0x241820, roughness: 0.3 });
+      for (const sx of [-1, 1]) {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.0055, 8, 20), gFrameMat);
+        rim.position.set(sx * 0.070, 0.020, 0.215);
+        rim.rotation.z = sx * 0.15; // cute subtle cat-eye angle
+        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.036, 16), sunLensMat);
+        lens.position.set(sx * 0.070, 0.020, 0.216);
+        girlSunglasses.add(rim, lens);
+      }
+      const gBridge2 = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.006, 0.006), gFrameMat);
+      gBridge2.position.set(0, 0.024, 0.218);
+      girlSunglasses.add(gBridge2);
+      girlSunglasses.visible = false;
+      girlHeadData.headGroup.add(girlSunglasses);
+
+      // Girl Knit Beanie with Fluffy Pom-Pom (for cold, snow)
+      const girlBeanieMat = new THREE.MeshStandardMaterial({ color: 0x8a3250, roughness: 0.92 });
+      const pomPomMat = new THREE.MeshStandardMaterial({ color: 0xf5edf0, roughness: 0.98 });
+      const girlBeanieGroup = new THREE.Group();
+      const gCuff = new THREE.Mesh(new THREE.TorusGeometry(0.220, 0.036, 10, 24), girlBeanieMat);
+      gCuff.position.set(0, 0.132, 0.01);
+      gCuff.rotation.x = Math.PI / 2 - 0.10;
+      const gDome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.225, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.52),
+        girlBeanieMat
+      );
+      gDome.position.set(0, 0.08, -0.03);
+      gDome.rotation.x = -0.30;
+      gDome.castShadow = true;
+      const pomPom = new THREE.Mesh(new THREE.SphereGeometry(0.046, 12, 12), pomPomMat);
+      pomPom.position.set(0, 0.29, -0.07);
+      pomPom.castShadow = true;
+      girlBeanieGroup.add(gCuff, gDome, pomPom);
+      girlBeanieGroup.visible = false;
+      girlHeadData.headGroup.add(girlBeanieGroup);
+
+      // Girl Cozy Cable Knit Scarf (for chilly & cold weather)
+      const scarfMat = new THREE.MeshStandardMaterial({ color: 0xe8d0b5, roughness: 0.95 });
+      const girlScarfGroup = new THREE.Group();
+      const neckRing = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.036, 8, 20), scarfMat);
+      neckRing.position.set(0, 1.04, 0.01);
+      neckRing.rotation.x = Math.PI / 2;
+      neckRing.castShadow = true;
+      const scarfTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.032, 0.16, 6, 8), scarfMat);
+      scarfTail.position.set(0.045, 0.91, 0.095);
+      scarfTail.rotation.z = 0.15;
+      scarfTail.rotation.x = 0.12;
+      scarfTail.castShadow = true;
+      girlScarfGroup.add(neckRing, scarfTail);
+      girlScarfGroup.visible = false;
+      girlBody.add(girlScarfGroup);
+
+      // Large 3D Open Rain Umbrella (held aloft shielding the couple)
+      const umbrellaGroup = new THREE.Group();
+      const umbrellaCanopyMat = new THREE.MeshStandardMaterial({
+        color: 0x1d3344,
+        roughness: 0.38,
+        metalness: 0.15,
+        side: THREE.DoubleSide
+      });
+      const umbrellaMetalMat = new THREE.MeshStandardMaterial({ color: 0xd0d8e0, roughness: 0.3, metalness: 0.8 });
+      const umbrellaHandleMat = new THREE.MeshStandardMaterial({ color: 0x3d2215, roughness: 0.6 });
+
+      const umbrellaCanopy = new THREE.Mesh(new THREE.ConeGeometry(0.74, 0.25, 8, 1, true), umbrellaCanopyMat);
+      umbrellaCanopy.position.y = 0.52;
+      umbrellaCanopy.castShadow = true;
+
+      const umbrellaTip = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.08, 8), umbrellaMetalMat);
+      umbrellaTip.position.y = 0.68;
+
+      const umbrellaShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 1.15, 10), umbrellaMetalMat);
+      umbrellaShaft.position.y = 0.0;
+
+      const umbrellaHandle = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.011, 8, 16, Math.PI), umbrellaHandleMat);
+      umbrellaHandle.position.set(0.036, -0.58, 0);
+      umbrellaHandle.rotation.z = Math.PI;
+
+      umbrellaGroup.add(umbrellaCanopy, umbrellaTip, umbrellaShaft, umbrellaHandle);
+      // Position parented to boyBody so it naturally sways and jumps with the couple
+      umbrellaGroup.position.set(0.30, 1.28, 0.08);
+      umbrellaGroup.rotation.set(-0.06, 0.0, -0.16);
+      umbrellaGroup.visible = false;
+      boyBody.add(umbrellaGroup);
 
       // =======================================================================
       // 11. SIDEWALK, CURB, ASPHALT STREET, WEEDS & DRIFTING 3D CLOUDS
@@ -3212,6 +3410,78 @@ export function createHouseNo121Scene(container, options = {}) {
           starOpacity: 0.0,
           exposure: 0.96,
         },
+        chilly: {
+          skyTop: new THREE.Color('#4c6680'),
+          skyMid: new THREE.Color('#7893ab'),
+          skyBottom: new THREE.Color('#c2d1de'),
+          fogColor: new THREE.Color('#8ea4b8'),
+          sunColor: new THREE.Color('#e0eaf2'),
+          sunIntensity: 1.6,
+          sunPos: new THREE.Vector3(-6.0, 13.0, 7.0),
+          hemiSky: new THREE.Color('#94afc7'),
+          hemiGround: new THREE.Color('#5c564f'),
+          hemiIntensity: 0.82,
+          bounceIntensity: 0.28,
+          cloudColor: new THREE.Color('#dce6f0'),
+          windowGlow: 0.0,
+          lanternIntensity: 0.0,
+          starOpacity: 0.0,
+          exposure: 1.02,
+        },
+        snow: {
+          skyTop: new THREE.Color('#58728a'),
+          skyMid: new THREE.Color('#8fa4b5'),
+          skyBottom: new THREE.Color('#e2ecf2'),
+          fogColor: new THREE.Color('#b8cad6'),
+          sunColor: new THREE.Color('#ffffff'),
+          sunIntensity: 1.8,
+          sunPos: new THREE.Vector3(-4.0, 14.0, 6.0),
+          hemiSky: new THREE.Color('#c8dbed'),
+          hemiGround: new THREE.Color('#e4edf5'),
+          hemiIntensity: 1.05,
+          bounceIntensity: 0.52,
+          cloudColor: new THREE.Color('#edf4f8'),
+          windowGlow: 0.0,
+          lanternIntensity: 0.0,
+          starOpacity: 0.0,
+          exposure: 1.06,
+        },
+        heavyRain: {
+          skyTop: new THREE.Color('#2e3d4c'),
+          skyMid: new THREE.Color('#485a6b'),
+          skyBottom: new THREE.Color('#6f8294'),
+          fogColor: new THREE.Color('#4f6273'),
+          sunColor: new THREE.Color('#8fa8bc'),
+          sunIntensity: 0.85,
+          sunPos: new THREE.Vector3(-3.0, 11.0, 5.0),
+          hemiSky: new THREE.Color('#54697d'),
+          hemiGround: new THREE.Color('#384048'),
+          hemiIntensity: 0.60,
+          bounceIntensity: 0.14,
+          cloudColor: new THREE.Color('#4a5866'),
+          windowGlow: 1.1,
+          lanternIntensity: 2.2,
+          starOpacity: 0.0,
+          exposure: 0.94,
+        },
+        deluge: {
+          skyTop: new THREE.Color('#1c2733'),
+          skyMid: new THREE.Color('#2e3d4a'),
+          skyBottom: new THREE.Color('#475766'),
+          fogColor: new THREE.Color('#2e3e4d'),
+          sunColor: new THREE.Color('#6f8599'),
+          sunIntensity: 0.55,
+          sunPos: new THREE.Vector3(-2.0, 10.0, 4.0),
+          hemiSky: new THREE.Color('#3b4b59'),
+          hemiGround: new THREE.Color('#242b30'),
+          hemiIntensity: 0.48,
+          bounceIntensity: 0.10,
+          cloudColor: new THREE.Color('#2c3742'),
+          windowGlow: 1.45,
+          lanternIntensity: 2.8,
+          starOpacity: 0.0,
+          exposure: 0.90,
+        },
       };
 
     // Rain particle system
@@ -3239,8 +3509,98 @@ export function createHouseNo121Scene(container, options = {}) {
     const rainParticles = new THREE.Points(rainGeo, rainMat);
     scene.add(rainParticles);
 
+    // Snow particle system (for winter snow flurries & blizzards)
+    const snowCount = 750;
+    const snowGeo = new THREE.BufferGeometry();
+    const snowPositions = new Float32Array(snowCount * 3);
+    const snowSpeeds = new Float32Array(snowCount);
+    const snowDrifts = new Float32Array(snowCount);
+
+    for (let i = 0; i < snowCount; i++) {
+      snowPositions[i * 3 + 0] = (Math.random() - 0.5) * 26;
+      snowPositions[i * 3 + 1] = Math.random() * 16;
+      snowPositions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+      snowSpeeds[i] = 1.4 + Math.random() * 1.2;
+      snowDrifts[i] = Math.random() * Math.PI * 2;
+    }
+    snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+
+    const snowMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.12,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const snowParticles = new THREE.Points(snowGeo, snowMat);
+    scene.add(snowParticles);
+
+    // Dynamic Reflective Puddles with Concentric Ripples
+    const puddlesGroup = new THREE.Group();
+    scene.add(puddlesGroup);
+
+    const puddleMat = new THREE.MeshStandardMaterial({
+      color: 0x141f2a,
+      roughness: 0.04,
+      metalness: 0.40,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+    });
+
+    const puddles = [
+      { mesh: new THREE.Mesh(new THREE.CircleGeometry(0.70, 32), puddleMat), pos: new THREE.Vector3(-0.45, -0.152, 4.2), scale: new THREE.Vector3(1.5, 0.85, 1.0) },
+      { mesh: new THREE.Mesh(new THREE.CircleGeometry(0.48, 28), puddleMat), pos: new THREE.Vector3(1.25, -0.152, 3.8), scale: new THREE.Vector3(1.2, 0.75, 1.0) },
+      { mesh: new THREE.Mesh(new THREE.CircleGeometry(0.58, 30), puddleMat), pos: new THREE.Vector3(-2.8, -0.152, 5.2), scale: new THREE.Vector3(1.6, 0.65, 1.0) },
+      { mesh: new THREE.Mesh(new THREE.CircleGeometry(0.38, 24), puddleMat), pos: new THREE.Vector3(0.85, 0.005, 1.8), scale: new THREE.Vector3(1.1, 0.8, 1.0) },
+    ];
+
+    puddles.forEach((p) => {
+      p.mesh.position.copy(p.pos);
+      p.mesh.rotation.x = -Math.PI / 2;
+      p.mesh.scale.copy(p.scale);
+      p.mesh.receiveShadow = true;
+      puddlesGroup.add(p.mesh);
+    });
+
+    // Expanding ripple rings inside puddles
+    const ripples = [];
+    const rippleBaseMat = new THREE.MeshBasicMaterial({
+      color: 0xa8cbe4,
+      transparent: true,
+      opacity: 0.0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const pIdx = i % puddles.length;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.015, 0.035, 24), rippleBaseMat.clone());
+      ring.rotation.x = -Math.PI / 2;
+      const p = puddles[pIdx];
+      ring.position.set(
+        p.pos.x + (Math.random() - 0.5) * 0.4 * p.scale.x,
+        p.pos.y + 0.002,
+        p.pos.z + (Math.random() - 0.5) * 0.3 * p.scale.y
+      );
+      puddlesGroup.add(ring);
+      ripples.push({
+        mesh: ring,
+        pIdx,
+        scale: 0.1 + (i / 10) * 1.4,
+        maxScale: 1.1 + Math.random() * 0.6,
+        speed: 0.75 + Math.random() * 0.45,
+      });
+    }
+
     let isRaining = false;
-      let targetLighting = lightingPresets.afternoon;
+    let isSnowing = false;
+    let targetRainOpacity = 0.0;
+    let targetPuddleOpacity = 0.0;
+    let activeScenarioKey = 'live';
+    let lightningFlashTimer = 0;
+    let targetLighting = lightingPresets.afternoon;
 
       const cameraPresets = {
         front: {
@@ -3581,9 +3941,10 @@ export function createHouseNo121Scene(container, options = {}) {
         alarmLedMat.emissiveIntensity = Math.sin(now * 3.5) > 0.72 ? 2.4 : 0.25;
       }
 
-      // Rain animation
+      // Rain & Dynamic Puddles animation
       if (isRaining) {
-        rainMat.opacity = THREE.MathUtils.lerp(rainMat.opacity, 0.75, dt * 2.5);
+        rainMat.opacity = THREE.MathUtils.lerp(rainMat.opacity, targetRainOpacity > 0 ? targetRainOpacity : 0.75, dt * 2.5);
+        puddleMat.opacity = THREE.MathUtils.lerp(puddleMat.opacity, targetPuddleOpacity > 0 ? targetPuddleOpacity : 0.65, dt * 2.0);
         const posArr = rainGeo.attributes.position.array;
         for (let i = 0; i < rainCount; i++) {
           posArr[i * 3 + 1] -= rainSpeeds[i] * dt;
@@ -3595,8 +3956,62 @@ export function createHouseNo121Scene(container, options = {}) {
           }
         }
         rainGeo.attributes.position.needsUpdate = true;
-      } else if (rainMat.opacity > 0.01) {
-        rainMat.opacity = THREE.MathUtils.lerp(rainMat.opacity, 0.0, dt * 3.0);
+
+        // Animate dynamic concentric ripple rings
+        const curPuddleOp = puddleMat.opacity;
+        for (const r of ripples) {
+          r.scale += dt * r.speed;
+          const prog = r.scale / r.maxScale;
+          r.mesh.scale.set(r.scale, r.scale, 1);
+          r.mesh.material.opacity = Math.max(0, (1 - prog) * curPuddleOp * 0.72);
+          if (prog >= 1.0) {
+            r.scale = 0.05;
+            const p = puddles[r.pIdx];
+            r.mesh.position.set(
+              p.pos.x + (Math.random() - 0.5) * 0.45 * p.scale.x,
+              p.pos.y + 0.002,
+              p.pos.z + (Math.random() - 0.5) * 0.35 * p.scale.y
+            );
+          }
+        }
+      } else {
+        if (rainMat.opacity > 0.01) {
+          rainMat.opacity = THREE.MathUtils.lerp(rainMat.opacity, 0.0, dt * 3.0);
+        }
+        if (puddleMat.opacity > 0.01) {
+          puddleMat.opacity = THREE.MathUtils.lerp(puddleMat.opacity, 0.0, dt * 2.5);
+          for (const r of ripples) {
+            r.mesh.material.opacity = THREE.MathUtils.lerp(r.mesh.material.opacity, 0.0, dt * 4.0);
+          }
+        }
+      }
+
+      // Snow particle animation (soft drifting flakes)
+      if (isSnowing) {
+        snowMat.opacity = THREE.MathUtils.lerp(snowMat.opacity, 0.88, dt * 2.5);
+        const sArr = snowGeo.attributes.position.array;
+        for (let i = 0; i < snowCount; i++) {
+          sArr[i * 3 + 1] -= snowSpeeds[i] * dt;
+          sArr[i * 3 + 0] += Math.sin(t * 1.5 + snowDrifts[i]) * 0.40 * dt;
+          if (sArr[i * 3 + 1] < 0.05) {
+            sArr[i * 3 + 1] = 15.5;
+            sArr[i * 3 + 0] = (Math.random() - 0.5) * 26;
+            sArr[i * 3 + 2] = (Math.random() - 0.5) * 20;
+          }
+        }
+        snowGeo.attributes.position.needsUpdate = true;
+      } else if (snowMat.opacity > 0.01) {
+        snowMat.opacity = THREE.MathUtils.lerp(snowMat.opacity, 0.0, dt * 3.0);
+      }
+
+      // Occasional atmospheric lightning flash during Cold Deluge / Thunderstorms
+      if (activeScenarioKey === 'cold_deluge') {
+        if (lightningFlashTimer > 0) {
+          lightningFlashTimer -= dt;
+          sunLight.intensity = targetLighting.sunIntensity + 3.2;
+        } else if (Math.random() < 0.006) {
+          lightningFlashTimer = 0.08 + Math.random() * 0.07;
+        }
       }
 
       // 3. Couple Idle Animations (Sway, Waving, Clean Vertical-Scale Blinks & Tap Jump)
@@ -3719,23 +4134,300 @@ export function createHouseNo121Scene(container, options = {}) {
       }
     }
 
-    function setWeatherState({ isDay = true, isRaining: rain = false, precipitation = 0, isDusk = false }) {
-      isRaining = !!rain || (precipitation > 0.05);
-      if (isRaining) {
-        targetLighting = isDay ? lightingPresets.rainy : lightingPresets.dusk;
-      } else if (!isDay) {
-        targetLighting = lightingPresets.dusk;
-      } else if (isDusk) {
-        targetLighting = lightingPresets.dusk;
-      } else {
-        targetLighting = lightingPresets.afternoon;
+    function setWeatherScenario(key) {
+      activeScenarioKey = key;
+
+      switch (key) {
+        case 'summer':
+          targetLighting = lightingPresets.noon;
+          isRaining = false;
+          isSnowing = false;
+          targetRainOpacity = 0.0;
+          targetPuddleOpacity = 0.0;
+          // Boy: Sunglasses, baseball cap, summer light windbreaker over tee
+          boySunglassesGroup.visible = true;
+          boyGlassesGroup.visible = false;
+          boyCapGroup.visible = true;
+          boyBeanieGroup.visible = false;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x3a88c2); // fresh summer windbreaker
+          sweaterMat.roughness = 0.55;
+          umbrellaGroup.visible = false;
+          // Girl: Sunglasses, summer dress
+          girlSunglasses.visible = true;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = false;
+          dressMat.color.setHex(0xe86194);
+          break;
+
+        case 'mild':
+          targetLighting = lightingPresets.afternoon;
+          isRaining = false;
+          isSnowing = false;
+          targetRainOpacity = 0.0;
+          targetPuddleOpacity = 0.0;
+          // Boy: Clear glasses, baseball cap, casual track/sport jacket
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = true;
+          boyBeanieGroup.visible = false;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x235b87); // marine sport jacket
+          sweaterMat.roughness = 0.65;
+          umbrellaGroup.visible = false;
+          // Girl: Chic denim/sport jacket & dress
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = false;
+          dressMat.color.setHex(0x3e6892);
+          break;
+
+        case 'chilly':
+          targetLighting = lightingPresets.chilly;
+          isRaining = false;
+          isSnowing = false;
+          targetRainOpacity = 0.0;
+          targetPuddleOpacity = 0.15; // damp sidewalk sheen
+          // Boy: Clear glasses, knit beanie, hard fleece hoodie with kangaroo pocket!
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = false;
+          boyBeanieGroup.visible = true;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = true;
+          boyZipMesh.visible = false;
+          sweaterMat.color.setHex(0x3d4f5e); // hard slate fleece
+          sweaterMat.roughness = 0.95;
+          umbrellaGroup.visible = false;
+          // Girl: Cozy knit scarf & fleece coat
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = true;
+          dressMat.color.setHex(0x8a4568);
+          break;
+
+        case 'puffy_cold':
+          targetLighting = lightingPresets.snow;
+          isRaining = false;
+          isSnowing = false;
+          targetRainOpacity = 0.0;
+          targetPuddleOpacity = 0.0;
+          // Boy: Clear glasses, knit beanie, quilted puffy down jacket (4 horizontal baffles)
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = false;
+          boyBeanieGroup.visible = true;
+          boyPuffyGroup.visible = true;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x182534); // dark down jacket
+          sweaterMat.roughness = 0.42;
+          umbrellaGroup.visible = false;
+          // Girl: Pom-pom beanie, scarf, winter coat
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = true;
+          girlScarfGroup.visible = true;
+          dressMat.color.setHex(0xa53258);
+          break;
+
+        case 'snow':
+          targetLighting = lightingPresets.snow;
+          isRaining = false;
+          isSnowing = true;
+          targetRainOpacity = 0.0;
+          targetPuddleOpacity = 0.0;
+          // Boy: Beanie, puffy jacket, clear glasses
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = false;
+          boyBeanieGroup.visible = true;
+          boyPuffyGroup.visible = true;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x182534);
+          sweaterMat.roughness = 0.42;
+          umbrellaGroup.visible = false;
+          // Girl: Pom-pom beanie, scarf, winter coat
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = true;
+          girlScarfGroup.visible = true;
+          dressMat.color.setHex(0xa53258);
+          break;
+
+        case 'light_rain':
+          targetLighting = lightingPresets.rainy;
+          isRaining = true;
+          isSnowing = false;
+          targetRainOpacity = 0.45;
+          targetPuddleOpacity = 0.50;
+          // Boy: Baseball cap, rain jacket, clear glasses, umbrella raised!
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = true;
+          boyBeanieGroup.visible = false;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x23687a); // waterproof teal
+          sweaterMat.roughness = 0.40;
+          umbrellaGroup.visible = true;
+          // Girl: Classic yellow raincoat!
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = false;
+          dressMat.color.setHex(0xf5a623);
+          break;
+
+        case 'heavy_rain':
+          targetLighting = lightingPresets.heavyRain;
+          isRaining = true;
+          isSnowing = false;
+          targetRainOpacity = 0.85;
+          targetPuddleOpacity = 0.85;
+          // Boy: Rain jacket, umbrella raised!
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = true;
+          boyBeanieGroup.visible = false;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x1a4e5d);
+          sweaterMat.roughness = 0.35;
+          umbrellaGroup.visible = true;
+          // Girl: Heavy yellow raincoat!
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = false;
+          dressMat.color.setHex(0xf5a623);
+          break;
+
+        case 'cold_deluge':
+          targetLighting = lightingPresets.deluge;
+          isRaining = true;
+          isSnowing = false;
+          targetRainOpacity = 1.0;
+          targetPuddleOpacity = 1.0;
+          // Boy: Beanie, heavy storm jacket, umbrella raised!
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = false;
+          boyBeanieGroup.visible = true;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x133d49);
+          sweaterMat.roughness = 0.30;
+          umbrellaGroup.visible = true;
+          // Girl: Heavy raincoat, beanie, scarf!
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = true;
+          girlScarfGroup.visible = true;
+          dressMat.color.setHex(0xd48812);
+          break;
+
+        case 'clear_night':
+          targetLighting = lightingPresets.dusk;
+          isRaining = false;
+          isSnowing = false;
+          targetRainOpacity = 0.0;
+          targetPuddleOpacity = 0.0;
+          // Boy: Baseball cap, casual evening jacket, clear glasses
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = true;
+          boyBeanieGroup.visible = false;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x283b4c);
+          sweaterMat.roughness = 0.70;
+          umbrellaGroup.visible = false;
+          // Girl: Evening jacket & dress
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = false;
+          dressMat.color.setHex(0x752b48);
+          break;
+
+        case 'rain_night':
+          targetLighting = lightingPresets.dusk;
+          isRaining = true;
+          isSnowing = false;
+          targetRainOpacity = 0.65;
+          targetPuddleOpacity = 0.80;
+          // Boy: Rain jacket, umbrella raised!
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          boyCapGroup.visible = true;
+          boyBeanieGroup.visible = false;
+          boyPuffyGroup.visible = false;
+          boyFleeceGroup.visible = false;
+          boyZipMesh.visible = true;
+          sweaterMat.color.setHex(0x1d4d5e);
+          sweaterMat.roughness = 0.38;
+          umbrellaGroup.visible = true;
+          // Girl: Yellow raincoat!
+          girlSunglasses.visible = false;
+          girlBeanieGroup.visible = false;
+          girlScarfGroup.visible = false;
+          dressMat.color.setHex(0xf5a623);
+          break;
+
+        case 'live':
+        default:
+          activeScenarioKey = 'live';
+          break;
       }
+    }
+
+    function setWeatherState({
+      isDay = true,
+      isRaining: rain = false,
+      precipitation = 0,
+      temperature = 14,
+      weatherCode = 0,
+    }) {
+      if (activeScenarioKey !== 'live') return;
+
+      const rainVal = Number(precipitation) || 0;
+      const code = Number(weatherCode) || 0;
+      const temp = Number(temperature) || 14;
+      const raining = !!rain || (rainVal > 0.05);
+
+      if (code >= 71 && code <= 86) {
+        // Snow conditions
+        setWeatherScenario('snow');
+      } else if (raining) {
+        if (rainVal >= 2.5 && temp < 8) {
+          setWeatherScenario('cold_deluge');
+        } else if (rainVal >= 2.0) {
+          setWeatherScenario(!isDay ? 'rain_night' : 'heavy_rain');
+        } else {
+          setWeatherScenario(!isDay ? 'rain_night' : 'light_rain');
+        }
+      } else if (!isDay) {
+        setWeatherScenario('clear_night');
+      } else if (temp >= 20) {
+        setWeatherScenario('summer');
+      } else if (temp >= 16) {
+        setWeatherScenario('mild');
+      } else if (temp >= 7) {
+        setWeatherScenario('chilly');
+      } else {
+        setWeatherScenario('puffy_cold');
+      }
+      activeScenarioKey = 'live';
     }
 
     function setLightingPreset(key) {
       if (lightingPresets[key]) {
         targetLighting = lightingPresets[key];
-        isRaining = (key === 'rainy');
+        isRaining = (key === 'rainy' || key === 'heavyRain' || key === 'deluge');
       }
     }
 
@@ -3771,6 +4463,8 @@ export function createHouseNo121Scene(container, options = {}) {
 
     return {
       setWeatherState,
+      setWeatherScenario,
+      getActiveScenarioKey: () => activeScenarioKey,
       setCameraPreset,
       playIntroSequence,
       cancelIntroSequence,

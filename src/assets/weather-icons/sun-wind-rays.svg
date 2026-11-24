@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <path d="M42.40,29.60 C42.40,35.35 37.74,40.00 32.00,40.00 C26.25,40.00 21.60,35.35 21.60,29.60 C21.60,23.86 26.25,19.20 32.00,19.20 C37.74,19.20 42.40,23.86 42.40,29.60" fill="#ffcc00" />
+  <path d="M28.00,22.40 C35.04,22.40 40.76,28.10 40.80,35.13 C41.81,33.53 42.40,31.64 42.40,29.60 C42.40,23.86 37.74,19.20 32.00,19.20 C28.72,19.20 25.81,20.72 23.90,23.09 C25.19,22.65 26.56,22.40 28.00,22.40" fill="#ffffff" />
+  <path d="M31.97,40.00 C26.22,40.00 21.57,35.34 21.57,29.60 C21.57,23.85 26.22,19.20 31.97,19.20 C36.11,19.20 39.69,21.62 41.36,25.12" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M32.00,8.00 L32.00,12.80" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M16.00,30.40 L9.60,30.40" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M16.00,12.81 L20.80,17.60" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M47.93,12.87 L43.20,17.59" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M51.20,33.60 C52.97,33.60 54.40,35.03 54.40,36.80 C54.40,38.57 52.97,40.00 51.20,40.00 L46.41,40.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M52.80,52.80 C54.57,52.80 56.00,51.37 56.00,49.60 C56.00,47.83 54.57,46.40 52.80,46.40 L43.21,46.40" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M8.00,46.40 L33.61,46.40 C36.26,46.40 38.41,48.55 38.41,51.20 C38.41,53.85 36.26,56.00 33.61,56.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M8.00,40.00 L36.81,40.00 C39.46,40.00 41.61,37.85 41.61,35.20 C41.61,32.55 39.46,30.40 36.81,30.40" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

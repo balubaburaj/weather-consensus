@@ -262,8 +262,8 @@ export default function CurrentOverview({
                 </div>
 
                 <div className="my-2">
-                  <div className="text-base font-black text-white flex items-center gap-1.5 leading-tight">
-                    <span>{currentRainType.emoji}</span>
+                  <div className="text-base font-black text-white flex items-center gap-2 leading-tight">
+                    <WeatherIcon iconName={currentRainType.icon} className="w-5 h-5 shrink-0" />
                     <span className="truncate">{isCurrentlyRaining ? currentRainType.label : 'Currently Dry'}</span>
                   </div>
                   <div className="text-[10px] text-cyan-400 font-medium mt-0.5">

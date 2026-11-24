@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <path d="M44.89,36.00 C45.85,34.07 46.40,31.90 46.40,29.60 C46.40,21.65 39.95,15.20 32.00,15.20 C24.05,15.20 17.60,21.65 17.60,29.60 C17.60,31.90 18.15,34.07 19.11,36.00 L44.89,36.00" fill="#ffcc00" />
+  <path d="M43.20,32.80 C43.20,33.90 43.07,34.97 42.83,36.00 L44.89,36.00 C45.85,34.07 46.40,31.90 46.40,29.60 C46.40,21.65 39.95,15.20 32.00,15.20 C27.21,15.20 22.97,17.55 20.35,21.15 C22.73,19.43 25.64,18.40 28.80,18.40 C36.75,18.40 43.20,24.85 43.20,32.80" fill="#ffffff" />
+  <path d="M19.10,36.00 C18.14,34.07 17.60,31.90 17.60,29.60 C17.60,21.65 24.05,15.20 32.00,15.20 C39.96,15.20 46.40,21.65 46.40,29.60 C46.40,31.90 45.86,34.07 44.91,36.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M12.80,36.00 L51.20,36.00" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M8.00,42.40 L56.00,42.40" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M20.81,48.80 L44.79,48.80" fill="none" stroke="#2e4369" stroke-width="1.60" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

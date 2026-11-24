@@ -76,7 +76,7 @@ export default function HourDetailModal({ hour, unit, timeFormat = '24h', onClos
               {/* Top Banner */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{rainInfo.emoji}</span>
+                  <WeatherIcon iconName={rainInfo.icon} className="w-6 h-6 shrink-0" />
                   <span className="text-base font-black text-white">
                     {rainInfo.label}
                   </span>
