@@ -6,6 +6,7 @@ export default function MobileDailyForecast({
   dates = [],
   hoursByDate = {},
   unit = 'C',
+  onOpenDetailedDaily,
 }) {
   const [activeFilter, setActiveFilter] = useState('precipitation'); // 'precipitation' | 'wind' | 'temperature'
 
@@ -85,9 +86,14 @@ export default function MobileDailyForecast({
             Daily
           </h3>
         </div>
-        <div className="p-1 rounded-full bg-slate-800 text-slate-400">
+        <button
+          type="button"
+          onClick={onOpenDetailedDaily}
+          className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer active:scale-95"
+          title="View 10-day detailed forecast (Table & Graph)"
+        >
           <ChevronRight className="w-4 h-4" />
-        </div>
+        </button>
       </div>
 
       {/* 7-Day Vertical Range Bar Grid */}

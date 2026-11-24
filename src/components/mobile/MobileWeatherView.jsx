@@ -17,6 +17,7 @@ import MobileWeatherGrid from './MobileWeatherGrid';
 import MobileAirQualityCard from './MobileAirQualityCard';
 import MobileSunMoonCard from './MobileSunMoonCard';
 import MobileDetailedHourlyModal from './MobileDetailedHourlyModal';
+import MobileDetailedDailyModal from './MobileDetailedDailyModal';
 import WeatherNarrativeCard from '../WeatherNarrativeCard';
 import { DEFAULT_CITIES, searchLocations } from '../../services/weatherApi';
 
@@ -42,6 +43,7 @@ export default function MobileWeatherView({
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailedHourlyOpen, setIsDetailedHourlyOpen] = useState(false);
+  const [isDetailedDailyOpen, setIsDetailedDailyOpen] = useState(false);
 
   // Pull-to-refresh state
   const [pullY, setPullY] = useState(0);
@@ -51,7 +53,7 @@ export default function MobileWeatherView({
 
   if (!weatherData) return null;
 
-  const { current, hours, dates, airQuality } = weatherData;
+  const { current, hours, dates, airQuality, dailySunByDate } = weatherData;
   const isCurrentlyRaining = current.precipitation > 0 || current.weatherCode >= 50;
 
   // Group hours by date
@@ -391,6 +393,7 @@ export default function MobileWeatherView({
           dates={dates}
           hoursByDate={hoursByDate}
           unit={unit}
+          onOpenDetailedDaily={() => setIsDetailedDailyOpen(true)}
         />
 
         {/* 5. Precipitation Timeline Graph */}
@@ -440,6 +443,20 @@ export default function MobileWeatherView({
             unit={unit}
             timeFormat={timeFormat}
             onClose={() => setIsDetailedHourlyOpen(false)}
+          />
+        )}
+
+        {/* Comprehensive 10-Day Detailed Daily Modal (Yr Table & Graph Views) */}
+        {isDetailedDailyOpen && (
+          <MobileDetailedDailyModal
+            dates={dates}
+            hoursByDate={hoursByDate}
+            hours={hours}
+            dailySunByDate={dailySunByDate}
+            selectedCity={selectedCity}
+            unit={unit}
+            timeFormat={timeFormat}
+            onClose={() => setIsDetailedDailyOpen(false)}
           />
         )}
 
