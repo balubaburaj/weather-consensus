@@ -128,34 +128,34 @@ export const PROVIDER_KEYS = Object.keys(WEATHER_PROVIDERS);
 // Weather condition codes (WMO code mapping)
 export const WMO_WEATHER_CODES = {
   0: { label: 'Clear sky', icon: 'Sun', category: 'clear', isRain: false, emoji: '☀️' },
-  1: { label: 'Mainly clear', icon: 'SunDim', category: 'clear', isRain: false, emoji: '🌤️' },
+  1: { label: 'Mainly clear', icon: 'mainly_clear', category: 'clear', isRain: false, emoji: '🌤️' },
   2: { label: 'Partly cloudy', icon: 'CloudSun', category: 'cloudy', isRain: false, emoji: '⛅' },
-  3: { label: 'Overcast', icon: 'Cloud', category: 'cloudy', isRain: false, emoji: '☁️' },
-  45: { label: 'Dense fog', icon: 'CloudFog', category: 'fog', isRain: false, emoji: '🌫️' },
-  48: { label: 'Depositing rime fog', icon: 'CloudFog', category: 'fog', isRain: false, emoji: '🌫️' },
-  51: { label: 'Light drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true, emoji: '🌦️' },
-  53: { label: 'Moderate drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true, emoji: '🌧️' },
-  55: { label: 'Dense drizzle', icon: 'CloudDrizzle', category: 'rain', isRain: true, emoji: '🌧️' },
+  3: { label: 'Overcast', icon: 'overcast', category: 'cloudy', isRain: false, emoji: '☁️' },
+  45: { label: 'Foggy', icon: 'fog', category: 'fog', isRain: false, emoji: '🌫️' },
+  48: { label: 'Depositing rime fog', icon: 'dense_fog', category: 'fog', isRain: false, emoji: '🌫️' },
+  51: { label: 'Light drizzle', icon: 'drizzle', category: 'rain', isRain: true, emoji: '🌦️' },
+  53: { label: 'Moderate drizzle', icon: 'drizzle', category: 'rain', isRain: true, emoji: '🌧️' },
+  55: { label: 'Dense drizzle', icon: 'light_rain', category: 'rain', isRain: true, emoji: '🌧️' },
   56: { label: 'Freezing drizzle', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
   57: { label: 'Dense freezing drizzle', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
-  61: { label: 'Light rain', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
-  62: { label: 'Moderate rain', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
-  63: { label: 'Heavy rain', icon: 'CloudRainWind', category: 'rain', isRain: true, emoji: '🌧️' },
-  65: { label: 'Lashing downpours', icon: 'CloudRainWind', category: 'rain', isRain: true, emoji: '⛈️' },
+  61: { label: 'Light rain', icon: 'light_rain', category: 'rain', isRain: true, emoji: '🌧️' },
+  62: { label: 'Moderate rain', icon: 'moderate_rain', category: 'rain', isRain: true, emoji: '🌧️' },
+  63: { label: 'Heavy rain', icon: 'heavy_rain', category: 'rain', isRain: true, emoji: '🌧️' },
+  65: { label: 'Lashing downpours', icon: 'torrential', category: 'rain', isRain: true, emoji: '⛈️' },
   66: { label: 'Light freezing rain', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
-  67: { label: 'Heavy freezing rain', icon: 'CloudSnow', category: 'snow', isRain: true, emoji: '🌨️' },
-  71: { label: 'Slight snow fall', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '🌨️' },
-  73: { label: 'Moderate snow fall', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
-  75: { label: 'Heavy snow fall', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
-  77: { label: 'Snow grains', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
-  80: { label: 'Passing rain showers', icon: 'CloudSunRain', category: 'rain', isRain: true, emoji: '🌦️' },
-  81: { label: 'Moderate rain showers', icon: 'CloudRain', category: 'rain', isRain: true, emoji: '🌧️' },
-  82: { label: 'Violent rain showers', icon: 'CloudRainWind', category: 'rain', isRain: true, emoji: '⛈️' },
-  85: { label: 'Slight snow showers', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '🌨️' },
-  86: { label: 'Heavy snow showers', icon: 'Snowflake', category: 'snow', isRain: false, emoji: '❄️' },
-  95: { label: 'Thunderstorm', icon: 'CloudLightning', category: 'storm', isRain: true, emoji: '⛈️' },
-  96: { label: 'Thunderstorm with hail', icon: 'CloudHail', category: 'storm', isRain: true, emoji: '⛈️' },
-  99: { label: 'Heavy thunderstorm & hail', icon: 'CloudHail', category: 'storm', isRain: true, emoji: '⛈️' },
+  67: { label: 'Heavy freezing rain', icon: 'heavy_snow', category: 'snow', isRain: true, emoji: '🌨️' },
+  71: { label: 'Slight snow fall', icon: 'snow', category: 'snow', isRain: false, emoji: '🌨️' },
+  73: { label: 'Moderate snow fall', icon: 'snow', category: 'snow', isRain: false, emoji: '❄️' },
+  75: { label: 'Heavy snow fall', icon: 'heavy_snow', category: 'snow', isRain: false, emoji: '❄️' },
+  77: { label: 'Snow grains', icon: 'snow', category: 'snow', isRain: false, emoji: '❄️' },
+  80: { label: 'Passing rain showers', icon: 'rain_showers', category: 'rain', isRain: true, emoji: '🌦️' },
+  81: { label: 'Moderate rain showers', icon: 'moderate_rain', category: 'rain', isRain: true, emoji: '🌧️' },
+  82: { label: 'Violent rain showers', icon: 'torrential', category: 'rain', isRain: true, emoji: '⛈️' },
+  85: { label: 'Slight snow showers', icon: 'snow', category: 'snow', isRain: false, emoji: '🌨️' },
+  86: { label: 'Heavy snow showers', icon: 'heavy_snow', category: 'snow', isRain: false, emoji: '❄️' },
+  95: { label: 'Thunderstorm', icon: 'thunderstorm', category: 'storm', isRain: true, emoji: '⛈️' },
+  96: { label: 'Thunderstorm with hail', icon: 'hail', category: 'storm', isRain: true, emoji: '⛈️' },
+  99: { label: 'Heavy thunderstorm & hail', icon: 'severe_thunderstorm', category: 'storm', isRain: true, emoji: '⛈️' },
 };
 
 export function getWeatherInfo(code) {
@@ -173,14 +173,49 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
   const amount = Number(rainAmountMm) || 0;
   const prob = Number(rainProb) || 0;
 
-  // 1. Thunderstorms & Hail
-  if (weatherCode === 95 || weatherCode === 96 || weatherCode === 99) {
+  // 1. Severe Thunderstorm / Hail (checked before general thunderstorm)
+  if (weatherCode === 99) {
+    return {
+      type: 'severe_thunderstorm',
+      label: 'Severe Thunderstorm & Hail',
+      shortLabel: 'Severe Storm',
+      intensity: 'Severe Storm',
+      icon: 'severe_thunderstorm',
+      emoji: '⛈️',
+      color: 'text-purple-400',
+      badgeBg: 'bg-purple-500/25 text-purple-200 border border-purple-500/40',
+      description: 'Severe convective storm cells with intense lightning, downpours, and hail gusts.',
+      whatItMeans: 'Dangerous storm conditions. Seek shelter indoors immediately.',
+      umbrellaNeeded: true,
+      scaleIndex: 5,
+    };
+  }
+
+  if (weatherCode === 96 || weatherCode === 89) {
+    return {
+      type: 'hail',
+      label: 'Thunderstorm & Hail Pellets',
+      shortLabel: 'Hail',
+      intensity: 'Severe Burst',
+      icon: 'hail',
+      emoji: '🌨️',
+      color: 'text-cyan-300',
+      badgeBg: 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/30',
+      description: 'Hard frozen ice pellets falling in brief violent bursts with thunder.',
+      whatItMeans: 'Take cover immediately; stinging ice pellets.',
+      umbrellaNeeded: true,
+      scaleIndex: 5,
+    };
+  }
+
+  // 2. Standard Thunderstorm
+  if (weatherCode === 95) {
     return {
       type: 'thunderstorm',
-      label: 'Thunderstorms & Hail',
+      label: 'Thunderstorms',
       shortLabel: 'Thunderstorm',
       intensity: 'Storm Alert',
-      icon: 'CloudLightning',
+      icon: 'thunderstorm',
       emoji: '⛈️',
       color: 'text-purple-400',
       badgeBg: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
@@ -191,15 +226,16 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
     };
   }
 
-  // 2. Snow / Sleet
-  if (weatherCode >= 71 && weatherCode <= 86) {
-    if (amount >= 2.0) {
+  // 3. Snow / Sleet / Freezing Precipitation (excludes 80, 81, 82 which are Rain Showers!)
+  const isSnowCode = [56, 57, 66, 67, 71, 73, 75, 77, 85, 86].includes(weatherCode);
+  if (isSnowCode) {
+    if (amount >= 2.0 || weatherCode === 75 || weatherCode === 86 || weatherCode === 67) {
       return {
         type: 'heavy_snow',
         label: 'Heavy Snowfall / Blizzard',
         shortLabel: 'Heavy Snow',
         intensity: 'Heavy Snow',
-        icon: 'Snowflake',
+        icon: 'heavy_snow',
         emoji: '❄️',
         color: 'text-indigo-200',
         badgeBg: 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/30',
@@ -214,7 +250,7 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
       label: 'Snow Flurries / Light Snow',
       shortLabel: 'Snow',
       intensity: 'Light Snow',
-      icon: 'Snowflake',
+      icon: 'snow',
       emoji: '🌨️',
       color: 'text-sky-200',
       badgeBg: 'bg-sky-500/20 text-sky-200 border border-sky-500/30',
@@ -225,32 +261,14 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
     };
   }
 
-  // 3. Hail
-  if (weatherCode === 96 || weatherCode === 99 || weatherCode === 89) {
-    return {
-      type: 'hail',
-      label: 'Hail & Ice Pellets',
-      shortLabel: 'Hail',
-      intensity: 'Severe Burst',
-      icon: 'CloudHail',
-      emoji: '🌨️',
-      color: 'text-cyan-300',
-      badgeBg: 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/30',
-      description: 'Hard frozen ice pellets falling in brief violent bursts.',
-      whatItMeans: 'Take cover immediately; stinging ice pellets.',
-      umbrellaNeeded: true,
-      scaleIndex: 5,
-    };
-  }
-
-  // 4. Torrential Deluge (> 6.0 mm/hr)
-  if (amount >= 6.0) {
+  // 4. Torrential Deluge (> 6.0 mm/hr or violent showers)
+  if (amount >= 6.0 || weatherCode === 65 || weatherCode === 82) {
     return {
       type: 'torrential',
       label: 'Torrential Deluge / Cloudburst',
       shortLabel: 'Deluge',
       intensity: 'Torrential',
-      icon: 'CloudRainWind',
+      icon: 'torrential',
       emoji: '⛈️',
       color: 'text-indigo-400',
       badgeBg: 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40',
@@ -262,13 +280,13 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
   }
 
   // 5. Heavy Downpours / "Lashing Rain" (2.5 - 6.0 mm/hr)
-  if (amount >= 2.5 || weatherCode === 63 || weatherCode === 65 || weatherCode === 82) {
+  if (amount >= 2.5 || weatherCode === 63) {
     return {
       type: 'heavy_rain',
       label: 'Heavy Downpours ("Lashing Rain")',
       shortLabel: 'Lashing Rain',
       intensity: 'Heavy',
-      icon: 'CloudRainWind',
+      icon: 'heavy_rain',
       emoji: '🌧️',
       color: 'text-blue-400',
       badgeBg: 'bg-blue-600/30 text-blue-200 border border-blue-500/40',
@@ -286,7 +304,7 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
       label: 'Moderate Rain Showers',
       shortLabel: 'Showers',
       intensity: 'Moderate',
-      icon: 'CloudRain',
+      icon: 'moderate_rain',
       emoji: '🌧️',
       color: 'text-blue-400',
       badgeBg: 'bg-blue-500/25 text-blue-300 border border-blue-500/30',
@@ -297,15 +315,16 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
     };
   }
 
-  // 7. Steady Light Rain (0.25 - 0.7 mm/hr)
-  if (amount >= 0.25 || (prob >= 45 && amount > 0.05) || weatherCode === 61) {
+  // 7. Passing Showers / Steady Light Rain (0.25 - 0.7 mm/hr)
+  if (amount >= 0.25 || (prob >= 55 && amount > 0.05) || weatherCode === 61 || weatherCode === 80) {
+    const isShowerCode = weatherCode === 80;
     return {
-      type: 'light_rain',
-      label: 'Steady Light Rain',
-      shortLabel: 'Light Rain',
+      type: isShowerCode ? 'rain_showers' : 'light_rain',
+      label: isShowerCode ? 'Passing Rain Showers' : 'Steady Light Rain',
+      shortLabel: isShowerCode ? 'Showers' : 'Light Rain',
       intensity: 'Light',
-      icon: 'CloudRain',
-      emoji: '🌧️',
+      icon: isShowerCode ? 'rain_showers' : 'light_rain',
+      emoji: isShowerCode ? '🌦️' : '🌧️',
       color: 'text-cyan-400',
       badgeBg: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/25',
       description: 'Steady light rain. Noticeable droplets, windshield wipers on intermittent, coats get wet after a few minutes.',
@@ -315,14 +334,14 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
     };
   }
 
-  // 8. Fine Misting Drizzle / "Soft Day" (0.01 - 0.25 mm/hr)
-  if (amount > 0 || prob >= 25 || (weatherCode >= 51 && weatherCode <= 55)) {
+  // 8. Fine Misting Drizzle / "Soft Day" (0.05 - 0.25 mm/hr or active drizzle code)
+  if (amount >= 0.05 || prob >= 50 || (weatherCode >= 51 && weatherCode <= 55)) {
     return {
       type: 'drizzle',
       label: 'Fine Misting Drizzle ("Soft Day")',
       shortLabel: 'Misting',
       intensity: 'Misting / Very Light',
-      icon: 'CloudDrizzle',
+      icon: 'drizzle',
       emoji: '🌦️',
       color: 'text-teal-300',
       badgeBg: 'bg-teal-500/20 text-teal-300 border border-teal-500/25',

@@ -46,7 +46,7 @@ export default function MobileHourlyForecast({
     const code = consensus.weatherCode !== undefined ? consensus.weatherCode : (actual.weatherCode || 0);
     const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
     const rainMm = consensus.precipitation !== undefined ? consensus.precipitation : (actual.precipitation || 0);
-    const smartInfo = resolveSmartWeatherInfo(code, prob, rainMm);
+    const smartInfo = resolveSmartWeatherInfo(code, rainMm > 0 || prob >= 40 ? prob : 0, rainMm);
     let icon = smartInfo.icon || 'Cloud';
 
     const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
@@ -60,7 +60,11 @@ export default function MobileHourlyForecast({
     } else if (activeMetric === 'precipitation') {
       val = Math.round(prob);
       label = `${val}%`;
-      icon = val > 45 ? 'CloudRain' : (val > 15 ? 'CloudDrizzle' : (smartInfo.icon || 'Cloud'));
+      if (smartInfo.category === 'rain' || smartInfo.category === 'storm' || smartInfo.category === 'snow') {
+        icon = smartInfo.icon;
+      } else {
+        icon = val > 60 ? 'moderate_rain' : (val > 40 ? 'drizzle' : (smartInfo.icon || 'Cloud'));
+      }
     } else {
       // Wind
       const w = consensus.windSpeed !== undefined ? consensus.windSpeed : (actual.windSpeed || 15);
@@ -268,7 +272,7 @@ export default function MobileHourlyForecast({
 
         {/* Row 3: Condition Subtitle */}
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800/80">
-          <WeatherIcon iconName={aInfo.icon} className="w-4 h-4 text-cyan-400 shrink-0" />
+          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-4 h-4 text-cyan-400 shrink-0" />
           <span className="text-xs font-semibold text-cyan-300">
             {aInfo.label}
           </span>

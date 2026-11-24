@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { WeatherIcon } from '../../utils/weatherIcons';
+import { resolveSmartWeatherInfo } from '../../constants/providers';
 
 export default function MobileDailyForecast({
   dates = [],
@@ -34,23 +35,54 @@ export default function MobileDailyForecast({
           rainProb: 20,
           maxWind: 20,
           icon: 'Cloud',
+          isNight: false,
           isToday: idx === 0,
         };
       }
 
-      const temps = dayHours.map((h) => h.consensus?.temperature || h.actual?.temperature || 10);
-      const minTemp = Math.round(Math.min(...temps));
-      const maxTemp = Math.round(Math.max(...temps));
+      const tempsC = dayHours.map((h) => h.consensus?.temperature ?? h.actual?.temperature ?? 10);
+      const rawMin = Math.min(...tempsC);
+      const rawMax = Math.max(...tempsC);
+      const minTemp = unit === 'F' ? Math.round((rawMin * 9) / 5 + 32) : Math.round(rawMin);
+      const maxTemp = unit === 'F' ? Math.round((rawMax * 9) / 5 + 32) : Math.round(rawMax);
 
-      const probs = dayHours.map((h) => h.consensus?.precipitationProbability || h.actual?.precipitationProbability || 0);
+      const probs = dayHours.map((h) => h.consensus?.precipitationProbability ?? h.actual?.precipitationProbability ?? 0);
       const rainProb = Math.max(...probs);
+      const precips = dayHours.map((h) => h.consensus?.precipitation ?? h.actual?.precipitation ?? 0);
+      const totalRain = precips.reduce((s, v) => s + v, 0);
+      const maxHourlyRain = Math.max(...precips);
 
-      const winds = dayHours.map((h) => h.actual?.windSpeed || 15);
-      const maxWind = Math.round(Math.max(...winds));
+      const windsKmh = dayHours.map((h) => h.consensus?.windSpeed ?? h.actual?.windSpeed ?? 15);
+      const rawMaxWind = Math.max(...windsKmh);
+      const maxWind = unit === 'F' ? Math.round(rawMaxWind * 0.621371) : Math.round(rawMaxWind);
 
-      // Dominant midday icon
-      const midHour = dayHours[Math.floor(dayHours.length / 2)] || dayHours[0];
-      const icon = midHour.consensus?.weatherIcon || (rainProb >= 60 ? 'CloudRain' : (rainProb >= 30 ? 'CloudDrizzle' : 'CloudSun'));
+      // Intensity-aware daily icon
+      const daytimeHours = dayHours.filter((h) => h.isDay);
+      const refHour = daytimeHours[Math.floor(daytimeHours.length / 2)] || dayHours[Math.floor(dayHours.length / 2)] || dayHours[0];
+      const refCode = refHour.consensus?.weatherCode ?? refHour.actual?.weatherCode ?? 2;
+      const smartRef = resolveSmartWeatherInfo(refCode, 0, 0);
+
+      let icon = smartRef.icon || 'CloudSun';
+      const severeHour = dayHours.find((h) => {
+        const c = h.consensus?.weatherCode ?? h.actual?.weatherCode ?? 0;
+        return [71, 73, 75, 77, 85, 86, 95, 96, 99].includes(c);
+      });
+      if (severeHour) {
+        const sc = severeHour.consensus?.weatherCode ?? severeHour.actual?.weatherCode ?? 0;
+        icon = resolveSmartWeatherInfo(sc, rainProb, maxHourlyRain).icon;
+      } else if (maxHourlyRain >= 6.0) {
+        icon = 'torrential';
+      } else if (maxHourlyRain >= 2.5 || totalRain >= 8.0) {
+        icon = 'heavy_rain';
+      } else if (maxHourlyRain >= 0.7 || totalRain >= 2.0 || rainProb >= 70) {
+        icon = 'moderate_rain';
+      } else if (maxHourlyRain >= 0.25 || totalRain >= 0.5 || rainProb >= 55) {
+        icon = 'light_rain';
+      } else if (totalRain >= 0.1 || rainProb >= 40) {
+        icon = 'drizzle';
+      }
+
+      const isNight = idx === 0 && dayHours.every((h) => h.isDay === false);
 
       return {
         dateStr,
@@ -60,10 +92,11 @@ export default function MobileDailyForecast({
         rainProb,
         maxWind,
         icon,
+        isNight,
         isToday: idx === 0,
       };
     });
-  }, [dates, hoursByDate]);
+  }, [dates, hoursByDate, unit]);
 
   if (dailyData.length === 0) return null;
 
@@ -160,7 +193,7 @@ export default function MobileDailyForecast({
 
               {/* Weather Icon */}
               <div className="w-5 h-5 flex items-center justify-center my-1">
-                <WeatherIcon iconName={day.icon} className="w-4 h-4 text-slate-200" />
+                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-4 h-4 text-slate-200" />
               </div>
 
               {/* Day Label */}

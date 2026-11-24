@@ -168,17 +168,21 @@ export default function MobileDetailedDailyModal({
           const nightHoursCount = metricsList.filter((m) => !m.isDay).length;
           const periodIsNight = nightHoursCount > metricsList.length / 2;
 
-          // Pick representative weather icon matching actual precip & sky state
+          // Pick representative weather icon matching actual precip intensity & sky state
           let repIcon = metricsList[Math.floor(metricsList.length / 2)].icon;
-          const specialSevere = metricsList.find((m) => m.code >= 71);
+          const specialSevere = metricsList.find((m) => [71, 73, 75, 77, 85, 86, 95, 96, 99].includes(m.code));
           if (specialSevere) {
             repIcon = specialSevere.icon;
-          } else if (totalPrecip >= 2.5 || maxHourlyPrecipMm >= 1.5) {
-            repIcon = 'CloudRainWind';
-          } else if (totalPrecip >= 0.5 || maxProb >= 60) {
-            repIcon = 'CloudRain';
-          } else if (totalPrecip >= 0.1 || maxProb >= 40) {
-            repIcon = 'CloudDrizzle';
+          } else if (maxHourlyPrecipMm >= 6.0) {
+            repIcon = 'torrential';
+          } else if (totalPrecip >= 4.0 || maxHourlyPrecipMm >= 2.5) {
+            repIcon = 'heavy_rain';
+          } else if (totalPrecip >= 1.0 || maxHourlyPrecipMm >= 0.7 || maxProb >= 65) {
+            repIcon = 'moderate_rain';
+          } else if (totalPrecip >= 0.3 || maxHourlyPrecipMm >= 0.25 || maxProb >= 55) {
+            repIcon = 'light_rain';
+          } else if (totalPrecip >= 0.05 || maxProb >= 40) {
+            repIcon = 'drizzle';
           }
 
           return {

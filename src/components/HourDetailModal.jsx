@@ -41,7 +41,7 @@ export default function HourDetailModal({ hour, unit, timeFormat = '24h', onClos
         <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
-              <WeatherIcon iconName={c?.weatherIcon} className="w-9 h-9" />
+              <WeatherIcon iconName={c?.weatherIcon} isNight={hour?.isDay === false} className="w-9 h-9" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export default function HourDetailModal({ hour, unit, timeFormat = '24h', onClos
               {/* Top Banner */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <WeatherIcon iconName={rainInfo.icon} className="w-8 h-8 shrink-0" />
+                  <WeatherIcon iconName={rainInfo.icon} isNight={hour?.isDay === false} className="w-8 h-8 shrink-0" />
                   <span className="text-base font-black text-white">
                     {rainInfo.label}
                   </span>
@@ -231,7 +231,7 @@ export default function HourDetailModal({ hour, unit, timeFormat = '24h', onClos
                           <span className="text-[10px] font-normal text-slate-400">({prov.origin})</span>
                         </div>
                         <div className="text-[11px] text-slate-300 flex items-center gap-1.5 mt-0.5">
-                          <WeatherIcon iconName={smartInfo.icon} className="w-5 h-5 inline" />
+                          <WeatherIcon iconName={smartInfo.icon} isNight={hour?.isDay === false} className="w-5 h-5 inline" />
                           <span className="font-semibold">{smartInfo.shortLabel}</span>
                           <span className="text-slate-500">•</span>
                           <span className="text-[10px] text-slate-400">{modelRain.shortLabel}</span>

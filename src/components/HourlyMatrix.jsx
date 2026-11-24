@@ -218,7 +218,7 @@ const MatrixControlBar = memo(function MatrixControlBar({
         {currentViewing && (
           <div className="flex items-center gap-2 text-xs shrink-0 self-end sm:self-auto">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-mono font-bold">
-              <WeatherIcon iconName={currentViewing.consensus?.weatherIcon || 'Sun'} className="w-5 h-5" />
+              <WeatherIcon iconName={currentViewing.consensus?.weatherIcon || 'Sun'} isNight={currentViewing.isDay === false} className="w-5 h-5" />
               <span>
                 {formatTime(currentViewing.hourLabel, timeFormat)} {currentViewing.isCurrent && '(NOW)'}
               </span>
@@ -425,7 +425,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                 } ${hour.isCurrent ? 'bg-blue-600/15 ring-1 ring-cyan-400' : ''}`}
               >
                 <div className="flex flex-col items-center gap-1">
-                  <WeatherIcon iconName={c.weatherIcon} className="w-8 h-8 sm:w-9 sm:h-9" />
+                  <WeatherIcon iconName={c.weatherIcon} isNight={hour.isDay === false} className="w-8 h-8 sm:w-9 sm:h-9" />
 
                   <span
                     className={`px-1.5 py-0.2 rounded text-[10px] font-bold truncate max-w-[95px] ${
@@ -587,7 +587,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                     } ${hour.isCurrent ? 'bg-blue-600/5' : ''}`}
                   >
                     <div className="flex flex-col items-center gap-1">
-                      <WeatherIcon iconName={smartInfo.icon} className="w-5 h-5 opacity-90" />
+                      <WeatherIcon iconName={smartInfo.icon} isNight={hour.isDay === false} className="w-5 h-5 opacity-90" />
 
                       <span
                         className={`px-1.5 py-0.2 rounded text-[9px] font-semibold truncate max-w-[90px] ${
@@ -673,7 +673,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
                 } ${hour.isCurrent ? 'bg-emerald-500/15' : ''}`}
               >
                 <div className="flex flex-col items-center gap-1">
-                  <WeatherIcon iconName={smartActual.icon} className="w-5 h-5" />
+                  <WeatherIcon iconName={smartActual.icon} isNight={hour.isDay === false} className="w-5 h-5" />
 
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 truncate max-w-[90px]">
                     {smartActual.shortLabel}

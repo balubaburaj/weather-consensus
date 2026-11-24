@@ -224,6 +224,7 @@ export default function MobileHeroCard({
               <div className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center shrink-0">
                 <WeatherIcon
                   iconName={weatherInfo.icon}
+                  isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
                   className="w-8 h-8 sm:w-9 sm:h-9 text-cyan-300 drop-shadow-md"
                 />
               </div>
@@ -587,7 +588,11 @@ export default function MobileHeroCard({
           </div>
           <span className="text-slate-600">&bull;</span>
           <div className="flex items-center gap-1.5 text-slate-300 font-medium">
-            <WeatherIcon iconName={rainInfo.icon} className="w-4 h-4 text-cyan-400" />
+            <WeatherIcon
+              iconName={rainInfo.icon}
+              isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
+              className="w-4 h-4 text-cyan-400"
+            />
             <span className="truncate max-w-[130px] sm:max-w-none">
               {isCurrentlyRaining ? rainInfo.label : 'Dry Roads'}
             </span>

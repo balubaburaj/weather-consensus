@@ -224,7 +224,7 @@ export default function CurrentOverview({
                     {formatTemp(current.temperature, unit)}
                   </div>
                   <div className="p-1.5 bg-slate-900 border border-slate-700/60 rounded-xl shrink-0 shadow-sm">
-                    <WeatherIcon iconName={currentCondition.icon} className="w-8 h-8 sm:w-9 sm:h-9" />
+                    <WeatherIcon iconName={currentCondition.icon} isNight={current.isDay === false || current.isDay === 0} className="w-8 h-8 sm:w-9 sm:h-9" />
                   </div>
                 </div>
 
@@ -269,13 +269,13 @@ export default function CurrentOverview({
                     )}
                   </span>
                   <div className={`p-1.5 rounded-xl ${isCurrentlyRaining ? 'bg-blue-500/20 text-blue-300' : 'bg-slate-800 text-slate-400'}`}>
-                    <WeatherIcon iconName={currentRainType.icon} className="w-5 h-5" />
+                    <WeatherIcon iconName={currentRainType.icon} isNight={current.isDay === false || current.isDay === 0} className="w-5 h-5" />
                   </div>
                 </div>
 
                 <div className="my-2">
                   <div className="text-base font-black text-white flex items-center gap-2 leading-tight">
-                    <WeatherIcon iconName={currentRainType.icon} className="w-7 h-7 shrink-0" />
+                    <WeatherIcon iconName={currentRainType.icon} isNight={current.isDay === false || current.isDay === 0} className="w-7 h-7 shrink-0" />
                     <span className="truncate">{isCurrentlyRaining ? currentRainType.label : 'Currently Dry'}</span>
                   </div>
                   <div className="text-[10px] text-cyan-400 font-medium mt-0.5">
