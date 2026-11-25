@@ -25,10 +25,10 @@ export default function MobileHourlyForecast({
 
   if (displayHours.length === 0) return null;
 
-  const itemWidth = 62;
+  const itemWidth = 64;
   const svgWidth = displayHours.length * itemWidth;
-  const svgHeight = 82;
-  const topPadding = 24;
+  const svgHeight = 88;
+  const topPadding = 26;
   const bottomPadding = 16;
   const usableHeight = svgHeight - topPadding - bottomPadding;
 
@@ -198,22 +198,22 @@ export default function MobileHourlyForecast({
       : '#9333ea';
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-          <h3 className="text-sm font-bold text-white tracking-wide">
+          <h3 className="text-base font-extrabold text-white tracking-wide">
             Hourly
           </h3>
-          <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-bold text-slate-400">
+          <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[11px] font-bold text-slate-300">
             24h
           </span>
           {activeMetric === 'temperature' && (
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 ml-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 ml-1">
+              <span className="w-2 h-2 rounded-full bg-slate-200" />
               <span>Temp</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 ml-0.5" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 ml-0.5" />
               <span className="text-amber-400">Feels</span>
             </span>
           )}
@@ -229,24 +229,24 @@ export default function MobileHourlyForecast({
       </div>
 
       {/* Top Inspector Box (Live Updates as user scrolls / taps hours) */}
-      <div className="rounded-2xl bg-slate-950/70 border border-slate-800/80 p-3.5 mb-3.5 shadow-inner">
+      <div className="rounded-2xl bg-slate-950/70 border border-slate-800/80 p-3 mb-2.5 shadow-inner">
         {/* Row 1: Badges */}
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Condition badge */}
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
               {aInfo.shortLabel || aInfo.label || 'Overcast'}
             </span>
 
             {/* Wind badge */}
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-800/90 text-slate-300 border border-slate-700/60 flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800/90 text-slate-200 border border-slate-700/60 flex items-center gap-1.5">
               <span>💨</span>
               <span>{formatWind(windKmh, unit)} {windDir}</span>
             </span>
           </div>
 
           {/* High / Low Day Badge */}
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800/90 text-slate-300 border border-slate-700/60 font-mono shrink-0">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800/90 text-slate-200 border border-slate-700/60 font-mono shrink-0">
             {dayMax}° / {dayMin}°
           </span>
         </div>
@@ -254,7 +254,7 @@ export default function MobileHourlyForecast({
         {/* Row 2: Big Temp + Feels Like (Enlarged, same warm amber color as hero card) + Wind Chill */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-3xl font-black text-white font-mono tracking-tight">
+            <span className="text-4xl font-black text-white font-mono tracking-tight leading-none">
               {tDisp}{tempUnit}
             </span>
             <span className="text-sm sm:text-base font-extrabold px-3 py-1 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 shadow-sm drop-shadow-md">
@@ -264,7 +264,7 @@ export default function MobileHourlyForecast({
 
           {/* Wind Chill / Heat Index Delta Badge */}
           {chillBadgeText !== 'Matched' && (
-            <span className="px-2.5 py-1 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-[10px] font-semibold text-indigo-300 shrink-0">
+            <span className="px-2.5 py-1 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-semibold text-indigo-300 shrink-0">
               {chillBadgeText}
             </span>
           )}
@@ -272,12 +272,12 @@ export default function MobileHourlyForecast({
 
         {/* Row 3: Condition Subtitle */}
         <div className="flex items-center gap-2.5 mt-2 pt-2 border-t border-slate-800/80">
-          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-7 h-7 text-cyan-400 shrink-0" />
-          <span className="text-xs font-semibold text-cyan-300">
+          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-8 h-8 text-cyan-400 shrink-0" />
+          <span className="text-sm font-bold text-cyan-300">
             {aInfo.label}
           </span>
           <span className="text-slate-500 text-xs">&bull;</span>
-          <span className="text-xs text-slate-400 font-mono">
+          <span className="text-xs text-slate-300 font-mono font-semibold">
             {activePoint.isNow ? 'Right Now' : activePoint.hourLabel}
           </span>
         </div>
@@ -360,7 +360,7 @@ export default function MobileHourlyForecast({
                       className="font-mono select-none"
                     >
                       <tspan
-                        className={`text-[13px] font-black tracking-tight ${
+                        className={`text-[15px] font-black tracking-tight ${
                           isSelected ? 'fill-white' : 'fill-slate-100'
                         }`}
                         fill={isSelected ? '#ffffff' : '#f1f5f9'}
@@ -368,8 +368,8 @@ export default function MobileHourlyForecast({
                         {p.label}
                       </tspan>
                       <tspan
-                        dx="3.5"
-                        className="text-[11px] font-extrabold fill-amber-400"
+                        dx="4"
+                        className="text-[13px] font-extrabold fill-amber-400"
                         fill="#fbbf24"
                       >
                         {p.feelsLabel}
@@ -380,7 +380,7 @@ export default function MobileHourlyForecast({
                       x={p.x}
                       y={p.y - 8}
                       textAnchor="middle"
-                      className={`text-[12px] font-mono font-bold select-none ${
+                      className={`text-[13px] font-mono font-bold select-none ${
                         isSelected ? 'fill-white' : 'fill-slate-300'
                       }`}
                       fill={isSelected ? '#ffffff' : '#cbd5e1'}
@@ -422,22 +422,22 @@ export default function MobileHourlyForecast({
                       : 'hover:bg-slate-800/40 border border-transparent'
                   }`}
                 >
-                  <div className="w-9 h-9 flex items-center justify-center">
+                  <div className="w-10 h-10 flex items-center justify-center">
                     <WeatherIcon
                       iconName={p.icon}
                       isNight={!p.isDay}
-                      className={`w-8 h-8 transition-colors ${
+                      className={`w-10 h-10 transition-colors ${
                         isSelected ? 'text-amber-300' : 'text-slate-400'
                       }`}
                     />
                   </div>
                   <span
-                    className={`text-[11px] font-medium mt-1 truncate ${
+                    className={`text-xs font-bold mt-1 truncate ${
                       isSelected
-                        ? 'text-amber-300 font-bold'
+                        ? 'text-amber-300'
                         : p.isNow
-                        ? 'text-white font-semibold'
-                        : 'text-slate-400'
+                        ? 'text-white'
+                        : 'text-slate-300'
                     }`}
                   >
                     {p.isNow ? 'Now' : p.hourLabel}

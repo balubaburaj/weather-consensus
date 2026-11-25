@@ -158,7 +158,7 @@ export function WeatherIcon({
     <img
       src={iconUrl}
       alt={accessibleAlt}
-      className={`object-contain inline-block shrink-0 drop-shadow-sm select-none ${className}`}
+      className={`object-contain inline-block shrink-0 drop-shadow-sm select-none scale-[1.14] ${className}`}
       loading="lazy"
       draggable={false}
       {...props}

@@ -286,7 +286,7 @@ export default function MobileDetailedDailyModal({
 
       {/* BODY: Table View OR Graph View */}
       {viewTab === 'table' ? (
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 pb-12">
+        <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2.5 pb-10">
           {tenDaysData.map((day) => {
             const isExpanded = Boolean(expandedDates[day.dateStr]);
             const showColumnHeaders = isExpanded || day.isToday;
@@ -297,12 +297,12 @@ export default function MobileDetailedDailyModal({
                 className="rounded-2xl bg-[#0e1b30] border border-slate-800/80 overflow-hidden shadow-lg"
               >
                 {/* Day Header */}
-                <div className="px-4 pt-3.5 pb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-100">
+                <div className="px-3.5 pt-3 pb-1.5 flex items-center justify-between">
+                  <h3 className="text-base font-extrabold text-slate-100">
                     {day.title}
                   </h3>
                   {!isExpanded && (
-                    <span className="text-[10px] font-medium text-slate-400">
+                    <span className="text-[11px] font-semibold text-slate-400">
                       {day.periods.length === 1 ? 'Tonight' : '6h blocks'}
                     </span>
                   )}
@@ -310,7 +310,7 @@ export default function MobileDetailedDailyModal({
 
                 {/* Column Header Row (visible when expanded or for Today) */}
                 {showColumnHeaders && (
-                  <div className="grid grid-cols-[64px_52px_1fr_1fr_1fr] items-center px-4 pb-1.5 text-[10px] font-semibold text-slate-400 border-b border-slate-800/60">
+                  <div className="grid grid-cols-[72px_54px_1fr_1fr_1fr] items-center px-3.5 pb-1.5 text-[11px] font-bold text-slate-400 border-b border-slate-800/60">
                     <span>Time</span>
                     <span />
                     <span className="text-center">Temp. °{unit}</span>
@@ -325,16 +325,16 @@ export default function MobileDetailedDailyModal({
                     ? day.hourlySplit.map((hr, idx) => (
                         <div
                           key={idx}
-                          className="grid grid-cols-[64px_52px_1fr_1fr_1fr] items-center px-4 py-1.5 text-xs hover:bg-slate-800/30 transition-colors"
+                          className="grid grid-cols-[72px_54px_1fr_1fr_1fr] items-center px-3.5 py-1.5 text-sm hover:bg-slate-800/30 transition-colors"
                         >
-                          <span className="font-mono text-slate-300 font-medium">
+                          <span className="font-mono text-slate-200 font-semibold text-[13px]">
                             {hr.timeStr}
                           </span>
                           <div className="flex items-center justify-center">
-                            <WeatherIcon iconName={hr.icon} isNight={!hr.isDay} className="w-8 h-8 text-slate-100" />
+                            <WeatherIcon iconName={hr.icon} isNight={!hr.isDay} className="w-10 h-10 text-slate-100" />
                           </div>
                           <span
-                            className={`text-center font-bold font-mono ${
+                            className={`text-center font-black font-mono text-[15px] ${
                               hr.temp <= (unit === 'F' ? 32 : 0)
                                 ? 'text-sky-300'
                                 : 'text-amber-400'
@@ -342,18 +342,18 @@ export default function MobileDetailedDailyModal({
                           >
                             {hr.temp}°
                           </span>
-                          <span className="text-center font-mono font-semibold text-sky-400">
+                          <span className="text-center font-mono font-bold text-sm text-sky-400">
                             {hr.precip > 0 ? hr.precip.toFixed(1) : ''}
                           </span>
-                          <div className="flex items-center justify-end gap-1.5 text-slate-200 font-mono">
+                          <div className="flex items-center justify-end gap-1.5 text-slate-100 font-mono font-bold text-sm">
                             <span>{hr.wind}</span>
                             <svg
-                              className="w-3 h-3 text-slate-400 shrink-0"
+                              className="w-3.5 h-3.5 text-slate-300 shrink-0"
                               style={{ transform: `rotate(${hr.windDir}deg)` }}
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
-                              strokeWidth="2.2"
+                              strokeWidth="2.3"
                               strokeLinecap="round"
                               strokeLinejoin="round"
                             >
@@ -366,16 +366,16 @@ export default function MobileDetailedDailyModal({
                     : day.periods.map((p, idx) => (
                         <div
                           key={idx}
-                          className="grid grid-cols-[64px_52px_1fr_1fr_1fr] items-center px-4 py-2 text-xs"
+                          className="grid grid-cols-[72px_54px_1fr_1fr_1fr] items-center px-3.5 py-1.5 text-sm"
                         >
-                          <span className="font-mono text-slate-300 font-medium">
+                          <span className="font-mono text-slate-200 font-semibold text-[13px]">
                             {p.label}
                           </span>
                           <div className="flex items-center justify-center">
-                            <WeatherIcon iconName={p.icon} isNight={p.isNight} className="w-8 h-8 text-slate-100" />
+                            <WeatherIcon iconName={p.icon} isNight={p.isNight} className="w-10 h-10 text-slate-100" />
                           </div>
                           <span
-                            className={`text-center font-bold font-mono ${
+                            className={`text-center font-black font-mono text-[15px] ${
                               p.temp <= (unit === 'F' ? 32 : 0)
                                 ? 'text-sky-300'
                                 : 'text-amber-400'
@@ -383,10 +383,10 @@ export default function MobileDetailedDailyModal({
                           >
                             {p.temp}°
                           </span>
-                          <span className="text-center font-mono font-semibold text-sky-400">
+                          <span className="text-center font-mono font-bold text-sm text-sky-400">
                             {p.precip >= 0.1 ? p.precip.toFixed(1) : ''}
                           </span>
-                          <span className="text-right font-mono text-slate-200">
+                          <span className="text-right font-mono font-bold text-sm text-slate-100">
                             {p.wind}
                           </span>
                         </div>
@@ -395,16 +395,16 @@ export default function MobileDetailedDailyModal({
 
                 {/* Sunrise & Sunset Strip (when expanded) */}
                 {isExpanded && (day.sunrise || day.sunset) && (
-                  <div className="grid grid-cols-2 gap-2 px-4 py-3 bg-slate-900/50 border-t border-slate-800/60 text-xs">
+                  <div className="grid grid-cols-2 gap-2 px-4 py-2.5 bg-slate-900/50 border-t border-slate-800/60 text-sm">
                     <div className="flex flex-col items-center justify-center gap-0.5">
-                      <Sunrise className="w-4 h-4 text-amber-400" />
-                      <span className="font-mono font-bold text-slate-200">{day.sunrise || '--'}</span>
-                      <span className="text-[10px] text-slate-400">Sunrise</span>
+                      <Sunrise className="w-5 h-5 text-amber-400" />
+                      <span className="font-mono font-extrabold text-slate-100">{day.sunrise || '--'}</span>
+                      <span className="text-xs text-slate-400">Sunrise</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-0.5">
-                      <Sunset className="w-4 h-4 text-orange-400" />
-                      <span className="font-mono font-bold text-slate-200">{day.sunset || '--'}</span>
-                      <span className="text-[10px] text-slate-400">Sunset</span>
+                      <Sunset className="w-5 h-5 text-orange-400" />
+                      <span className="font-mono font-extrabold text-slate-100">{day.sunset || '--'}</span>
+                      <span className="text-xs text-slate-400">Sunset</span>
                     </div>
                   </div>
                 )}
@@ -413,13 +413,13 @@ export default function MobileDetailedDailyModal({
                 <button
                   type="button"
                   onClick={() => toggleDayExpand(day.dateStr)}
-                  className="w-full py-2.5 px-4 border-t border-slate-800/60 bg-slate-900/30 hover:bg-slate-800/40 flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition cursor-pointer"
+                  className="w-full py-2 px-4 border-t border-slate-800/60 bg-slate-900/30 hover:bg-slate-800/40 flex items-center justify-center gap-1.5 text-sm font-bold text-slate-200 hover:text-white transition cursor-pointer"
                 >
                   <span>{isExpanded ? 'Hide details' : 'Details'}</span>
                   {isExpanded ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
                   ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
                   )}
                 </button>
               </div>
@@ -459,8 +459,8 @@ function DailyGraphView({
     return hours.slice(startIdx, startIdx + 240);
   }, [hours]);
 
-  const colWidth = 38; // Gives clean breathing room for larger 28px weather icons across ~9-10 visible hours
-  const yAxisWidth = 44;
+  const colWidth = 44; // Wide columns for crisp 36px icons and bold time ticks
+  const yAxisWidth = 48;
   const chartWidth = timelineHours.length * colWidth;
 
   // Compute day groups for the moving sticky date bar
@@ -524,7 +524,7 @@ function DailyGraphView({
         {/* STICKY TOP BAR: Moving Date Header + Time Ticks + Cloud/Weather Icons */}
         <div className="sticky top-0 z-30 bg-[#0b172a]/95 backdrop-blur-md border-b border-slate-800 shadow-lg">
           {/* Row 1: Moving / Sticky Date Header Row */}
-          <div className="flex items-center pt-2 pb-1">
+          <div className="flex items-center pt-1.5 pb-0.5">
             {/* Y-axis corner spacer */}
             <div style={{ width: `${yAxisWidth}px` }} className="sticky left-0 z-40 shrink-0 bg-[#0b172a]" />
 
@@ -539,10 +539,10 @@ function DailyGraphView({
                   {g.items.length >= 3 ? (
                     <div
                       style={{ left: `${yAxisWidth + 6}px` }}
-                      className="sticky inline-flex items-baseline gap-1 whitespace-nowrap text-xs"
+                      className="sticky inline-flex items-baseline gap-1.5 whitespace-nowrap text-sm"
                     >
-                      <span className="font-bold text-white">{g.pill.weekday}</span>
-                      <span className="text-slate-400 font-medium">{g.pill.rest}</span>
+                      <span className="font-extrabold text-white">{g.pill.weekday}</span>
+                      <span className="text-slate-300 font-semibold">{g.pill.rest}</span>
                     </div>
                   ) : null}
                 </div>
@@ -560,12 +560,12 @@ function DailyGraphView({
                   <div
                     key={`t-${item.idx}`}
                     style={{ width: `${colWidth}px` }}
-                    className="shrink-0 flex flex-col items-center leading-tight text-[10px] font-mono text-slate-300"
+                    className="shrink-0 flex flex-col items-center leading-tight text-xs font-mono text-slate-200"
                   >
                     {showTick ? (
                       <>
-                        <span className="font-semibold">{item.tick.main}</span>
-                        <span className="text-[9px] text-slate-400">{item.tick.sub}</span>
+                        <span className="font-bold">{item.tick.main}</span>
+                        <span className="text-[10px] font-semibold text-slate-400">{item.tick.sub}</span>
                       </>
                     ) : null}
                   </div>
@@ -575,16 +575,16 @@ function DailyGraphView({
           </div>
 
           {/* Row 3: Weather Icons */}
-          <div className="flex items-center pb-2 pt-0.5">
+          <div className="flex items-center pb-1.5 pt-0.5">
             <div style={{ width: `${yAxisWidth}px` }} className="sticky left-0 z-40 shrink-0 bg-[#0b172a]" />
             <div className="flex">
               {flatItems.map((item) => (
                 <div
                   key={`ic-${item.idx}`}
                   style={{ width: `${colWidth}px` }}
-                  className="shrink-0 flex items-center justify-center h-8"
+                  className="shrink-0 flex items-center justify-center h-9"
                 >
-                  <WeatherIcon iconName={item.icon} isNight={!item.isDay} className="w-7 h-7 text-slate-100" />
+                  <WeatherIcon iconName={item.icon} isNight={!item.isDay} className="w-9 h-9 text-slate-100" />
                 </div>
               ))}
             </div>
@@ -592,7 +592,7 @@ function DailyGraphView({
         </div>
 
         {/* 4 GRAPH PANELS */}
-        <div className="space-y-4 pt-3">
+        <div className="space-y-2.5 pt-2">
           
           {/* 1. Temperature Graph */}
           <YrGridChartPanel
@@ -601,7 +601,7 @@ function DailyGraphView({
             yAxisWidth={yAxisWidth}
             colWidth={colWidth}
             chartWidth={chartWidth}
-            height={110}
+            height={98}
             minVal={tempMin}
             maxVal={tempMax}
             tickCount={5}
@@ -609,8 +609,8 @@ function DailyGraphView({
             strokeColor="#fb7185"
             fillFrom="rgba(249, 115, 22, 0.35)"
             legendContent={
-              <div className="flex items-center gap-2 text-xs text-slate-200 font-medium">
-                <span className="w-3 h-1 rounded-full bg-orange-500 inline-block" />
+              <div className="flex items-center gap-2 text-[13px] text-slate-100 font-bold">
+                <span className="w-3.5 h-1 rounded-full bg-orange-500 inline-block" />
                 <span>Temperature, °{unit}</span>
               </div>
             }
@@ -622,7 +622,7 @@ function DailyGraphView({
             yAxisWidth={yAxisWidth}
             colWidth={colWidth}
             chartWidth={chartWidth}
-            height={86}
+            height={78}
             maxVal={precipMax}
             precipUnitLabel={precipUnitLabel}
           />
@@ -634,7 +634,7 @@ function DailyGraphView({
             yAxisWidth={yAxisWidth}
             colWidth={colWidth}
             chartWidth={chartWidth}
-            height={104}
+            height={92}
             minVal={0}
             maxVal={windMax}
             tickCount={5}
@@ -642,8 +642,8 @@ function DailyGraphView({
             fillFrom="rgba(168, 85, 247, 0.32)"
             showWindArrows={true}
             legendContent={
-              <div className="flex items-center gap-2 text-xs text-slate-200 font-medium">
-                <span className="w-3 h-1 rounded-full bg-purple-400 inline-block" />
+              <div className="flex items-center gap-2 text-[13px] text-slate-100 font-bold">
+                <span className="w-3.5 h-1 rounded-full bg-purple-400 inline-block" />
                 <span>Wind, {windUnitLabel}</span>
               </div>
             }
@@ -656,15 +656,15 @@ function DailyGraphView({
             yAxisWidth={yAxisWidth}
             colWidth={colWidth}
             chartWidth={chartWidth}
-            height={104}
+            height={92}
             minVal={presMin}
             maxVal={presMax}
             tickCount={5}
             strokeColor="#4ade80"
             fillFrom="rgba(34, 197, 94, 0.30)"
             legendContent={
-              <div className="flex items-center gap-2 text-xs text-slate-200 font-medium">
-                <span className="w-3 h-1 rounded-full bg-emerald-400 inline-block" />
+              <div className="flex items-center gap-2 text-[13px] text-slate-100 font-bold">
+                <span className="w-3.5 h-1 rounded-full bg-emerald-400 inline-block" />
                 <span>Air pressure, hPa</span>
               </div>
             }
@@ -745,7 +745,7 @@ function YrGridChartPanel({
             <span
               key={i}
               style={{ top: `${t.y}px` }}
-              className="absolute right-1.5 -translate-y-1/2 text-[10px] font-mono text-slate-400"
+              className="absolute right-1.5 -translate-y-1/2 text-[11px] font-mono font-semibold text-slate-300"
             >
               {t.val}
               {tickSuffix}
@@ -816,7 +816,7 @@ function YrGridChartPanel({
                 className="shrink-0 flex items-center justify-center"
               >
                 <svg
-                  className="w-3.5 h-3.5 text-slate-200"
+                  className="w-4 h-4 text-slate-100"
                   style={{ transform: `rotate(${item.windDir}deg)` }}
                   viewBox="0 0 24 24"
                   fill="none"
@@ -877,7 +877,7 @@ function YrPrecipBarPanel({
             <span
               key={i}
               style={{ top: `${t.y}px` }}
-              className="absolute right-1.5 -translate-y-1/2 text-[10px] font-mono text-slate-400"
+              className="absolute right-1.5 -translate-y-1/2 text-[11px] font-mono font-semibold text-slate-300"
             >
               {t.val}
             </span>
@@ -950,7 +950,7 @@ function YrPrecipBarPanel({
 
       {/* Legend */}
       <div className="mt-1.5 flex items-center">
-        <div style={{ left: `${yAxisWidth + 8}px` }} className="sticky inline-flex items-center gap-3 text-xs text-slate-200 font-medium whitespace-nowrap">
+        <div style={{ left: `${yAxisWidth + 8}px` }} className="sticky inline-flex items-center gap-3 text-[13px] text-slate-100 font-bold whitespace-nowrap">
           <span className="inline-flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-sm bg-blue-400 inline-block" />
             <span>Expected precipitation, {precipUnitLabel}</span>

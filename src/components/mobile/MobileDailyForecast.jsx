@@ -107,15 +107,15 @@ export default function MobileDailyForecast({
   const globalMax = Math.max(...allMaxs);
   const tempSpan = globalMax - globalMin || 1;
 
-  const barTotalHeightPx = 80;
+  const barTotalHeightPx = 74;
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-cyan-400" />
-          <h3 className="text-sm font-bold text-white tracking-wide">
+          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+          <h3 className="text-base font-extrabold text-white tracking-wide">
             Daily
           </h3>
         </div>
@@ -130,25 +130,25 @@ export default function MobileDailyForecast({
       </div>
 
       {/* 7-Day Vertical Range Bar Grid */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center pb-2">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1.5 text-center pb-1">
         {dailyData.map((day, i) => {
           // Calculate vertical position and height of temperature bar
           const topOffsetNorm = (globalMax - day.maxTemp) / tempSpan;
           const barHeightNorm = (day.maxTemp - day.minTemp) / tempSpan;
-          const topOffsetPx = Math.max(0, topOffsetNorm * (barTotalHeightPx - 24));
-          const barHeightPx = Math.max(16, barHeightNorm * (barTotalHeightPx - 24));
+          const topOffsetPx = Math.max(0, topOffsetNorm * (barTotalHeightPx - 22));
+          const barHeightPx = Math.max(16, barHeightNorm * (barTotalHeightPx - 22));
 
           return (
             <div key={day.dateStr} className="flex flex-col items-center justify-between">
               {/* Max Temp label */}
-              <span className="text-[11px] font-mono font-bold text-slate-100">
+              <span className="text-[13px] font-mono font-extrabold text-slate-100">
                 {day.maxTemp}°
               </span>
 
               {/* Vertical Range Bar Track */}
               <div
                 style={{ height: `${barTotalHeightPx}px` }}
-                className="w-4 sm:w-5 relative my-1 flex justify-center items-center"
+                className="w-4 sm:w-5 relative my-0.5 flex justify-center items-center"
               >
                 {/* Thin background track */}
                 <div className="absolute inset-y-0 w-1 bg-slate-800/60 rounded-full" />
@@ -168,36 +168,36 @@ export default function MobileDailyForecast({
               </div>
 
               {/* Min Temp label */}
-              <span className="text-[11px] font-mono text-slate-400 font-medium">
+              <span className="text-[13px] font-mono text-slate-300 font-bold">
                 {day.minTemp}°
               </span>
 
               {/* Rain Probability / Value Badge based on filter */}
-              <div className="mt-2 min-h-[18px]">
+              <div className="mt-1.5 min-h-[18px]">
                 {activeFilter === 'precipitation' && (
-                  <span className={`text-[10px] font-bold ${day.rainProb >= 60 ? 'text-cyan-400 font-extrabold' : 'text-slate-400'}`}>
+                  <span className={`text-xs font-extrabold ${day.rainProb >= 60 ? 'text-cyan-400' : 'text-slate-300'}`}>
                     {day.rainProb}%
                   </span>
                 )}
                 {activeFilter === 'wind' && (
-                  <span className="text-[10px] font-mono font-semibold text-sky-300">
+                  <span className="text-xs font-mono font-bold text-sky-300">
                     {day.maxWind}k
                   </span>
                 )}
                 {activeFilter === 'temperature' && (
-                  <span className="text-[10px] font-mono text-amber-300 font-semibold">
+                  <span className="text-xs font-mono text-amber-300 font-bold">
                     &Delta;{day.maxTemp - day.minTemp}°
                   </span>
                 )}
               </div>
 
               {/* Weather Icon */}
-              <div className="w-9 h-9 flex items-center justify-center my-1.5">
-                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-8 h-8 text-slate-200" />
+              <div className="w-10 h-10 flex items-center justify-center my-0.5">
+                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-10 h-10 text-slate-200" />
               </div>
 
               {/* Day Label */}
-              <span className={`text-[10px] font-semibold tracking-tight ${day.isToday ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-bold tracking-tight ${day.isToday ? 'text-amber-400' : 'text-slate-300'}`}>
                 {day.isToday ? 'Today' : day.dayLabel}
               </span>
             </div>

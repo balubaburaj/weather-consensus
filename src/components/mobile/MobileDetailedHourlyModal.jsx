@@ -82,7 +82,7 @@ export default function MobileDetailedHourlyModal({
   const startIdx = currentIdx !== -1 ? currentIdx : 0;
   const displayHours = hours.slice(startIdx, startIdx + 24);
 
-  const colWidth = 52;
+  const colWidth = 58;
   const totalWidth = displayHours.length * colWidth;
 
   // Process data for all 12 metrics
@@ -242,15 +242,15 @@ export default function MobileDetailedHourlyModal({
           </div>
 
           {/* STICKY TIME & CLOUD ROW (Pins to top when scrolling vertically; scrolls horizontally with metrics) */}
-          <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-slate-800/90 pt-1.5 pb-2 shadow-lg">
+          <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-slate-800/90 pt-1 pb-1.5 shadow-lg">
             {/* Day Header Row */}
-            <div className="relative h-4 mb-1">
+            <div className="relative h-4 mb-0.5">
               {processed.map((p, i) =>
                 p.dayLabel ? (
                   <div
                     key={`day-${i}`}
                     style={{ left: `${i * colWidth + 4}px` }}
-                    className="absolute top-0 text-[11px] font-bold text-slate-300 tracking-tight"
+                    className="absolute top-0 text-xs font-extrabold text-slate-200 tracking-tight"
                   >
                     {p.dayLabel}
                   </div>
@@ -264,24 +264,24 @@ export default function MobileDetailedHourlyModal({
                 <div
                   key={`icon-${i}`}
                   style={{ width: `${colWidth}px` }}
-                  className="shrink-0 flex items-center justify-center h-9"
+                  className="shrink-0 flex items-center justify-center h-10"
                 >
                   <WeatherIcon
                     iconName={p.icon}
                     isNight={!p.isDay}
-                    className="w-8 h-8 text-cyan-300 drop-shadow-sm"
+                    className="w-10 h-10 text-cyan-300 drop-shadow-sm"
                   />
                 </div>
               ))}
             </div>
 
             {/* Hour Labels Row */}
-            <div className="flex items-center mt-1">
+            <div className="flex items-center mt-0.5">
               {processed.map((p, i) => (
                 <div
                   key={`time-${i}`}
                   style={{ width: `${colWidth}px` }}
-                  className="shrink-0 text-center text-[11px] font-medium text-slate-400 font-mono"
+                  className="shrink-0 text-center text-xs font-bold text-slate-300 font-mono"
                 >
                   {p.hourLabel}
                 </div>
@@ -504,12 +504,12 @@ function MetricCurveRow({
   const gradId = `grad-${title.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
-    <div className="relative pt-2 pb-1">
+    <div className="relative pt-1.5 pb-0.5">
       {/* Pinned Metric Title on the Left */}
-      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-1">
+      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-0.5">
         {icon}
-        <span className="text-[11px] font-bold text-slate-200">{title}</span>
-        <span className="text-[10px] text-slate-400">{unit}</span>
+        <span className="text-xs font-extrabold text-slate-100">{title}</span>
+        <span className="text-[11px] font-semibold text-slate-400">{unit}</span>
       </div>
 
       {/* SVG Curve Canvas */}
@@ -547,7 +547,7 @@ function MetricCurveRow({
               x={c.x}
               y={c.y - 6}
               textAnchor="middle"
-              className={`text-[10px] font-mono font-bold select-none ${labelColor}`}
+              className={`text-xs font-mono font-extrabold select-none ${labelColor}`}
             >
               {c.val}
               {valueSuffix}
@@ -583,12 +583,12 @@ function MetricBarOrLineRow({
   const gradId = `grad-${title.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
-    <div className="relative pt-2 pb-1">
+    <div className="relative pt-1.5 pb-0.5">
       {/* Pinned Metric Title on the Left */}
-      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-1">
+      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-0.5">
         {icon}
-        <span className="text-[11px] font-bold text-slate-200">{title}</span>
-        <span className="text-[10px] text-slate-400">{unit}</span>
+        <span className="text-xs font-extrabold text-slate-100">{title}</span>
+        <span className="text-[11px] font-semibold text-slate-400">{unit}</span>
       </div>
 
       <svg width={totalWidth} height={svgHeight} className="overflow-visible block">
@@ -638,7 +638,7 @@ function MetricBarOrLineRow({
               x={c.x}
               y={c.y - 5}
               textAnchor="middle"
-              className={`text-[10px] font-mono font-bold select-none ${labelColor}`}
+              className={`text-xs font-mono font-extrabold select-none ${labelColor}`}
             >
               {c.val}
             </text>
@@ -672,12 +672,12 @@ function MetricWindRow({
   const gradId = `grad-${title.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
-    <div className="relative pt-2 pb-1">
+    <div className="relative pt-1.5 pb-0.5">
       {/* Pinned Metric Title on the Left */}
-      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-1">
+      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-0.5">
         {icon}
-        <span className="text-[11px] font-bold text-slate-200">{title}</span>
-        <span className="text-[10px] text-slate-400">{unit}</span>
+        <span className="text-xs font-extrabold text-slate-100">{title}</span>
+        <span className="text-[11px] font-semibold text-slate-400">{unit}</span>
       </div>
 
       <svg width={totalWidth} height={svgHeight} className="overflow-visible block">
@@ -716,7 +716,7 @@ function MetricWindRow({
                 x={c.x}
                 y={c.y - 5}
                 textAnchor="middle"
-                className={`text-[10px] font-mono font-bold select-none ${labelColor}`}
+                className={`text-xs font-mono font-extrabold select-none ${labelColor}`}
               >
                 {c.val}
               </text>

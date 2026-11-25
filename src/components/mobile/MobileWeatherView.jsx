@@ -184,7 +184,7 @@ export default function MobileWeatherView({
       )}
 
       {/* Maximum mobile content width container (e.g. 480px) */}
-      <div className="w-full max-w-md px-3.5 py-2.5 space-y-4 pb-12">
+      <div className="w-full max-w-md px-2.5 py-2 space-y-3 pb-10">
         
         {/* Quick Settings Modal Overlay */}
         {isSettingsOpen && (
