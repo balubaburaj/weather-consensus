@@ -42,7 +42,7 @@ export default function MobileSunMoonCard({
   const sunY = 95 - arcRadius * Math.sin(angle);
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-4 sm:p-5 shadow-xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -51,20 +51,20 @@ export default function MobileSunMoonCard({
             Sun and Moon
           </h3>
         </div>
-        <div className="p-1 rounded-full bg-slate-800 text-slate-400">
+        <div className="p-1 rounded-full bg-zinc-800 text-zinc-400">
           <ChevronRight className="w-4 h-4" />
         </div>
       </div>
 
       {/* 1. Sun Daylight Arc Card */}
-      <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 mb-3 relative overflow-hidden flex flex-col items-center">
+      <div className="p-3.5 rounded-2xl bg-black/75 border border-zinc-800/80 mb-3 relative overflow-hidden flex flex-col items-center">
         {/* SVG Arc Diagram */}
         <div className="relative w-[200px] h-[105px]">
           <svg viewBox="0 0 200 105" className="w-full h-full overflow-visible">
             <defs>
               <linearGradient id="sunArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#f59e0b" />
-                <stop offset="50%" stopColor="#38bdf8" />
+                <stop offset="50%" stopColor="#fbbf24" />
                 <stop offset="100%" stopColor="#a855f7" />
               </linearGradient>
             </defs>
@@ -73,7 +73,7 @@ export default function MobileSunMoonCard({
             <path
               d="M 25 95 A 75 75 0 0 1 175 95"
               fill="none"
-              stroke="#334155"
+              stroke="#27272a"
               strokeWidth="2.5"
               strokeDasharray="4 4"
             />
@@ -92,25 +92,25 @@ export default function MobileSunMoonCard({
 
           {/* Central Daylight Info Badge */}
           <div className="absolute bottom-1 inset-x-0 flex flex-col items-center pointer-events-none">
-            <span className="text-[10px] uppercase font-bold text-slate-400">Daylight</span>
-            <span className="text-xs font-black font-mono text-cyan-300">{daylight}</span>
+            <span className="text-[10px] uppercase font-bold text-zinc-400">Daylight</span>
+            <span className="text-xs font-black font-mono text-amber-300">{daylight}</span>
           </div>
         </div>
 
         {/* Sunrise & Sunset Timings Strip */}
-        <div className="w-full flex items-center justify-between text-xs pt-1 px-2 border-t border-slate-800/80">
+        <div className="w-full flex items-center justify-between text-xs pt-1 px-2 border-t border-zinc-800/80">
           <div className="flex items-center gap-1.5 text-amber-300">
             <Sunrise className="w-4 h-4 text-amber-400" />
             <div className="text-left">
-              <span className="text-[9px] uppercase font-bold text-slate-500 block leading-tight">Sunrise</span>
-              <span className="font-mono font-bold text-slate-200">{sunrise}</span>
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block leading-tight">Sunrise</span>
+              <span className="font-mono font-bold text-zinc-100">{sunrise}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 text-purple-300">
             <div className="text-right">
-              <span className="text-[9px] uppercase font-bold text-slate-500 block leading-tight">Sunset</span>
-              <span className="font-mono font-bold text-slate-200">{sunset}</span>
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block leading-tight">Sunset</span>
+              <span className="font-mono font-bold text-zinc-100">{sunset}</span>
             </div>
             <Sunset className="w-4 h-4 text-purple-400" />
           </div>
@@ -118,30 +118,30 @@ export default function MobileSunMoonCard({
       </div>
 
       {/* 2. Moon Phase Card */}
-      <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+      <div className="p-3.5 rounded-2xl bg-black/75 border border-zinc-800/80 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Realistic Moon Avatar */}
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-200 via-slate-400 to-slate-700 shadow-md shadow-indigo-500/20 flex items-center justify-center border border-slate-300 relative overflow-hidden">
-            <div className="absolute inset-0 bg-slate-950/40 rounded-full" />
-            <div className="w-3 h-3 rounded-full bg-slate-600/60 absolute top-2 left-2" />
-            <div className="w-2 h-2 rounded-full bg-slate-700/60 absolute bottom-3 right-3" />
-            <div className="w-1.5 h-1.5 rounded-full bg-slate-600/60 absolute top-6 right-2" />
-            <Moon className="w-6 h-6 text-slate-100 z-10" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-zinc-200 via-zinc-400 to-zinc-700 shadow-md shadow-amber-500/10 flex items-center justify-center border border-zinc-300 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/40 rounded-full" />
+            <div className="w-3 h-3 rounded-full bg-zinc-600/60 absolute top-2 left-2" />
+            <div className="w-2 h-2 rounded-full bg-zinc-700/60 absolute bottom-3 right-3" />
+            <div className="w-1.5 h-1.5 rounded-full bg-zinc-600/60 absolute top-6 right-2" />
+            <Moon className="w-6 h-6 text-zinc-100 z-10" />
           </div>
 
           <div>
             <span className="text-xs font-bold text-white block">
               {moon.label}
             </span>
-            <span className="text-[11px] font-mono text-cyan-400">
+            <span className="text-[11px] font-mono text-amber-300">
               {moon.illumination}% illuminated
             </span>
           </div>
         </div>
 
-        <div className="text-right text-[11px] text-slate-400">
+        <div className="text-right text-[11px] text-zinc-400">
           <div>Next Full Moon</div>
-          <span className="font-bold text-slate-300 font-mono">in 6 days</span>
+          <span className="font-bold text-zinc-200 font-mono">in 6 days</span>
         </div>
       </div>
     </div>

@@ -198,7 +198,7 @@ export default function MobileHourlyForecast({
       : '#9333ea';
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-3.5 sm:p-4 shadow-xl">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2 flex-wrap">
@@ -206,12 +206,12 @@ export default function MobileHourlyForecast({
           <h3 className="text-base font-extrabold text-white tracking-wide">
             Hourly
           </h3>
-          <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[11px] font-bold text-slate-300">
+          <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-[11px] font-bold text-zinc-300">
             24h
           </span>
           {activeMetric === 'temperature' && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 ml-1">
-              <span className="w-2 h-2 rounded-full bg-slate-200" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 ml-1">
+              <span className="w-2 h-2 rounded-full bg-zinc-100" />
               <span>Temp</span>
               <span className="w-2 h-2 rounded-full bg-amber-400 ml-0.5" />
               <span className="text-amber-400">Feels</span>
@@ -221,7 +221,7 @@ export default function MobileHourlyForecast({
         <button
           type="button"
           onClick={onOpenDetailedHourly}
-          className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer active:scale-95"
+          className="p-1.5 rounded-full bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer active:scale-95"
           title="View comprehensive 24h hourly breakdown"
         >
           <ChevronRight className="w-4 h-4" />
@@ -229,24 +229,24 @@ export default function MobileHourlyForecast({
       </div>
 
       {/* Top Inspector Box (Live Updates as user scrolls / taps hours) */}
-      <div className="rounded-2xl bg-slate-950/70 border border-slate-800/80 p-3 mb-2.5 shadow-inner">
+      <div className="rounded-2xl bg-black/75 border border-zinc-800/80 p-3 mb-2.5 shadow-inner">
         {/* Row 1: Badges */}
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Condition badge */}
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-800 text-zinc-100 border border-zinc-700/80">
               {aInfo.shortLabel || aInfo.label || 'Overcast'}
             </span>
 
             {/* Wind badge */}
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800/90 text-slate-200 border border-slate-700/60 flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-900 text-zinc-200 border border-zinc-800 flex items-center gap-1.5">
               <span>💨</span>
               <span>{formatWind(windKmh, unit)} {windDir}</span>
             </span>
           </div>
 
           {/* High / Low Day Badge */}
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800/90 text-slate-200 border border-slate-700/60 font-mono shrink-0">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-900 text-zinc-200 border border-zinc-800 font-mono shrink-0">
             {dayMax}° / {dayMin}°
           </span>
         </div>
@@ -257,27 +257,27 @@ export default function MobileHourlyForecast({
             <span className="text-4xl font-black text-white font-mono tracking-tight leading-none">
               {tDisp}{tempUnit}
             </span>
-            <span className="text-sm sm:text-base font-extrabold px-3 py-1 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 shadow-sm drop-shadow-md">
+            <span className="text-sm sm:text-base font-extrabold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-sm drop-shadow-md">
               Feels {feelsDisp}{tempUnit}
             </span>
           </div>
 
           {/* Wind Chill / Heat Index Delta Badge */}
           {chillBadgeText !== 'Matched' && (
-            <span className="px-2.5 py-1 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-semibold text-indigo-300 shrink-0">
+            <span className="px-2.5 py-1 rounded-xl bg-zinc-900 border border-zinc-700 text-[11px] font-semibold text-zinc-300 shrink-0">
               {chillBadgeText}
             </span>
           )}
         </div>
 
         {/* Row 3: Condition Subtitle */}
-        <div className="flex items-center gap-2.5 mt-2 pt-2 border-t border-slate-800/80">
-          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-8 h-8 text-cyan-400 shrink-0" />
-          <span className="text-sm font-bold text-cyan-300">
+        <div className="flex items-center gap-2.5 mt-2 pt-2 border-t border-zinc-800/80">
+          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-8 h-8 shrink-0" />
+          <span className="text-sm font-bold text-zinc-100">
             {aInfo.label}
           </span>
-          <span className="text-slate-500 text-xs">&bull;</span>
-          <span className="text-xs text-slate-300 font-mono font-semibold">
+          <span className="text-zinc-500 text-xs">&bull;</span>
+          <span className="text-xs text-zinc-300 font-mono font-semibold">
             {activePoint.isNow ? 'Right Now' : activePoint.hourLabel}
           </span>
         </div>
@@ -287,7 +287,7 @@ export default function MobileHourlyForecast({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-800 pb-2 -mx-2 px-2 scroll-smooth"
+        className="overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-800 pb-2 -mx-2 px-2 scroll-smooth"
       >
         <div style={{ width: `${svgWidth}px` }} className="relative select-none">
           {/* Curve SVG */}
@@ -349,7 +349,7 @@ export default function MobileHourlyForecast({
                     cy={p.y}
                     r={isSelected ? '5' : '3'}
                     fill={isSelected ? '#ffffff' : strokeColor}
-                    stroke="#0f172a"
+                    stroke="#000000"
                     strokeWidth="1.5"
                   />
                   {activeMetric === 'temperature' ? (
@@ -361,9 +361,9 @@ export default function MobileHourlyForecast({
                     >
                       <tspan
                         className={`text-[15px] font-black tracking-tight ${
-                          isSelected ? 'fill-white' : 'fill-slate-100'
+                          isSelected ? 'fill-white' : 'fill-zinc-100'
                         }`}
-                        fill={isSelected ? '#ffffff' : '#f1f5f9'}
+                        fill={isSelected ? '#ffffff' : '#f4f4f5'}
                       >
                         {p.label}
                       </tspan>
@@ -381,9 +381,9 @@ export default function MobileHourlyForecast({
                       y={p.y - 8}
                       textAnchor="middle"
                       className={`text-[13px] font-mono font-bold select-none ${
-                        isSelected ? 'fill-white' : 'fill-slate-300'
+                        isSelected ? 'fill-white' : 'fill-zinc-300'
                       }`}
-                      fill={isSelected ? '#ffffff' : '#cbd5e1'}
+                      fill={isSelected ? '#ffffff' : '#d4d4d8'}
                     >
                       {p.label}
                     </text>
@@ -418,17 +418,15 @@ export default function MobileHourlyForecast({
                   style={{ width: `${itemWidth}px` }}
                   className={`flex flex-col items-center justify-center shrink-0 py-1.5 px-1 rounded-2xl transition-all ${
                     isSelected
-                      ? 'bg-slate-800/90 border border-amber-400/40 shadow-lg scale-105'
-                      : 'hover:bg-slate-800/40 border border-transparent'
+                      ? 'bg-zinc-800/90 border border-amber-400/50 shadow-lg scale-105'
+                      : 'hover:bg-zinc-800/40 border border-transparent'
                   }`}
                 >
                   <div className="w-10 h-10 flex items-center justify-center">
                     <WeatherIcon
                       iconName={p.icon}
                       isNight={!p.isDay}
-                      className={`w-10 h-10 transition-colors ${
-                        isSelected ? 'text-amber-300' : 'text-slate-400'
-                      }`}
+                      className="w-10 h-10 transition-colors"
                     />
                   </div>
                   <span
@@ -437,7 +435,7 @@ export default function MobileHourlyForecast({
                         ? 'text-amber-300'
                         : p.isNow
                         ? 'text-white'
-                        : 'text-slate-300'
+                        : 'text-zinc-300'
                     }`}
                   >
                     {p.isNow ? 'Now' : p.hourLabel}
@@ -450,14 +448,14 @@ export default function MobileHourlyForecast({
       </div>
 
       {/* Metric Filter Pills (Matching Section 4 of Reference Design) */}
-      <div className="flex items-center gap-2 pt-3 mt-1 border-t border-slate-800/80">
+      <div className="flex items-center gap-2 pt-3 mt-1 border-t border-zinc-800/80">
         <button
           type="button"
           onClick={() => setActiveMetric('temperature')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
             activeMetric === 'temperature'
-              ? 'bg-amber-400 text-slate-950 font-bold shadow-md'
-              : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
           Temperature
@@ -465,10 +463,10 @@ export default function MobileHourlyForecast({
         <button
           type="button"
           onClick={() => setActiveMetric('precipitation')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
             activeMetric === 'precipitation'
-              ? 'bg-amber-400 text-slate-950 font-bold shadow-md'
-              : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
           Precipitation
@@ -476,10 +474,10 @@ export default function MobileHourlyForecast({
         <button
           type="button"
           onClick={() => setActiveMetric('wind')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
             activeMetric === 'wind'
-              ? 'bg-amber-400 text-slate-950 font-bold shadow-md'
-              : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
           Wind

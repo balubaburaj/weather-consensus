@@ -43,18 +43,18 @@ export default function WeatherNarrativeCard({
 
   if (isMobile) {
     return (
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+      <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-4 sm:p-5 shadow-xl">
         {/* Section Header: Live Day Story with desktop Sparkles icon */}
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+            <div className="p-2 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/30">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white tracking-wide">
                 Live Day Story
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-zinc-400">
                 {narrative.subHeader || `${narrative.cityName} • Today's Outlook`}
               </p>
             </div>
@@ -62,8 +62,8 @@ export default function WeatherNarrativeCard({
         </div>
 
         {/* Hero Narrative Headline */}
-        <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 mb-3 shadow-inner">
-          <p className="text-sm sm:text-base leading-relaxed text-slate-100 font-medium tracking-wide">
+        <div className="p-4 rounded-2xl bg-black/75 border border-zinc-800/80 mb-3 shadow-inner">
+          <p className="text-sm sm:text-base leading-relaxed text-zinc-100 font-medium tracking-wide">
             {narrative.naturalHero}
           </p>
         </div>
@@ -71,26 +71,26 @@ export default function WeatherNarrativeCard({
         {/* 3 Full-Width Vertically Stacked Micro-Cards: NOW, NEXT SHIFT, HEADS-UP */}
         <div className="flex flex-col gap-2.5">
           {/* Slot A: NOW */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+          <div className="p-3.5 rounded-2xl bg-black/75 border border-zinc-800/80 flex flex-col justify-between hover:border-zinc-700 transition-colors">
             <div>
-              <div className="flex items-center gap-2 text-cyan-400 mb-1.5">
-                <Clock className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2 text-zinc-200 mb-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-[11px] font-extrabold uppercase tracking-wider">
                   {narrative.microFields.nowTitle || 'Right Now'}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-snug">
+              <p className="text-xs sm:text-sm text-zinc-200 leading-snug">
                 {narrative.microFields.now}
               </p>
             </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+            <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-400">
               <span>{narrative.microFields.nowFooterLabel || 'Observed condition'}</span>
-              <span className="font-semibold text-cyan-300">{narrative.microFields.nowFooterValue || narrative.temperature}</span>
+              <span className="font-semibold text-white">{narrative.microFields.nowFooterValue || narrative.temperature}</span>
             </div>
           </div>
 
           {/* Slot B: LATER / NEXT SHIFT */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
+          <div className="p-3.5 rounded-2xl bg-black/75 border border-zinc-800/80 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
             <div>
               <div className="flex items-center gap-2 text-amber-400 mb-1.5">
                 <Compass className="w-3.5 h-3.5" />
@@ -98,11 +98,11 @@ export default function WeatherNarrativeCard({
                   {narrative.microFields.laterTitle || 'Next Shift'}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-snug">
+              <p className="text-xs sm:text-sm text-zinc-200 leading-snug">
                 {narrative.microFields.later}
               </p>
             </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+            <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-400">
               <span>{narrative.microFields.laterFooterLabel || 'Expected outlook'}</span>
               <span className="font-semibold text-amber-300">
                 {narrative.microFields.laterFooterValue || 'Overnight'}
@@ -111,7 +111,7 @@ export default function WeatherNarrativeCard({
           </div>
 
           {/* Slot C: HEADS-UP */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
+          <div className="p-3.5 rounded-2xl bg-black/75 border border-zinc-800/80 flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
             <div>
               <div className="flex items-center gap-2 text-emerald-400 mb-1.5">
                 <Lightbulb className="w-3.5 h-3.5" />
@@ -119,11 +119,11 @@ export default function WeatherNarrativeCard({
                   {narrative.microFields.headsUpTitle || 'Heads-up'}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-snug">
+              <p className="text-xs sm:text-sm text-zinc-200 leading-snug">
                 {narrative.microFields.headsUp}
               </p>
             </div>
-            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+            <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-400">
               <span>{narrative.microFields.headsUpFooterLabel || 'Practical advice'}</span>
               <span className="font-semibold text-emerald-300">
                 {narrative.microFields.headsUpFooterValue || 'For tonight'}

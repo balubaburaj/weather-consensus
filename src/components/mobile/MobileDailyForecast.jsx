@@ -110,11 +110,11 @@ export default function MobileDailyForecast({
   const barTotalHeightPx = 74;
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-3.5 sm:p-4 shadow-xl">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
           <h3 className="text-base font-extrabold text-white tracking-wide">
             Daily
           </h3>
@@ -122,7 +122,7 @@ export default function MobileDailyForecast({
         <button
           type="button"
           onClick={onOpenDetailedDaily}
-          className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer active:scale-95"
+          className="p-1.5 rounded-full bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer active:scale-95"
           title="View 10-day detailed forecast (Table & Graph)"
         >
           <ChevronRight className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function MobileDailyForecast({
           return (
             <div key={day.dateStr} className="flex flex-col items-center justify-between">
               {/* Max Temp label */}
-              <span className="text-[13px] font-mono font-extrabold text-slate-100">
+              <span className="text-[13px] font-mono font-extrabold text-zinc-100">
                 {day.maxTemp}°
               </span>
 
@@ -151,9 +151,9 @@ export default function MobileDailyForecast({
                 className="w-4 sm:w-5 relative my-0.5 flex justify-center items-center"
               >
                 {/* Thin background track */}
-                <div className="absolute inset-y-0 w-1 bg-slate-800/60 rounded-full" />
+                <div className="absolute inset-y-0 w-1 bg-zinc-800/80 rounded-full" />
 
-                {/* Range Bar Pill with Blue to Amber gradient */}
+                {/* Range Bar Pill with Warm Amber gradient (avoiding blue-on-blue near rain icons) */}
                 <div
                   style={{
                     top: `${topOffsetPx}px`,
@@ -161,26 +161,26 @@ export default function MobileDailyForecast({
                   }}
                   className={`absolute w-3 sm:w-3.5 rounded-full shadow-sm transition-all ${
                     day.isToday
-                      ? 'bg-gradient-to-b from-amber-400 to-cyan-400 border border-amber-300'
-                      : 'bg-gradient-to-b from-amber-500/80 to-blue-500/80 border border-slate-700'
+                      ? 'bg-gradient-to-b from-amber-300 to-orange-500 border border-amber-200/80'
+                      : 'bg-gradient-to-b from-amber-400/90 to-zinc-500/85 border border-zinc-700'
                   }`}
                 />
               </div>
 
               {/* Min Temp label */}
-              <span className="text-[13px] font-mono text-slate-300 font-bold">
+              <span className="text-[13px] font-mono text-zinc-300 font-bold">
                 {day.minTemp}°
               </span>
 
               {/* Rain Probability / Value Badge based on filter */}
               <div className="mt-1.5 min-h-[18px]">
                 {activeFilter === 'precipitation' && (
-                  <span className={`text-xs font-extrabold ${day.rainProb >= 60 ? 'text-cyan-400' : 'text-slate-300'}`}>
+                  <span className={`text-xs font-extrabold ${day.rainProb >= 60 ? 'text-sky-400' : 'text-zinc-300'}`}>
                     {day.rainProb}%
                   </span>
                 )}
                 {activeFilter === 'wind' && (
-                  <span className="text-xs font-mono font-bold text-sky-300">
+                  <span className="text-xs font-mono font-bold text-zinc-200">
                     {day.maxWind}k
                   </span>
                 )}
@@ -193,11 +193,11 @@ export default function MobileDailyForecast({
 
               {/* Weather Icon */}
               <div className="w-10 h-10 flex items-center justify-center my-0.5">
-                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-10 h-10 text-slate-200" />
+                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-10 h-10" />
               </div>
 
               {/* Day Label */}
-              <span className={`text-[11px] font-bold tracking-tight ${day.isToday ? 'text-amber-400' : 'text-slate-300'}`}>
+              <span className={`text-[11px] font-bold tracking-tight ${day.isToday ? 'text-amber-400' : 'text-zinc-300'}`}>
                 {day.isToday ? 'Today' : day.dayLabel}
               </span>
             </div>
@@ -206,14 +206,14 @@ export default function MobileDailyForecast({
       </div>
 
       {/* Filter Pills (Matching Section 5 of Reference Design) */}
-      <div className="flex items-center gap-2 pt-3 mt-1 border-t border-slate-800/80">
+      <div className="flex items-center gap-2 pt-3 mt-1 border-t border-zinc-800/80">
         <button
           type="button"
           onClick={() => setActiveFilter('precipitation')}
-          className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
+          className={`px-3 py-1 rounded-xl text-xs font-semibold transition cursor-pointer ${
             activeFilter === 'precipitation'
-              ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-              : 'bg-slate-800/80 text-slate-300 hover:text-white'
+              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-sm'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
           Precipitation
@@ -221,10 +221,10 @@ export default function MobileDailyForecast({
         <button
           type="button"
           onClick={() => setActiveFilter('wind')}
-          className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
+          className={`px-3 py-1 rounded-xl text-xs font-semibold transition cursor-pointer ${
             activeFilter === 'wind'
-              ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-              : 'bg-slate-800/80 text-slate-300 hover:text-white'
+              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-sm'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
           Wind
@@ -232,10 +232,10 @@ export default function MobileDailyForecast({
         <button
           type="button"
           onClick={() => setActiveFilter('temperature')}
-          className={`px-3 py-1 rounded-xl text-xs font-semibold transition ${
+          className={`px-3 py-1 rounded-xl text-xs font-semibold transition cursor-pointer ${
             activeFilter === 'temperature'
-              ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-              : 'bg-slate-800/80 text-slate-300 hover:text-white'
+              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-sm'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
           Temperature

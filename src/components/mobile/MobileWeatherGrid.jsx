@@ -90,7 +90,7 @@ export default function MobileWeatherGrid({
   ];
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-4 sm:p-5 shadow-xl">
       {/* Header */}
       <h3 className="text-sm font-bold text-white tracking-wide mb-3">
         Current Weather
@@ -103,9 +103,9 @@ export default function MobileWeatherGrid({
           return (
             <div
               key={m.id}
-              className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between"
+              className="p-3 rounded-2xl bg-black/75 border border-zinc-800/80 flex flex-col justify-between"
             >
-              <div className="flex items-center gap-1.5 text-slate-400 mb-1">
+              <div className="flex items-center gap-1.5 text-zinc-400 mb-1">
                 <IconComponent className={`w-3.5 h-3.5 ${m.color}`} />
                 <span className="text-[10px] font-semibold tracking-tight truncate">
                   {m.label}

@@ -201,14 +201,14 @@ export default function MobileDetailedHourlyModal({
   const visMetric = createMetricData('visibilityVal', 0);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black text-slate-100 flex flex-col overflow-hidden select-none animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 bg-black text-zinc-100 flex flex-col overflow-hidden select-none animate-fade-in font-sans">
       {/* 1. Top App Bar */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 bg-black/95 border-b border-slate-900 z-50">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 bg-black/95 border-b border-zinc-800/90 z-50">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 -ml-1 rounded-full hover:bg-slate-800 text-slate-200 transition cursor-pointer active:scale-95"
+            className="p-1.5 -ml-1 rounded-full hover:bg-zinc-800 text-zinc-200 transition cursor-pointer active:scale-95"
             title="Back to Mobile Overview"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -217,15 +217,15 @@ export default function MobileDetailedHourlyModal({
             Hourly
           </h2>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+        <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
           <span>{selectedCity?.name || 'Cork'}</span>
-          <span className="text-slate-600">&bull;</span>
-          <span className="text-cyan-400 font-mono">24h</span>
+          <span className="text-zinc-600">&bull;</span>
+          <span className="text-amber-400 font-mono">24h</span>
         </div>
       </div>
 
       {/* 2. 2D Scrollable Area: Horizontal 24h & Vertical 12 Metrics */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+      <div className="flex-1 overflow-x-auto overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
         <div style={{ width: `${totalWidth}px` }} className="relative min-h-full pb-14">
           
           {/* Vertical Column Grid Guide Background */}
@@ -234,15 +234,15 @@ export default function MobileDetailedHourlyModal({
               <div
                 key={i}
                 style={{ width: `${colWidth}px` }}
-                className={`h-full shrink-0 border-r border-slate-900/60 ${
-                  i % 2 === 0 ? 'bg-white/[0.015]' : 'bg-transparent'
+                className={`h-full shrink-0 border-r border-zinc-900/90 ${
+                  i % 2 === 0 ? 'bg-white/[0.018]' : 'bg-transparent'
                 }`}
               />
             ))}
           </div>
 
           {/* STICKY TIME & CLOUD ROW (Pins to top when scrolling vertically; scrolls horizontally with metrics) */}
-          <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-slate-800/90 pt-1 pb-1.5 shadow-lg">
+          <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-zinc-800/90 pt-1 pb-1.5 shadow-lg">
             {/* Day Header Row */}
             <div className="relative h-4 mb-0.5">
               {processed.map((p, i) =>
@@ -250,7 +250,7 @@ export default function MobileDetailedHourlyModal({
                   <div
                     key={`day-${i}`}
                     style={{ left: `${i * colWidth + 4}px` }}
-                    className="absolute top-0 text-xs font-extrabold text-slate-200 tracking-tight"
+                    className="absolute top-0 text-xs font-extrabold text-zinc-100 tracking-tight"
                   >
                     {p.dayLabel}
                   </div>
@@ -269,7 +269,7 @@ export default function MobileDetailedHourlyModal({
                   <WeatherIcon
                     iconName={p.icon}
                     isNight={!p.isDay}
-                    className="w-10 h-10 text-cyan-300 drop-shadow-sm"
+                    className="w-10 h-10 drop-shadow-sm"
                   />
                 </div>
               ))}
@@ -281,7 +281,7 @@ export default function MobileDetailedHourlyModal({
                 <div
                   key={`time-${i}`}
                   style={{ width: `${colWidth}px` }}
-                  className="shrink-0 text-center text-xs font-bold text-slate-300 font-mono"
+                  className="shrink-0 text-center text-xs font-bold text-zinc-300 font-mono"
                 >
                   {p.hourLabel}
                 </div>
@@ -290,7 +290,7 @@ export default function MobileDetailedHourlyModal({
           </div>
 
           {/* METRIC ROWS STACK (12 Exact Metrics Matching Weawow) */}
-          <div className="relative z-10 divide-y divide-slate-900/70">
+          <div className="relative z-10 divide-y divide-zinc-900">
             
             {/* 1. Temperature */}
             <MetricCurveRow
@@ -506,10 +506,10 @@ function MetricCurveRow({
   return (
     <div className="relative pt-1.5 pb-0.5">
       {/* Pinned Metric Title on the Left */}
-      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-0.5">
+      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#111113]/90 backdrop-blur-md border border-zinc-800 mb-0.5">
         {icon}
-        <span className="text-xs font-extrabold text-slate-100">{title}</span>
-        <span className="text-[11px] font-semibold text-slate-400">{unit}</span>
+        <span className="text-xs font-extrabold text-zinc-100">{title}</span>
+        <span className="text-[11px] font-semibold text-zinc-400">{unit}</span>
       </div>
 
       {/* SVG Curve Canvas */}
@@ -585,10 +585,10 @@ function MetricBarOrLineRow({
   return (
     <div className="relative pt-1.5 pb-0.5">
       {/* Pinned Metric Title on the Left */}
-      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-0.5">
+      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#111113]/90 backdrop-blur-md border border-zinc-800 mb-0.5">
         {icon}
-        <span className="text-xs font-extrabold text-slate-100">{title}</span>
-        <span className="text-[11px] font-semibold text-slate-400">{unit}</span>
+        <span className="text-xs font-extrabold text-zinc-100">{title}</span>
+        <span className="text-[11px] font-semibold text-zinc-400">{unit}</span>
       </div>
 
       <svg width={totalWidth} height={svgHeight} className="overflow-visible block">
@@ -674,10 +674,10 @@ function MetricWindRow({
   return (
     <div className="relative pt-1.5 pb-0.5">
       {/* Pinned Metric Title on the Left */}
-      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-800/80 mb-0.5">
+      <div className="sticky left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#111113]/90 backdrop-blur-md border border-zinc-800 mb-0.5">
         {icon}
-        <span className="text-xs font-extrabold text-slate-100">{title}</span>
-        <span className="text-[11px] font-semibold text-slate-400">{unit}</span>
+        <span className="text-xs font-extrabold text-zinc-100">{title}</span>
+        <span className="text-[11px] font-semibold text-zinc-400">{unit}</span>
       </div>
 
       <svg width={totalWidth} height={svgHeight} className="overflow-visible block">

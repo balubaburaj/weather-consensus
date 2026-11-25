@@ -16,7 +16,7 @@ export default function MobileAirQualityCard({ airQuality }) {
   const strokeDashoffset = circumference - (progressPct / 100) * circumference;
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+    <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-4 sm:p-5 shadow-xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -25,13 +25,13 @@ export default function MobileAirQualityCard({ airQuality }) {
             Air Quality
           </h3>
         </div>
-        <div className="p-1 rounded-full bg-slate-800 text-slate-400">
+        <div className="p-1 rounded-full bg-zinc-800 text-zinc-400">
           <ChevronRight className="w-4 h-4" />
         </div>
       </div>
 
       {/* Main AQI Gauge & Advice */}
-      <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 mb-3">
+      <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-black/75 border border-zinc-800/80 mb-3">
         {/* Circular Gauge */}
         <div className="relative w-18 h-18 shrink-0 flex items-center justify-center">
           <svg className="w-16 h-16 -rotate-90">
@@ -42,7 +42,7 @@ export default function MobileAirQualityCard({ airQuality }) {
               stroke="currentColor"
               strokeWidth="5"
               fill="transparent"
-              className="text-slate-800"
+              className="text-zinc-800"
             />
             <circle
               cx="32"
@@ -61,7 +61,7 @@ export default function MobileAirQualityCard({ airQuality }) {
             <span className="text-base font-black font-mono text-white leading-none">
               {aqi}
             </span>
-            <span className="text-[9px] font-bold text-slate-400">AQI</span>
+            <span className="text-[9px] font-bold text-zinc-400">AQI</span>
           </div>
         </div>
 
@@ -71,9 +71,9 @@ export default function MobileAirQualityCard({ airQuality }) {
             <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
               {status}
             </span>
-            <span className="text-xs font-bold text-slate-200">European AQI</span>
+            <span className="text-xs font-bold text-zinc-200">European AQI</span>
           </div>
-          <p className="text-xs text-slate-300 leading-snug">
+          <p className="text-xs text-zinc-300 leading-snug">
             {advice}
           </p>
         </div>
@@ -81,8 +81,8 @@ export default function MobileAirQualityCard({ airQuality }) {
 
       {/* Hourly AQI Mini-Bar Chart (if hourly data available) */}
       {hourly.length > 0 && (
-        <div className="pt-2 border-t border-slate-800/80">
-          <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1.5 font-medium">
+        <div className="pt-2 border-t border-zinc-800/80">
+          <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1.5 font-medium">
             <span>24h AQI Trend</span>
             <span className="text-emerald-400 font-semibold">Low Pollution</span>
           </div>

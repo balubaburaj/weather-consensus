@@ -119,7 +119,7 @@ export default function MobileHeroCard({
   });
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
+    <div className="relative overflow-hidden rounded-3xl border border-zinc-800/90 bg-black shadow-2xl">
       {/* 3D Model Scene Backdrop (with real-time tunable container height) */}
       <div
         style={{ height: `${tuning.cardHeight}px` }}
@@ -150,8 +150,8 @@ export default function MobileHeroCard({
         />
 
         {/* Gradient shadow overlay for crystal-clear readability */}
-        <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-        <div className="absolute top-0 inset-x-0 h-20 pointer-events-none bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none bg-gradient-to-t from-black via-black/60 to-transparent" />
+        <div className="absolute top-0 inset-x-0 h-20 pointer-events-none bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
 
         {/* Top Controls Overlay inside the 3D card (City Selection, Refresh, Search, Settings) */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-auto">
@@ -159,11 +159,11 @@ export default function MobileHeroCard({
           <button
             type="button"
             onClick={onOpenCitySearch}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-xs font-bold text-white shadow-md active:scale-95 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-black/75 hover:bg-zinc-900/90 border border-zinc-700/70 backdrop-blur-md text-xs font-bold text-white shadow-md active:scale-95 transition cursor-pointer"
           >
-            <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+            <MapPin className="w-3.5 h-3.5 text-amber-400" />
             <span className="truncate max-w-[125px]">{selectedCity?.name || 'Cork'}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <ChevronDown className="w-3 h-3 text-zinc-400" />
           </button>
 
           {/* Action Icons: Refresh, Search & Settings */}
@@ -171,8 +171,8 @@ export default function MobileHeroCard({
             <button
               type="button"
               onClick={onRefresh}
-              className={`p-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-slate-300 hover:text-white transition active:scale-95 shadow-md cursor-pointer ${
-                isRefreshing ? 'animate-spin text-cyan-400' : ''
+              className={`p-2 rounded-2xl bg-black/75 hover:bg-zinc-900/90 border border-zinc-700/70 backdrop-blur-md text-zinc-200 hover:text-white transition active:scale-95 shadow-md cursor-pointer ${
+                isRefreshing ? 'animate-spin text-amber-400' : ''
               }`}
               title="Refresh weather"
             >
@@ -182,7 +182,7 @@ export default function MobileHeroCard({
             <button
               type="button"
               onClick={onOpenCitySearch}
-              className="p-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-slate-300 hover:text-white transition active:scale-95 shadow-md cursor-pointer"
+              className="p-2 rounded-2xl bg-black/75 hover:bg-zinc-900/90 border border-zinc-700/70 backdrop-blur-md text-zinc-200 hover:text-white transition active:scale-95 shadow-md cursor-pointer"
               title="Search city"
             >
               <Search className="w-4 h-4" />
@@ -191,7 +191,7 @@ export default function MobileHeroCard({
             <button
               type="button"
               onClick={onOpenSettings}
-              className="p-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/70 backdrop-blur-md text-slate-300 hover:text-white transition active:scale-95 shadow-md cursor-pointer"
+              className="p-2 rounded-2xl bg-black/75 hover:bg-zinc-900/90 border border-zinc-700/70 backdrop-blur-md text-zinc-200 hover:text-white transition active:scale-95 shadow-md cursor-pointer"
               title="Settings & Preferences"
             >
               <Settings className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function MobileHeroCard({
               <span className="text-6xl sm:text-7xl font-black text-white tracking-tighter drop-shadow-lg font-mono">
                 {temp}°
               </span>
-              <span className="text-sm font-bold text-slate-300 ml-1 mt-2">
+              <span className="text-sm font-bold text-zinc-300 ml-1 mt-2">
                 {unit === 'F' ? 'F' : 'C'}
               </span>
             </div>
@@ -225,19 +225,19 @@ export default function MobileHeroCard({
                 <WeatherIcon
                   iconName={weatherInfo.icon}
                   isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
-                  className="w-11 h-11 sm:w-12 sm:h-12 text-cyan-300 drop-shadow-md"
+                  className="w-11 h-11 sm:w-12 sm:h-12 drop-shadow-md"
                 />
               </div>
-              <span className="text-base sm:text-lg font-bold text-slate-100 drop-shadow leading-tight">
+              <span className="text-base sm:text-lg font-bold text-zinc-100 drop-shadow leading-tight">
                 {weatherInfo.label}
               </span>
             </div>
 
             {/* City Label */}
-            <div className="text-xs font-bold text-slate-300 tracking-wide mt-1 flex items-center gap-1.5 drop-shadow">
+            <div className="text-xs font-bold text-zinc-300 tracking-wide mt-1 flex items-center gap-1.5 drop-shadow">
               <span>{selectedCity?.name || 'Cork'}</span>
-              <span className="text-slate-400">&bull;</span>
-              <span className="text-[11px] text-slate-400 font-normal">
+              <span className="text-zinc-500">&bull;</span>
+              <span className="text-[11px] text-zinc-400 font-normal">
                 {selectedCity?.admin1 || selectedCity?.country || 'Ireland'}
               </span>
             </div>
@@ -577,21 +577,21 @@ export default function MobileHeroCard({
       )}
 
       {/* High/Low Bar & Daily Status Strip */}
-      <div className="px-4 py-3 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-between text-xs">
+      <div className="px-4 py-3 bg-[#111113] border-t border-zinc-800/90 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1 font-mono font-bold text-slate-200">
+          <div className="flex items-center gap-1 font-mono font-bold text-zinc-100">
             <span className="text-amber-400">&uarr;</span>
             <span>{maxTemp}°</span>
-            <span className="text-slate-500 font-normal">/</span>
-            <span className="text-cyan-400">&darr;</span>
+            <span className="text-zinc-600 font-normal">/</span>
+            <span className="text-zinc-400">&darr;</span>
             <span>{minTemp}°</span>
           </div>
-          <span className="text-slate-600">&bull;</span>
-          <div className="flex items-center gap-1.5 text-slate-300 font-medium">
+          <span className="text-zinc-700">&bull;</span>
+          <div className="flex items-center gap-1.5 text-zinc-200 font-medium">
             <WeatherIcon
               iconName={rainInfo.icon}
               isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
-              className="w-6 h-6 text-cyan-400"
+              className="w-6 h-6"
             />
             <span className="truncate max-w-[130px] sm:max-w-none">
               {isCurrentlyRaining ? rainInfo.label : 'Dry Roads'}
@@ -599,7 +599,7 @@ export default function MobileHeroCard({
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-400 font-medium">
+        <div className="text-[11px] text-zinc-400 font-medium">
           {todayDateStr}
         </div>
       </div>
