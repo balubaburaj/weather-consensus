@@ -4559,35 +4559,55 @@ export function createHouseNo121Scene(container, options = {}) {
       precipitation = 0,
       temperature = 14,
       weatherCode = 0,
+      cloudCover = null,
     }) {
       if (activeScenarioKey !== 'live') return;
 
       const rainVal = Number(precipitation) || 0;
       const code = Number(weatherCode) || 0;
-      const temp = Number(temperature) || 14;
-      const raining = !!rain || (rainVal > 0.05);
+      const temp = temperature !== null && temperature !== undefined ? Number(temperature) : 14;
+      const cc = cloudCover !== null && cloudCover !== undefined ? Number(cloudCover) : null;
 
-      if (code >= 71 && code <= 86) {
-        // Snow conditions
+      // Exact WMO snow/freezing codes (excludes 80, 81, 82 which are liquid rain showers!)
+      const isSnowCode = [56, 57, 66, 67, 71, 73, 75, 77, 85, 86].includes(code);
+      const isWetCode = [51, 53, 55, 61, 62, 63, 65, 80, 81, 82, 95, 96, 99].includes(code);
+      const raining = !!rain || rainVal > 0.05 || isWetCode;
+
+      if (isSnowCode) {
         setWeatherScenario('snow');
       } else if (raining) {
+        const isHeavy = rainVal >= 2.0 || [63, 65, 81, 82, 95, 96, 99].includes(code);
         if (rainVal >= 2.5 && temp < 8) {
           setWeatherScenario('cold_deluge');
-        } else if (rainVal >= 2.0) {
+        } else if (isHeavy) {
           setWeatherScenario(!isDay ? 'rain_night' : 'heavy_rain');
         } else {
           setWeatherScenario(!isDay ? 'rain_night' : 'light_rain');
         }
       } else if (!isDay) {
         setWeatherScenario('clear_night');
-      } else if (temp >= 20) {
-        setWeatherScenario('summer');
-      } else if (temp >= 16) {
-        setWeatherScenario('mild');
-      } else if (temp >= 7) {
-        setWeatherScenario('chilly');
       } else {
-        setWeatherScenario('puffy_cold');
+        if (temp >= 20) {
+          setWeatherScenario('summer');
+        } else if (temp >= 16) {
+          setWeatherScenario('mild');
+        } else if (temp >= 7) {
+          setWeatherScenario('chilly');
+        } else {
+          setWeatherScenario('puffy_cold');
+        }
+
+        // Reconcile daytime lighting & sunglasses with actual cloud cover / overcast sky codes
+        const isOvercastOrFog = [3, 45, 48].includes(code) || (cc !== null && cc >= 70);
+        const isClearSun = (code === 0 || code === 1) && (cc === null || cc < 35);
+        if (isOvercastOrFog) {
+          targetLighting = lightingPresets.chilly;
+          boySunglassesGroup.visible = false;
+          boyGlassesGroup.visible = true;
+          girlSunglasses.visible = false;
+        } else if (isClearSun && temp >= 7 && temp < 16) {
+          targetLighting = lightingPresets.afternoon;
+        }
       }
       activeScenarioKey = 'live';
     }

@@ -286,15 +286,17 @@ export default function WeatherHouse3D({
 
     if (activeScenario === 'live') {
       const isDay = currentWeather?.isDay !== undefined ? currentWeather.isDay : true;
-      const precipitation = currentWeather?.precipitation || 0;
-      const temperature = currentWeather?.temperature || 14;
-      const weatherCode = currentWeather?.weatherCode || 0;
+      const precipitation = currentWeather?.precipitation ?? 0;
+      const temperature = currentWeather?.temperature ?? 14;
+      const weatherCode = currentWeather?.weatherCode ?? 0;
+      const cloudCover = currentWeather?.cloudCover ?? null;
       sceneRef.current.setWeatherState({
         isDay,
         isRaining: isCurrentlyRaining,
         precipitation,
         temperature,
         weatherCode,
+        cloudCover,
       });
     }
   }, [
@@ -302,6 +304,7 @@ export default function WeatherHouse3D({
     currentWeather?.precipitation,
     currentWeather?.temperature,
     currentWeather?.weatherCode,
+    currentWeather?.cloudCover,
     isCurrentlyRaining,
     activeScenario,
   ]);
