@@ -8,6 +8,8 @@ import {
   MapPin,
   X,
   ChevronDown,
+  ChevronRight,
+  Layers,
 } from 'lucide-react';
 import MobileHeroCard from './MobileHeroCard';
 import MobileHourlyForecast from './MobileHourlyForecast';
@@ -18,6 +20,7 @@ import MobileAirQualityCard from './MobileAirQualityCard';
 import MobileSunMoonCard from './MobileSunMoonCard';
 import MobileDetailedHourlyModal from './MobileDetailedHourlyModal';
 import MobileDetailedDailyModal from './MobileDetailedDailyModal';
+import MobileMultiDayMatrixModal from './MobileMultiDayMatrixModal';
 import WeatherNarrativeCard from '../WeatherNarrativeCard';
 import { DEFAULT_CITIES, searchLocations } from '../../services/weatherApi';
 
@@ -44,6 +47,7 @@ export default function MobileWeatherView({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailedHourlyOpen, setIsDetailedHourlyOpen] = useState(false);
   const [isDetailedDailyOpen, setIsDetailedDailyOpen] = useState(false);
+  const [isMultiDayMatrixOpen, setIsMultiDayMatrixOpen] = useState(false);
 
   // Pull-to-refresh state
   const [pullY, setPullY] = useState(0);
@@ -419,6 +423,30 @@ export default function MobileWeatherView({
           timeFormat={timeFormat}
         />
 
+        {/* 9. Continuous Multi-Day Hourly Matrix Entry Card */}
+        <button
+          type="button"
+          onClick={() => setIsMultiDayMatrixOpen(true)}
+          className="w-full rounded-3xl border border-zinc-800/90 bg-[#111113] hover:bg-zinc-900 p-4 shadow-xl flex items-center justify-between gap-3 text-left transition active:scale-[0.99] cursor-pointer"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-extrabold text-white tracking-wide truncate">
+                Continuous Multi-Day Hourly Matrix
+              </h3>
+              <p className="text-[11px] text-zinc-400 truncate">
+                Compare TrueCast Consensus &amp; all weather providers (1h intervals)
+              </p>
+            </div>
+          </div>
+          <div className="p-1.5 rounded-full bg-zinc-800 text-zinc-300 shrink-0">
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </button>
+
         {/* Bottom Footer Actions */}
         <div className="pt-4 text-center space-y-3">
           <button
@@ -457,6 +485,17 @@ export default function MobileWeatherView({
             unit={unit}
             timeFormat={timeFormat}
             onClose={() => setIsDetailedDailyOpen(false)}
+          />
+        )}
+
+        {/* Continuous Multi-Day Hourly Matrix (Provider Comparison Curve Cards) */}
+        {isMultiDayMatrixOpen && (
+          <MobileMultiDayMatrixModal
+            hours={hours}
+            selectedCity={selectedCity}
+            unit={unit}
+            timeFormat={timeFormat}
+            onClose={() => setIsMultiDayMatrixOpen(false)}
           />
         )}
 
