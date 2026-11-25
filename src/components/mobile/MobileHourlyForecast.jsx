@@ -233,56 +233,56 @@ export default function MobileHourlyForecast({
         </button>
       </div>
 
-      {/* Top Inspector Box (Live Updates as user scrolls / taps hours) */}
+      {/* Top Inspector Box (Fixed single-row lines so horizontal scrolling never jumps) */}
       <div className="rounded-2xl bg-black/75 border border-zinc-800/80 p-3 mb-2.5 shadow-inner">
-        {/* Row 1: Badges */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
+        {/* Row 1: Badges (strict single line, never wraps) */}
+        <div className="flex items-center justify-between gap-1.5 mb-2 flex-nowrap">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
             {/* Condition badge */}
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-800 text-zinc-100 border border-zinc-700/80">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-zinc-800 text-zinc-100 border border-zinc-700/80 truncate">
               {aInfo.shortLabel || aInfo.label || 'Overcast'}
             </span>
 
             {/* Wind badge */}
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-900 text-zinc-200 border border-zinc-800 flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-zinc-900 text-zinc-200 border border-zinc-800 inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
               <span>💨</span>
               <span>{formatWind(windKmh, unit)} {windDir}</span>
             </span>
           </div>
 
           {/* High / Low Day Badge */}
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-900 text-zinc-200 border border-zinc-800 font-mono shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-zinc-900 text-zinc-200 border border-zinc-800 font-mono shrink-0 whitespace-nowrap">
             {dayMax}° / {dayMin}°
           </span>
         </div>
 
-        {/* Row 2: Big Temp + Feels Like (Enlarged, same warm amber color as hero card) + Wind Chill */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-4xl font-black text-white font-mono tracking-tight leading-none">
+        {/* Row 2: Big Temp + Feels Like + Wind Chill (strict single row, fixed height) */}
+        <div className="flex items-center justify-between gap-1.5 flex-nowrap min-h-[38px]">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight leading-none shrink-0">
               {tDisp}{tempUnit}
             </span>
-            <span className="text-sm sm:text-base font-extrabold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-sm drop-shadow-md">
+            <span className="text-xs sm:text-sm font-extrabold px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-sm whitespace-nowrap shrink-0">
               Feels {feelsDisp}{tempUnit}
             </span>
           </div>
 
           {/* Wind Chill / Heat Index Delta Badge */}
           {chillBadgeText !== 'Matched' && (
-            <span className="px-2.5 py-1 rounded-xl bg-zinc-900 border border-zinc-700 text-[11px] font-semibold text-zinc-300 shrink-0">
+            <span className="px-2 py-1 rounded-xl bg-zinc-900 border border-zinc-700 text-[10px] sm:text-[11px] font-semibold text-zinc-300 whitespace-nowrap shrink-0">
               {chillBadgeText}
             </span>
           )}
         </div>
 
-        {/* Row 3: Condition Subtitle */}
-        <div className="flex items-center gap-2.5 mt-2 pt-2 border-t border-zinc-800/80">
+        {/* Row 3: Condition Subtitle (strict single line) */}
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-800/80 min-w-0">
           <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-8 h-8 shrink-0" />
-          <span className="text-sm font-bold text-zinc-100">
+          <span className="text-sm font-bold text-zinc-100 truncate">
             {aInfo.label}
           </span>
-          <span className="text-zinc-500 text-xs">&bull;</span>
-          <span className="text-xs text-zinc-300 font-mono font-semibold">
+          <span className="text-zinc-500 text-xs shrink-0">&bull;</span>
+          <span className="text-xs text-zinc-300 font-mono font-semibold whitespace-nowrap shrink-0">
             {activePoint.isNow ? 'Right Now' : activePoint.hourLabel}
           </span>
         </div>
