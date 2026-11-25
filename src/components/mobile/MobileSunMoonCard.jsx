@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Sunrise, Sunset, Sun, Moon, ChevronRight } from 'lucide-react';
 import { formatTime } from '../../utils/units';
 
-export default function MobileSunMoonCard({
+const MobileSunMoonCard = memo(function MobileSunMoonCard({
   currentWeather,
   timeFormat = '24h',
 }) {
@@ -146,4 +146,6 @@ export default function MobileSunMoonCard({
       </div>
     </div>
   );
-}
+});
+
+export default MobileSunMoonCard;

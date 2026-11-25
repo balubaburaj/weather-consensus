@@ -759,12 +759,14 @@ export function createHouseNo121Scene(container, options = {}) {
   const initialWidth = container.clientWidth || 800;
   const initialHeight = container.clientHeight || 450;
 
-  // Renderer Setup
+  const isCompactViewport = initialWidth < 640;
+
+  // Renderer Setup (tuned DPR on mobile viewports for smooth GPU frame pacing)
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: 'high-performance',
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompactViewport ? 1.5 : 2));
   renderer.setSize(initialWidth, initialHeight, false);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -877,9 +879,10 @@ export function createHouseNo121Scene(container, options = {}) {
 
       const sunLight = new THREE.DirectionalLight(0xffe7c2, 2.35);
       sunLight.position.set(-9.5, 11.5, 9.2);
+      const shadowRes = isCompactViewport ? 1024 : 2048;
       sunLight.castShadow = true;
-      sunLight.shadow.mapSize.width = 2048;
-      sunLight.shadow.mapSize.height = 2048;
+      sunLight.shadow.mapSize.width = shadowRes;
+      sunLight.shadow.mapSize.height = shadowRes;
       sunLight.shadow.camera.near = 1;
       sunLight.shadow.camera.far = 36;
       sunLight.shadow.camera.left = -10.5;
@@ -3989,7 +3992,7 @@ export function createHouseNo121Scene(container, options = {}) {
     let girlNextBlink = 3.8;
 
     function animate() {
-      if (!isRunning || isOffscreen) return;
+      if (!isRunning || isOffscreen || (typeof document !== 'undefined' && document.hidden)) return;
       animFrameId = requestAnimationFrame(animate);
 
       const now = performance.now() / 1000;
@@ -4217,6 +4220,17 @@ export function createHouseNo121Scene(container, options = {}) {
         }
       }, 150);
     }
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !isOffscreen && isRunning) {
+        lastFrameTime = performance.now() / 1000;
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        animFrameId = requestAnimationFrame(animate);
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
     animFrameId = requestAnimationFrame(animate);
 
     // If playIntro requested, initiate intro sequence on load
@@ -4240,6 +4254,9 @@ export function createHouseNo121Scene(container, options = {}) {
       if (resizeRaf) cancelAnimationFrame(resizeRaf);
       if (loadTimeoutId) clearTimeout(loadTimeoutId);
       resizeObserver.disconnect();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
       window.removeEventListener('resize', onWindowResize);
       renderer.domElement.removeEventListener('wheel', handleWheelCapture, { capture: true });
       renderer.domElement.removeEventListener('pointerdown', handlePointerDownCapture, { capture: true });

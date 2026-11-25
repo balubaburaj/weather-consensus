@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import {
   Sliders,
   X,
@@ -32,7 +32,7 @@ const DEFAULT_TUNING = {
   cameraFov: 61,      // Camera lens angle width (FOV)
 };
 
-export default function MobileHeroCard({
+const MobileHeroCard = memo(function MobileHeroCard({
   currentWeather,
   currentHourConsensus,
   isCurrentlyRaining,
@@ -609,4 +609,6 @@ export default function MobileHeroCard({
       </div>
     </div>
   );
-}
+});
+
+export default MobileHeroCard;

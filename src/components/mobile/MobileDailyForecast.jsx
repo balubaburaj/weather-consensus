@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { memo, useState, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo } from '../../constants/providers';
 
-export default function MobileDailyForecast({
+function MobileDailyForecast({
   dates = [],
   todayDateStr,
   hoursByDate = {},
@@ -259,3 +259,5 @@ export default function MobileDailyForecast({
     </div>
   );
 }
+
+export default memo(MobileDailyForecast);

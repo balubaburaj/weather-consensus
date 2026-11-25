@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { memo, useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { formatTime, formatWind, getCardinalWindDirection } from '../../utils/units';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo } from '../../constants/providers';
 
-export default function MobileHourlyForecast({
+function MobileHourlyForecast({
   hours = [],
   dailySummary,
   unit = 'C',
@@ -16,14 +16,12 @@ export default function MobileHourlyForecast({
   const scrollContainerRef = useRef(null);
   const isAutoScrolling = useRef(false);
 
-  if (!hours || hours.length === 0) return null;
-
-  // Take next 24 hours starting from current (or first upcoming)
-  const currentIdx = hours.findIndex((h) => h.isCurrent);
-  const startIdx = currentIdx !== -1 ? currentIdx : 0;
-  const displayHours = hours.slice(startIdx, startIdx + 24);
-
-  if (displayHours.length === 0) return null;
+  const displayHours = useMemo(() => {
+    if (!hours || hours.length === 0) return [];
+    const currentIdx = hours.findIndex((h) => h.isCurrent);
+    const startIdx = currentIdx !== -1 ? currentIdx : 0;
+    return hours.slice(startIdx, startIdx + 24);
+  }, [hours]);
 
   const itemWidth = 64;
   const svgWidth = displayHours.length * itemWidth;
@@ -32,91 +30,96 @@ export default function MobileHourlyForecast({
   const bottomPadding = 16;
   const usableHeight = svgHeight - topPadding - bottomPadding;
 
-  // Extract values based on active metric
-  const dataPoints = displayHours.map((h, i) => {
-    const consensus = h.consensus || {};
-    const actual = h.actual || {};
-    const timeLabel = formatTime(h.hourLabel || h.timeIso, timeFormat, false);
+  // Memoize 24h point data & SVG bezier paths so horizontal scroll selection ticks do zero geometry recompute
+  const { points, pathD, fillD } = useMemo(() => {
+    if (displayHours.length === 0) {
+      return { points: [], pathD: '', fillD: '' };
+    }
 
-    let val = 0;
-    let label = '';
-    let feelsVal = null;
-    let feelsLabel = '';
+    const dataPoints = displayHours.map((h, i) => {
+      const consensus = h.consensus || {};
+      const actual = h.actual || {};
+      const timeLabel = formatTime(h.hourLabel || h.timeIso, timeFormat, false);
 
-    const code = consensus.weatherCode !== undefined && consensus.weatherCode !== null ? consensus.weatherCode : (actual.weatherCode ?? 2);
-    const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
-    const rainMm = consensus.precipitation !== undefined ? consensus.precipitation : (actual.precipitation || 0);
-    const isDay = h.isDay !== undefined ? Boolean(h.isDay) : true;
-    const cloudCover = consensus.cloudCover ?? actual.cloudCover ?? null;
-    const smartInfo = resolveSmartWeatherInfo(code, rainMm > 0 || prob >= 40 ? prob : 0, rainMm, isDay, cloudCover);
-    let icon = smartInfo.icon || 'Cloud';
+      let val = 0;
+      let label = '';
+      let feelsVal = null;
+      let feelsLabel = '';
 
-    const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
-    const fRaw = consensus.apparentTemperature !== undefined ? consensus.apparentTemperature : (actual.apparentTemperature !== undefined ? actual.apparentTemperature : tRaw);
+      const code = consensus.weatherCode !== undefined && consensus.weatherCode !== null ? consensus.weatherCode : (actual.weatherCode ?? 2);
+      const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
+      const rainMm = consensus.precipitation !== undefined ? consensus.precipitation : (actual.precipitation || 0);
+      const isDay = h.isDay !== undefined ? Boolean(h.isDay) : true;
+      const cloudCover = consensus.cloudCover ?? actual.cloudCover ?? null;
+      const smartInfo = resolveSmartWeatherInfo(code, rainMm > 0 || prob >= 40 ? prob : 0, rainMm, isDay, cloudCover);
+      let icon = smartInfo.icon || 'Cloud';
 
-    if (activeMetric === 'temperature') {
-      val = unit === 'F' ? Math.round((tRaw * 9) / 5 + 32) : Math.round(tRaw);
-      label = `${val}°`;
-      feelsVal = unit === 'F' ? Math.round((fRaw * 9) / 5 + 32) : Math.round(fRaw);
-      feelsLabel = `${feelsVal}°`;
-    } else if (activeMetric === 'precipitation') {
-      val = Math.round(prob);
-      label = `${val}%`;
-      if (smartInfo.category === 'rain' || smartInfo.category === 'storm' || smartInfo.category === 'snow') {
-        icon = smartInfo.icon;
+      const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
+      const fRaw = consensus.apparentTemperature !== undefined ? consensus.apparentTemperature : (actual.apparentTemperature !== undefined ? actual.apparentTemperature : tRaw);
+
+      if (activeMetric === 'temperature') {
+        val = unit === 'F' ? Math.round((tRaw * 9) / 5 + 32) : Math.round(tRaw);
+        label = `${val}°`;
+        feelsVal = unit === 'F' ? Math.round((fRaw * 9) / 5 + 32) : Math.round(fRaw);
+        feelsLabel = `${feelsVal}°`;
+      } else if (activeMetric === 'precipitation') {
+        val = Math.round(prob);
+        label = `${val}%`;
+        if (smartInfo.category === 'rain' || smartInfo.category === 'storm' || smartInfo.category === 'snow') {
+          icon = smartInfo.icon;
+        } else {
+          icon = val > 60 ? 'moderate_rain' : (val > 40 ? 'drizzle' : (smartInfo.icon || 'Cloud'));
+        }
       } else {
-        icon = val > 60 ? 'moderate_rain' : (val > 40 ? 'drizzle' : (smartInfo.icon || 'Cloud'));
+        const w = consensus.windSpeed !== undefined && consensus.windSpeed !== null ? consensus.windSpeed : (actual.windSpeed || 15);
+        val = unit === 'F' ? Math.round(w * 0.621371) : Math.round(w);
+        label = `${val}`;
+        icon = 'Wind';
       }
-    } else {
-      // Wind
-      const w = consensus.windSpeed !== undefined && consensus.windSpeed !== null ? consensus.windSpeed : (actual.windSpeed || 15);
-      val = unit === 'F' ? Math.round(w * 0.621371) : Math.round(w);
-      label = `${val}`;
-      icon = 'Wind';
+
+      return {
+        index: i,
+        hourLabel: timeLabel,
+        val,
+        label,
+        feelsVal,
+        feelsLabel,
+        icon,
+        isDay,
+        isNow: i === 0 && h.isCurrent,
+        rawHour: h,
+      };
+    });
+
+    const values = dataPoints.map((d) => d.val);
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const range = maxVal - minVal || 1;
+
+    const pts = dataPoints.map((d, i) => {
+      const x = i * itemWidth + itemWidth / 2;
+      const normalized = (d.val - minVal) / range;
+      const y = topPadding + (1 - normalized) * usableHeight;
+      return { x, y, ...d };
+    });
+
+    let line = '';
+    let fill = '';
+    if (pts.length > 0) {
+      line = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const curr = pts[i];
+        const next = pts[i + 1];
+        const cpX = curr.x + (next.x - curr.x) / 2;
+        line += ` C ${cpX} ${curr.y}, ${cpX} ${next.y}, ${next.x} ${next.y}`;
+      }
+      fill = `${line} L ${pts[pts.length - 1].x} ${svgHeight} L ${pts[0].x} ${svgHeight} Z`;
     }
 
-    return {
-      index: i,
-      hourLabel: timeLabel,
-      val,
-      label,
-      feelsVal,
-      feelsLabel,
-      icon,
-      isDay: h.isDay !== undefined ? Boolean(h.isDay) : true,
-      isNow: i === 0 && h.isCurrent,
-      rawHour: h,
-    };
-  });
+    return { points: pts, pathD: line, fillD: fill };
+  }, [displayHours, activeMetric, unit, timeFormat, itemWidth, svgHeight, topPadding, usableHeight]);
 
-  const values = dataPoints.map((d) => d.val);
-  const minVal = Math.min(...values);
-  const maxVal = Math.max(...values);
-  const range = maxVal - minVal || 1;
-
-  const points = dataPoints.map((d, i) => {
-    const x = i * itemWidth + itemWidth / 2;
-    const normalized = (d.val - minVal) / range;
-    const y = topPadding + (1 - normalized) * usableHeight;
-    return { x, y, ...d };
-  });
-
-  // Build smooth bezier curve path
-  let pathD = '';
-  let fillD = '';
-  if (points.length > 0) {
-    pathD = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const curr = points[i];
-      const next = points[i + 1];
-      const cpX1 = curr.x + (next.x - curr.x) / 2;
-      const cpY1 = curr.y;
-      const cpX2 = curr.x + (next.x - curr.x) / 2;
-      const cpY2 = next.y;
-      pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
-    }
-    fillD = `${pathD} L ${points[points.length - 1].x} ${svgHeight} L ${points[0].x} ${svgHeight} Z`;
-  }
+  if (points.length === 0) return null;
 
   // Active Selected Hour Details for the Top Inspector Card
   const activePoint = points[selectedHourIndex] || points[0];
@@ -491,3 +494,5 @@ export default function MobileHourlyForecast({
     </div>
   );
 }
+
+export default memo(MobileHourlyForecast);

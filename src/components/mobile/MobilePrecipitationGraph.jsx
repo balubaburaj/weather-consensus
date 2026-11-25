@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { CloudRain } from 'lucide-react';
 import { formatTime } from '../../utils/units';
 
-export default function MobilePrecipitationGraph({
+const MobilePrecipitationGraph = memo(function MobilePrecipitationGraph({
   hours = [],
   timeFormat = '24h',
 }) {
@@ -105,4 +105,6 @@ export default function MobilePrecipitationGraph({
       </div>
     </div>
   );
-}
+});
+
+export default MobilePrecipitationGraph;

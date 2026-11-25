@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import {
   Sparkles,
   Compass,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { generateWeatherNarrative } from '../services/weatherNarrativeEngine';
 
-export default function WeatherNarrativeCard({
+const WeatherNarrativeCard = memo(function WeatherNarrativeCard({
   currentWeather,
   hourlyHours,
   dailySummary,
@@ -30,14 +30,18 @@ export default function WeatherNarrativeCard({
     localStorage.setItem('omni_narrative_style', style);
   };
 
-  const narrative = generateWeatherNarrative({
-    current: currentWeather,
-    hourlyHours,
-    dailySummary,
-    selectedCity,
-    unit,
-    timeFormat,
-  });
+  const narrative = useMemo(
+    () =>
+      generateWeatherNarrative({
+        current: currentWeather,
+        hourlyHours,
+        dailySummary,
+        selectedCity,
+        unit,
+        timeFormat,
+      }),
+    [currentWeather, hourlyHours, dailySummary, selectedCity, unit, timeFormat]
+  );
 
   if (!narrative) return null;
 
@@ -306,4 +310,6 @@ export default function WeatherNarrativeCard({
       </div>
     </div>
   );
-}
+});
+
+export default WeatherNarrativeCard;

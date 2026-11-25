@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
 import Header from './components/Header';
-import CurrentOverview from './components/CurrentOverview';
-import WhatToWearCard from './components/WhatToWearCard';
 import DaySelector from './components/DaySelector';
-import HourlyMatrix from './components/HourlyMatrix';
-import MobileWeatherView from './components/mobile/MobileWeatherView';
 
-// Performance optimization: code-split heavy secondary tabs and modals
+// Performance optimization: code-split viewport shells, heavy 3D/matrix views, charts & modals
+const CurrentOverview = lazy(() => import('./components/CurrentOverview'));
+const HourlyMatrix = lazy(() => import('./components/HourlyMatrix'));
+const WhatToWearCard = lazy(() => import('./components/WhatToWearCard'));
+const MobileWeatherView = lazy(() => import('./components/mobile/MobileWeatherView'));
 const HourlyChart = lazy(() => import('./components/HourlyChart'));
 const AccuracyLeaderboard = lazy(() => import('./components/AccuracyLeaderboard'));
 const HourDetailModal = lazy(() => import('./components/HourDetailModal'));
@@ -312,21 +312,27 @@ export default function App() {
   // If Mobile Layout is active, render the dedicated mobile feed
   if (isMobileLayout && processedWeatherData) {
     return (
-      <MobileWeatherView
-        weatherData={processedWeatherData}
-        selectedCity={selectedCity}
-        onSelectCity={(city) => setSelectedCity(city)}
-        dailySummary={dailySummary}
-        unit={unit}
-        onToggleUnit={handleToggleUnit}
-        timeFormat={timeFormat}
-        onToggleTimeFormat={handleToggleTimeFormat}
-        onRefresh={() => loadWeatherData(selectedCity, true, false)}
-        isRefreshing={loading}
-        refreshInterval={refreshInterval}
-        onChangeRefreshInterval={handleSetRefreshInterval}
-        onSwitchToDesktop={() => handleSetViewMode('desktop')}
-      />
+      <Suspense fallback={
+        <div className="min-h-screen bg-black text-zinc-300 flex items-center justify-center text-xs font-semibold">
+          Loading mobile forecast...
+        </div>
+      }>
+        <MobileWeatherView
+          weatherData={processedWeatherData}
+          selectedCity={selectedCity}
+          onSelectCity={(city) => setSelectedCity(city)}
+          dailySummary={dailySummary}
+          unit={unit}
+          onToggleUnit={handleToggleUnit}
+          timeFormat={timeFormat}
+          onToggleTimeFormat={handleToggleTimeFormat}
+          onRefresh={() => loadWeatherData(selectedCity, true, false)}
+          isRefreshing={loading}
+          refreshInterval={refreshInterval}
+          onChangeRefreshInterval={handleSetRefreshInterval}
+          onSwitchToDesktop={() => handleSetViewMode('desktop')}
+        />
+      </Suspense>
     );
   }
 
@@ -385,7 +391,11 @@ export default function App() {
 
         {/* Content */}
         {processedWeatherData && (
-          <>
+          <Suspense fallback={
+            <div className="p-12 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse">
+              Loading weather overview &amp; 3D showcase...
+            </div>
+          }>
             {/* Live Observation, 4 Core Pillars Hero Bar & Modest Quick Wear Checklist */}
             <CurrentOverview
               weatherData={processedWeatherData}
@@ -479,37 +489,25 @@ export default function App() {
 
             {/* Tab 2: Interactive Chart (Lazy loaded) */}
             {activeTab === 'chart' && (
-              <Suspense fallback={
-                <div className="p-12 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse">
-                  Loading multi-model interactive chart...
-                </div>
-              }>
-                <HourlyChart
-                  hours={currentDayHours}
-                  unit={unit}
-                  timeFormat={timeFormat}
-                  activeProviders={activeProviders}
-                  onToggleProvider={handleToggleProvider}
-                  onSelectAllProviders={handleSelectAllProviders}
-                  onResetProviders={handleResetProviders}
-                />
-              </Suspense>
+              <HourlyChart
+                hours={currentDayHours}
+                unit={unit}
+                timeFormat={timeFormat}
+                activeProviders={activeProviders}
+                onToggleProvider={handleToggleProvider}
+                onSelectAllProviders={handleSelectAllProviders}
+                onResetProviders={handleResetProviders}
+              />
             )}
 
             {/* Tab 3: Accuracy Leaderboard & Truth Verification (Lazy loaded) */}
             {activeTab === 'accuracy' && (
-              <Suspense fallback={
-                <div className="p-12 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse">
-                  Loading accuracy leaderboard &amp; truth audit...
-                </div>
-              }>
-                <AccuracyLeaderboard
-                  accuracyReport={accuracyReport}
-                  unit={unit}
-                  timeFormat={timeFormat}
-                  onOpenExplainer={() => setShowExplainer(true)}
-                />
-              </Suspense>
+              <AccuracyLeaderboard
+                accuracyReport={accuracyReport}
+                unit={unit}
+                timeFormat={timeFormat}
+                onOpenExplainer={() => setShowExplainer(true)}
+              />
             )}
 
             {/* Detailed What to Wear & Thermal Comfort Stylist Guide (Placed at the bottom below comparison) */}
@@ -521,7 +519,7 @@ export default function App() {
                 unit={unit}
               />
             </div>
-          </>
+          </Suspense>
         )}
 
       </main>

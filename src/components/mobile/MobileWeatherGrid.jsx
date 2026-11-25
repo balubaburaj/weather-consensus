@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Thermometer,
   Droplets,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { formatWind, formatPrecip, formatTemp } from '../../utils/units';
 
-export default function MobileWeatherGrid({
+function MobileWeatherGrid({
   currentWeather,
   unit = 'C',
 }) {
@@ -121,3 +121,5 @@ export default function MobileWeatherGrid({
     </div>
   );
 }
+
+export default memo(MobileWeatherGrid);

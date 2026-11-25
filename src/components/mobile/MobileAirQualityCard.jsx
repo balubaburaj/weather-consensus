@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Wind, ChevronRight, CheckCircle2 } from 'lucide-react';
 
-export default function MobileAirQualityCard({ airQuality }) {
+function MobileAirQualityCard({ airQuality }) {
   const aqi = airQuality?.aqi !== undefined ? airQuality.aqi : 20;
   const status = airQuality?.status || 'Good';
   const advice = airQuality?.advice || 'Ideal air quality for all outdoor activities.';
@@ -104,3 +104,5 @@ export default function MobileAirQualityCard({ airQuality }) {
     </div>
   );
 }
+
+export default memo(MobileAirQualityCard);

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
 import {
   Menu,
   Search,
@@ -18,11 +18,13 @@ import MobilePrecipitationGraph from './MobilePrecipitationGraph';
 import MobileWeatherGrid from './MobileWeatherGrid';
 import MobileAirQualityCard from './MobileAirQualityCard';
 import MobileSunMoonCard from './MobileSunMoonCard';
-import MobileDetailedHourlyModal from './MobileDetailedHourlyModal';
-import MobileDetailedDailyModal from './MobileDetailedDailyModal';
-import MobileMultiDayMatrixModal from './MobileMultiDayMatrixModal';
 import WeatherNarrativeCard from '../WeatherNarrativeCard';
 import { DEFAULT_CITIES, searchLocations } from '../../services/weatherApi';
+
+// Code-split heavy full-screen detail modals so mobile initial mount stays fast
+const MobileDetailedHourlyModal = lazy(() => import('./MobileDetailedHourlyModal'));
+const MobileDetailedDailyModal = lazy(() => import('./MobileDetailedDailyModal'));
+const MobileMultiDayMatrixModal = lazy(() => import('./MobileMultiDayMatrixModal'));
 
 export default function MobileWeatherView({
   weatherData,
@@ -55,21 +57,44 @@ export default function MobileWeatherView({
   const touchStartY = useRef(null);
   const mouseStartY = useRef(null);
 
-  if (!weatherData) return null;
+  const current = weatherData?.current;
+  const hours = weatherData?.hours || [];
+  const dates = weatherData?.dates || [];
+  const airQuality = weatherData?.airQuality;
+  const dailySunByDate = weatherData?.dailySunByDate;
 
-  const { current, hours, dates, airQuality, dailySunByDate } = weatherData;
+  // Group hours by date once per weather dataset change (never on pullY drag ticks)
+  const hoursByDate = useMemo(() => {
+    const map = {};
+    hours.forEach((h) => {
+      if (!map[h.date]) map[h.date] = [];
+      map[h.date].push(h);
+    });
+    return map;
+  }, [hours]);
+
+  const currentHour = useMemo(
+    () => hours.find((h) => h.isCurrent) || hours[0],
+    [hours]
+  );
+
+  const todayDateStr = useMemo(
+    () => (current?.time && current.time.includes('T') ? current.time.split('T')[0] : dates[0]),
+    [current?.time, dates]
+  );
+
+  const openCitySearch = useCallback(() => setIsCitySearchOpen(true), []);
+  const openSettings = useCallback(() => setIsSettingsOpen(true), []);
+  const openDetailedHourly = useCallback(() => setIsDetailedHourlyOpen(true), []);
+  const openDetailedDaily = useCallback(() => setIsDetailedDailyOpen(true), []);
+  const openMultiDayMatrix = useCallback(() => setIsMultiDayMatrixOpen(true), []);
+  const closeDetailedHourly = useCallback(() => setIsDetailedHourlyOpen(false), []);
+  const closeDetailedDaily = useCallback(() => setIsDetailedDailyOpen(false), []);
+  const closeMultiDayMatrix = useCallback(() => setIsMultiDayMatrixOpen(false), []);
+
+  if (!weatherData || !current) return null;
+
   const isCurrentlyRaining = current.precipitation > 0 || current.weatherCode >= 50;
-  const currentHour = hours.find((h) => h.isCurrent) || hours[0];
-  const todayDateStr = current?.time && current.time.includes('T')
-    ? current.time.split('T')[0]
-    : dates[0];
-
-  // Group hours by date
-  const hoursByDate = {};
-  hours.forEach((h) => {
-    if (!hoursByDate[h.date]) hoursByDate[h.date] = [];
-    hoursByDate[h.date].push(h);
-  });
 
   const handleSearch = async (q) => {
     setSearchQuery(q);
@@ -371,8 +396,8 @@ export default function MobileWeatherView({
           dailySummary={dailySummary}
           unit={unit}
           timeFormat={timeFormat}
-          onOpenCitySearch={() => setIsCitySearchOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenCitySearch={openCitySearch}
+          onOpenSettings={openSettings}
           onRefresh={onRefresh}
           isRefreshing={isRefreshing}
         />
@@ -394,7 +419,7 @@ export default function MobileWeatherView({
           dailySummary={dailySummary}
           unit={unit}
           timeFormat={timeFormat}
-          onOpenDetailedHourly={() => setIsDetailedHourlyOpen(true)}
+          onOpenDetailedHourly={openDetailedHourly}
         />
 
         {/* 4. Daily Forecast (7-Day Vertical Range Bars) */}
@@ -403,7 +428,7 @@ export default function MobileWeatherView({
           todayDateStr={todayDateStr}
           hoursByDate={hoursByDate}
           unit={unit}
-          onOpenDetailedDaily={() => setIsDetailedDailyOpen(true)}
+          onOpenDetailedDaily={openDetailedDaily}
         />
 
         {/* 5. Precipitation Timeline Graph */}
@@ -432,7 +457,7 @@ export default function MobileWeatherView({
         {/* 9. Continuous Multi-Day Hourly Matrix Entry Card */}
         <button
           type="button"
-          onClick={() => setIsMultiDayMatrixOpen(true)}
+          onClick={openMultiDayMatrix}
           className="w-full rounded-3xl border border-zinc-800/90 bg-[#111113] hover:bg-zinc-900 p-4 shadow-xl flex items-center justify-between gap-3 text-left transition active:scale-[0.99] cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
@@ -469,41 +494,41 @@ export default function MobileWeatherView({
           </p>
         </div>
 
-        {/* Comprehensive 24h Detailed Hourly Modal (Weawow Reference Style) */}
-        {isDetailedHourlyOpen && (
-          <MobileDetailedHourlyModal
-            hours={hours}
-            selectedCity={selectedCity}
-            unit={unit}
-            timeFormat={timeFormat}
-            onClose={() => setIsDetailedHourlyOpen(false)}
-          />
-        )}
+        {/* Lazy-loaded Full-Screen Detail Views */}
+        <Suspense fallback={null}>
+          {isDetailedHourlyOpen && (
+            <MobileDetailedHourlyModal
+              hours={hours}
+              selectedCity={selectedCity}
+              unit={unit}
+              timeFormat={timeFormat}
+              onClose={closeDetailedHourly}
+            />
+          )}
 
-        {/* Comprehensive 10-Day Detailed Daily Modal (Yr Table & Graph Views) */}
-        {isDetailedDailyOpen && (
-          <MobileDetailedDailyModal
-            dates={dates}
-            hoursByDate={hoursByDate}
-            hours={hours}
-            dailySunByDate={dailySunByDate}
-            selectedCity={selectedCity}
-            unit={unit}
-            timeFormat={timeFormat}
-            onClose={() => setIsDetailedDailyOpen(false)}
-          />
-        )}
+          {isDetailedDailyOpen && (
+            <MobileDetailedDailyModal
+              dates={dates}
+              hoursByDate={hoursByDate}
+              hours={hours}
+              dailySunByDate={dailySunByDate}
+              selectedCity={selectedCity}
+              unit={unit}
+              timeFormat={timeFormat}
+              onClose={closeDetailedDaily}
+            />
+          )}
 
-        {/* Continuous Multi-Day Hourly Matrix (Provider Comparison Curve Cards) */}
-        {isMultiDayMatrixOpen && (
-          <MobileMultiDayMatrixModal
-            hours={hours}
-            selectedCity={selectedCity}
-            unit={unit}
-            timeFormat={timeFormat}
-            onClose={() => setIsMultiDayMatrixOpen(false)}
-          />
-        )}
+          {isMultiDayMatrixOpen && (
+            <MobileMultiDayMatrixModal
+              hours={hours}
+              selectedCity={selectedCity}
+              unit={unit}
+              timeFormat={timeFormat}
+              onClose={closeMultiDayMatrix}
+            />
+          )}
+        </Suspense>
 
       </div>
     </div>
