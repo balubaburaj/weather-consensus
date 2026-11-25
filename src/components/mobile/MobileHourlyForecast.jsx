@@ -271,8 +271,8 @@ export default function MobileHourlyForecast({
         </div>
 
         {/* Row 3: Condition Subtitle */}
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800/80">
-          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-4 h-4 text-cyan-400 shrink-0" />
+        <div className="flex items-center gap-2.5 mt-2 pt-2 border-t border-slate-800/80">
+          <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-7 h-7 text-cyan-400 shrink-0" />
           <span className="text-xs font-semibold text-cyan-300">
             {aInfo.label}
           </span>
@@ -422,11 +422,11 @@ export default function MobileHourlyForecast({
                       : 'hover:bg-slate-800/40 border border-transparent'
                   }`}
                 >
-                  <div className="w-6 h-6 flex items-center justify-center">
+                  <div className="w-9 h-9 flex items-center justify-center">
                     <WeatherIcon
                       iconName={p.icon}
                       isNight={!p.isDay}
-                      className={`w-5 h-5 transition-colors ${
+                      className={`w-8 h-8 transition-colors ${
                         isSelected ? 'text-amber-300' : 'text-slate-400'
                       }`}
                     />

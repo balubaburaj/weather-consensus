@@ -192,8 +192,8 @@ export default function MobileDailyForecast({
               </div>
 
               {/* Weather Icon */}
-              <div className="w-5 h-5 flex items-center justify-center my-1">
-                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-4 h-4 text-slate-200" />
+              <div className="w-9 h-9 flex items-center justify-center my-1.5">
+                <WeatherIcon iconName={day.icon} isNight={day.isNight} className="w-8 h-8 text-slate-200" />
               </div>
 
               {/* Day Label */}

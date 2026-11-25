@@ -220,12 +220,12 @@ export default function MobileHeroCard({
             </div>
 
             {/* Condition with ENLARGED Weather Icon */}
-            <div className="flex items-center gap-2.5 mt-1">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3 mt-1">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
                 <WeatherIcon
                   iconName={weatherInfo.icon}
                   isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
-                  className="w-8 h-8 sm:w-9 sm:h-9 text-cyan-300 drop-shadow-md"
+                  className="w-11 h-11 sm:w-12 sm:h-12 text-cyan-300 drop-shadow-md"
                 />
               </div>
               <span className="text-base sm:text-lg font-bold text-slate-100 drop-shadow leading-tight">
@@ -591,7 +591,7 @@ export default function MobileHeroCard({
             <WeatherIcon
               iconName={rainInfo.icon}
               isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
-              className="w-4 h-4 text-cyan-400"
+              className="w-6 h-6 text-cyan-400"
             />
             <span className="truncate max-w-[130px] sm:max-w-none">
               {isCurrentlyRaining ? rainInfo.label : 'Dry Roads'}

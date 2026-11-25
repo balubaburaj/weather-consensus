@@ -264,12 +264,12 @@ export default function MobileDetailedHourlyModal({
                 <div
                   key={`icon-${i}`}
                   style={{ width: `${colWidth}px` }}
-                  className="shrink-0 flex items-center justify-center h-6"
+                  className="shrink-0 flex items-center justify-center h-9"
                 >
                   <WeatherIcon
                     iconName={p.icon}
                     isNight={!p.isDay}
-                    className="w-5 h-5 text-cyan-300 drop-shadow-sm"
+                    className="w-8 h-8 text-cyan-300 drop-shadow-sm"
                   />
                 </div>
               ))}

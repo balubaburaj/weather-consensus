@@ -310,7 +310,7 @@ export default function MobileDetailedDailyModal({
 
                 {/* Column Header Row (visible when expanded or for Today) */}
                 {showColumnHeaders && (
-                  <div className="grid grid-cols-[64px_40px_1fr_1fr_1fr] items-center px-4 pb-1.5 text-[10px] font-semibold text-slate-400 border-b border-slate-800/60">
+                  <div className="grid grid-cols-[64px_52px_1fr_1fr_1fr] items-center px-4 pb-1.5 text-[10px] font-semibold text-slate-400 border-b border-slate-800/60">
                     <span>Time</span>
                     <span />
                     <span className="text-center">Temp. °{unit}</span>
@@ -325,13 +325,13 @@ export default function MobileDetailedDailyModal({
                     ? day.hourlySplit.map((hr, idx) => (
                         <div
                           key={idx}
-                          className="grid grid-cols-[64px_40px_1fr_1fr_1fr] items-center px-4 py-2 text-xs hover:bg-slate-800/30 transition-colors"
+                          className="grid grid-cols-[64px_52px_1fr_1fr_1fr] items-center px-4 py-1.5 text-xs hover:bg-slate-800/30 transition-colors"
                         >
                           <span className="font-mono text-slate-300 font-medium">
                             {hr.timeStr}
                           </span>
                           <div className="flex items-center justify-center">
-                            <WeatherIcon iconName={hr.icon} isNight={!hr.isDay} className="w-5 h-5 text-slate-100" />
+                            <WeatherIcon iconName={hr.icon} isNight={!hr.isDay} className="w-8 h-8 text-slate-100" />
                           </div>
                           <span
                             className={`text-center font-bold font-mono ${
@@ -366,13 +366,13 @@ export default function MobileDetailedDailyModal({
                     : day.periods.map((p, idx) => (
                         <div
                           key={idx}
-                          className="grid grid-cols-[64px_40px_1fr_1fr_1fr] items-center px-4 py-2.5 text-xs"
+                          className="grid grid-cols-[64px_52px_1fr_1fr_1fr] items-center px-4 py-2 text-xs"
                         >
                           <span className="font-mono text-slate-300 font-medium">
                             {p.label}
                           </span>
                           <div className="flex items-center justify-center">
-                            <WeatherIcon iconName={p.icon} isNight={p.isNight} className="w-5 h-5 text-slate-100" />
+                            <WeatherIcon iconName={p.icon} isNight={p.isNight} className="w-8 h-8 text-slate-100" />
                           </div>
                           <span
                             className={`text-center font-bold font-mono ${
@@ -459,7 +459,7 @@ function DailyGraphView({
     return hours.slice(startIdx, startIdx + 240);
   }, [hours]);
 
-  const colWidth = 34; // Compact width matching Yr so ~10-12 hours fit cleanly on phone width
+  const colWidth = 38; // Gives clean breathing room for larger 28px weather icons across ~9-10 visible hours
   const yAxisWidth = 44;
   const chartWidth = timelineHours.length * colWidth;
 
@@ -582,9 +582,9 @@ function DailyGraphView({
                 <div
                   key={`ic-${item.idx}`}
                   style={{ width: `${colWidth}px` }}
-                  className="shrink-0 flex items-center justify-center h-6"
+                  className="shrink-0 flex items-center justify-center h-8"
                 >
-                  <WeatherIcon iconName={item.icon} isNight={!item.isDay} className="w-5 h-5 text-slate-100" />
+                  <WeatherIcon iconName={item.icon} isNight={!item.isDay} className="w-7 h-7 text-slate-100" />
                 </div>
               ))}
             </div>
