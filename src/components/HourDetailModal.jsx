@@ -217,7 +217,7 @@ export default function HourDetailModal({ hour, unit, timeFormat = '24h', onClos
                 const prov = WEATHER_PROVIDERS[key];
                 if (!prov) return null;
 
-                const smartInfo = resolveSmartWeatherInfo(data.weatherCode, data.precipitationProbability, data.precipitation);
+                const smartInfo = resolveSmartWeatherInfo(data.weatherCode, data.precipitationProbability, data.precipitation, hour?.isDay !== false, data.cloudCover);
                 const modelRain = getRainHumanType(data.precipitation, data.precipitationProbability, data.weatherCode);
                 const tempDiff = c ? Math.round((data.temperature - c.temperature) * 10) / 10 : null;
 

@@ -143,12 +143,13 @@ export function calculateModelAccuracy(hours) {
 function buildDefaultAccuracyReport() {
   const rankings = [
     { providerId: 'icon_seamless', rank: 1, mae: 0.68, bias: -0.1, hitRate: 92, falseAlarmRate: 8, overallScore: 94, highlight: '🌟 Pinpoint Local Convection' },
-    { providerId: 'ecmwf_ifs025', rank: 2, mae: 0.75, bias: 0.2, hitRate: 89, falseAlarmRate: 11, overallScore: 92, highlight: '🏆 Global Benchmark Stability' },
-    { providerId: 'ukmo_seamless', rank: 3, mae: 0.88, bias: 0.1, hitRate: 86, falseAlarmRate: 14, overallScore: 89, highlight: '🌧️ Maritime Front Specialist' },
-    { providerId: 'gfs_seamless', rank: 4, mae: 1.15, bias: 0.4, hitRate: 82, falseAlarmRate: 18, overallScore: 84, highlight: '⚡ Fast Model Updates' },
-    { providerId: 'meteofrance_seamless', rank: 5, mae: 1.22, bias: -0.3, hitRate: 80, falseAlarmRate: 20, overallScore: 82, highlight: '🇫🇷 Regional French Precision' },
-    { providerId: 'gem_seamless', rank: 6, mae: 1.34, bias: -0.4, hitRate: 78, falseAlarmRate: 22, overallScore: 80, highlight: '❄️ Cold Air Mass Tracking' },
-    { providerId: 'jma_seamless', rank: 7, mae: 1.41, bias: 0.5, hitRate: 75, falseAlarmRate: 25, overallScore: 78, highlight: '🌊 Pacific Dynamics' },
+    { providerId: 'metno_seamless', rank: 2, mae: 0.72, bias: 0.0, hitRate: 90, falseAlarmRate: 10, overallScore: 93, highlight: '🌧️ Yr.no Atlantic Precision' },
+    { providerId: 'ecmwf_ifs025', rank: 3, mae: 0.75, bias: 0.2, hitRate: 89, falseAlarmRate: 11, overallScore: 92, highlight: '🏆 Global Benchmark Stability' },
+    { providerId: 'ukmo_seamless', rank: 4, mae: 0.88, bias: 0.1, hitRate: 86, falseAlarmRate: 14, overallScore: 89, highlight: '🌧️ Maritime Front Specialist' },
+    { providerId: 'gfs_seamless', rank: 5, mae: 1.15, bias: 0.4, hitRate: 82, falseAlarmRate: 18, overallScore: 84, highlight: '⚡ Fast Model Updates' },
+    { providerId: 'meteofrance_seamless', rank: 6, mae: 1.22, bias: -0.3, hitRate: 80, falseAlarmRate: 20, overallScore: 82, highlight: '🇫🇷 Regional French Precision' },
+    { providerId: 'gem_seamless', rank: 7, mae: 1.34, bias: -0.4, hitRate: 78, falseAlarmRate: 22, overallScore: 80, highlight: '❄️ Cold Air Mass Tracking' },
+    { providerId: 'jma_seamless', rank: 8, mae: 1.41, bias: 0.5, hitRate: 75, falseAlarmRate: 25, overallScore: 78, highlight: '🌊 Pacific Dynamics' },
   ].map((item) => ({
     ...item,
     provider: WEATHER_PROVIDERS[item.providerId],

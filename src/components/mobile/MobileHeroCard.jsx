@@ -34,6 +34,7 @@ const DEFAULT_TUNING = {
 
 export default function MobileHeroCard({
   currentWeather,
+  currentHourConsensus,
   isCurrentlyRaining,
   selectedCity,
   dailySummary,
@@ -104,9 +105,12 @@ export default function MobileHeroCard({
 
   const temp = currentWeather.temperature !== null ? Math.round(currentWeather.temperature) : '--';
   const feels = currentWeather.apparentTemperature !== null ? Math.round(currentWeather.apparentTemperature) : temp;
-  const weatherCode = currentWeather.weatherCode || 0;
+  const weatherCode = currentWeather.weatherCode ?? currentHourConsensus?.weatherCode ?? 2;
   const precip = currentWeather.precipitation || 0;
-  const weatherInfo = resolveSmartWeatherInfo(weatherCode, isCurrentlyRaining ? 85 : 10, precip);
+  const isDay = currentWeather.isDay !== false && currentWeather.isDay !== 0;
+  const effectiveCloud = currentWeather.cloudCover ?? currentHourConsensus?.cloudCover ?? null;
+  const effectiveProb = isCurrentlyRaining ? 85 : (currentHourConsensus?.precipitationProbability ?? 10);
+  const weatherInfo = resolveSmartWeatherInfo(weatherCode, effectiveProb, precip, isDay, effectiveCloud);
   const rainInfo = getRainHumanType(precip, isCurrentlyRaining ? 85 : 0, weatherCode);
 
   const minTemp = dailySummary?.minTemp !== undefined ? Math.round(dailySummary.minTemp) : temp - 2;

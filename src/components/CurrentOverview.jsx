@@ -100,14 +100,18 @@ export default function CurrentOverview({
 }) {
   if (!weatherData) return null;
 
-  const { current } = weatherData;
+  const { current, hours = [] } = weatherData;
   const topPerformer = accuracyReport?.topPerformer;
+  const currentHourConsensus = hours.find((h) => h.isCurrent)?.consensus;
 
-  // Resolve condition text and specific human rain classification
-  const currentCondition = resolveSmartWeatherInfo(current.weatherCode, current.precipitation > 0 ? 85 : 10, current.precipitation);
+  // Resolve condition text and specific human rain classification with day/night & cloud truthfulness
+  const isDay = current.isDay !== false && current.isDay !== 0;
+  const effectiveProb = current.precipitation > 0 ? 85 : (currentHourConsensus?.precipitationProbability ?? 10);
+  const effectiveCloud = current.cloudCover ?? currentHourConsensus?.cloudCover ?? null;
+  const currentCondition = resolveSmartWeatherInfo(current.weatherCode, effectiveProb, current.precipitation, isDay, effectiveCloud);
   const currentRainType = getRainHumanType(current.precipitation, current.precipitation > 0 ? 85 : 0, current.weatherCode);
   const isCurrentlyRaining = current.precipitation > 0 || currentCondition.isRain;
-  const isSunny = current.weatherCode === 0 || current.weatherCode === 1 || current.weatherCode === 2;
+  const isSunny = isDay && (currentCondition.shortLabel === 'Sunny' || currentCondition.shortLabel === 'Mostly Sunny');
 
   // Quick modest gear checklist
   const quickGear = getQuickGearChecklist(current, isCurrentlyRaining, isSunny);

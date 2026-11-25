@@ -59,6 +59,10 @@ export default function MobileWeatherView({
 
   const { current, hours, dates, airQuality, dailySunByDate } = weatherData;
   const isCurrentlyRaining = current.precipitation > 0 || current.weatherCode >= 50;
+  const currentHour = hours.find((h) => h.isCurrent) || hours[0];
+  const todayDateStr = current?.time && current.time.includes('T')
+    ? current.time.split('T')[0]
+    : dates[0];
 
   // Group hours by date
   const hoursByDate = {};
@@ -361,6 +365,7 @@ export default function MobileWeatherView({
         {/* 1. Hero Card: 3D Scene Backdrop + Top Controls + Giant Temp */}
         <MobileHeroCard
           currentWeather={current}
+          currentHourConsensus={currentHour?.consensus}
           isCurrentlyRaining={isCurrentlyRaining}
           selectedCity={selectedCity}
           dailySummary={dailySummary}
@@ -395,6 +400,7 @@ export default function MobileWeatherView({
         {/* 4. Daily Forecast (7-Day Vertical Range Bars) */}
         <MobileDailyForecast
           dates={dates}
+          todayDateStr={todayDateStr}
           hoursByDate={hoursByDate}
           unit={unit}
           onOpenDetailedDaily={() => setIsDetailedDailyOpen(true)}

@@ -5,6 +5,7 @@ import { resolveSmartWeatherInfo } from '../../constants/providers';
 
 export default function MobileDailyForecast({
   dates = [],
+  todayDateStr,
   hoursByDate = {},
   unit = 'C',
   onOpenDetailedDaily,
@@ -15,9 +16,10 @@ export default function MobileDailyForecast({
   const dailyData = useMemo(() => {
     if (!dates || dates.length === 0) return [];
 
-    // Filter to next 7 days starting from today or date index 2 (skip past days)
-    const todayStr = new Date().toISOString().split('T')[0];
-    const startIndex = dates.indexOf(todayStr) !== -1 ? dates.indexOf(todayStr) : 0;
+    // Prefer city-local date string over UTC ISO date so late-night timezones stay on Today
+    const now = new Date();
+    const localTodayStr = todayDateStr || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const startIndex = dates.indexOf(localTodayStr) !== -1 ? dates.indexOf(localTodayStr) : 0;
     const selectedDates = dates.slice(startIndex, startIndex + 7);
 
     return selectedDates.map((dateStr, idx) => {
@@ -56,20 +58,33 @@ export default function MobileDailyForecast({
       const rawMaxWind = Math.max(...windsKmh);
       const maxWind = unit === 'F' ? Math.round(rawMaxWind * 0.621371) : Math.round(rawMaxWind);
 
-      // Intensity-aware daily icon
-      const daytimeHours = dayHours.filter((h) => h.isDay);
-      const refHour = daytimeHours[Math.floor(daytimeHours.length / 2)] || dayHours[Math.floor(dayHours.length / 2)] || dayHours[0];
-      const refCode = refHour.consensus?.weatherCode ?? refHour.actual?.weatherCode ?? 2;
-      const smartRef = resolveSmartWeatherInfo(refCode, 0, 0);
+      // Intensity-aware daily icon anchored on daytime sky majority & cloud cover
+      const daytimeHours = dayHours.filter((h) => h.isDay !== false);
+      const skySample = daytimeHours.length > 0 ? daytimeHours : dayHours;
+      const fogHrs = skySample.filter((h) => [45, 48].includes(h.consensus?.weatherCode ?? h.actual?.weatherCode)).length;
+      const overcastHrs = skySample.filter((h) => (h.consensus?.weatherCode ?? h.actual?.weatherCode) === 3 || (h.consensus?.cloudCover ?? 0) >= 80).length;
+      const partlyHrs = skySample.filter((h) => (h.consensus?.weatherCode ?? h.actual?.weatherCode) === 2 || (h.consensus?.cloudCover ?? 0) >= 45).length;
 
-      let icon = smartRef.icon || 'CloudSun';
+      const refHour = skySample[Math.floor(skySample.length / 2)] || dayHours[0];
+      const refCode = refHour.consensus?.weatherCode ?? refHour.actual?.weatherCode ?? 2;
+      const refCloud = refHour.consensus?.cloudCover ?? refHour.actual?.cloudCover ?? null;
+
+      let icon = resolveSmartWeatherInfo(refCode, 0, 0, daytimeHours.length > 0, refCloud).icon || 'CloudSun';
+      if (fogHrs >= Math.max(2, Math.ceil(skySample.length * 0.35))) {
+        icon = 'fog';
+      } else if (overcastHrs >= Math.ceil(skySample.length * 0.5)) {
+        icon = 'overcast';
+      } else if (partlyHrs >= Math.ceil(skySample.length * 0.4) && icon === 'Sun') {
+        icon = 'CloudSun';
+      }
+
       const severeHour = dayHours.find((h) => {
         const c = h.consensus?.weatherCode ?? h.actual?.weatherCode ?? 0;
         return [71, 73, 75, 77, 85, 86, 95, 96, 99].includes(c);
       });
       if (severeHour) {
         const sc = severeHour.consensus?.weatherCode ?? severeHour.actual?.weatherCode ?? 0;
-        icon = resolveSmartWeatherInfo(sc, rainProb, maxHourlyRain).icon;
+        icon = resolveSmartWeatherInfo(sc, rainProb, maxHourlyRain, daytimeHours.length > 0).icon;
       } else if (maxHourlyRain >= 6.0) {
         icon = 'torrential';
       } else if (maxHourlyRain >= 2.5 || totalRain >= 8.0) {
@@ -96,7 +111,7 @@ export default function MobileDailyForecast({
         isToday: idx === 0,
       };
     });
-  }, [dates, hoursByDate, unit]);
+  }, [dates, todayDateStr, hoursByDate, unit]);
 
   if (dailyData.length === 0) return null;
 

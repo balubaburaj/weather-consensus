@@ -91,10 +91,12 @@ export default function MobileDetailedHourlyModal({
       const consensus = h.consensus || {};
       const actual = h.actual || {};
 
-      const code = consensus.weatherCode !== undefined ? consensus.weatherCode : (actual.weatherCode || 0);
+      const code = consensus.weatherCode !== undefined && consensus.weatherCode !== null ? consensus.weatherCode : (actual.weatherCode ?? 2);
       const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
       const rainMm = consensus.precipitation !== undefined ? consensus.precipitation : (actual.precipitation || 0);
-      const smartInfo = resolveSmartWeatherInfo(code, prob, rainMm);
+      const isDay = h.isDay !== undefined ? Boolean(h.isDay) : true;
+      const cloudCover = consensus.cloudCover ?? actual.cloudCover ?? null;
+      const smartInfo = resolveSmartWeatherInfo(code, prob, rainMm, isDay, cloudCover);
 
       const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
       const fRaw = consensus.apparentTemperature !== undefined ? consensus.apparentTemperature : (actual.apparentTemperature || tRaw);
@@ -112,7 +114,7 @@ export default function MobileDetailedHourlyModal({
         : Math.round(rainMm * 10) / 10;
 
       // Wind & Wind Gust
-      const windKmh = consensus.windSpeed !== undefined ? consensus.windSpeed : (actual.windSpeed || 10);
+      const windKmh = consensus.windSpeed !== undefined && consensus.windSpeed !== null ? consensus.windSpeed : (actual.windSpeed || 10);
       const windVal = unit === 'F' ? Math.round(windKmh * 0.621371) : Math.round(windKmh);
       const gustKmh = actual.windGusts !== undefined ? actual.windGusts : Math.round(windKmh * 1.35);
       const gustVal = unit === 'F' ? Math.round(gustKmh * 0.621371) : Math.round(gustKmh);
@@ -122,10 +124,10 @@ export default function MobileDetailedHourlyModal({
       const pressureVal = actual.surfacePressure || 1013;
 
       // Cloud Cover
-      const cloudCoverVal = actual.cloudCover !== undefined ? actual.cloudCover : 85;
+      const cloudCoverVal = cloudCover !== null ? Math.round(cloudCover) : 85;
 
       // Humidity
-      const humRaw = consensus.humidity !== undefined ? consensus.humidity : (actual.humidity || 85);
+      const humRaw = consensus.humidity !== undefined && consensus.humidity !== null ? consensus.humidity : (actual.humidity || 85);
       const humidityVal = Math.round(humRaw);
 
       // Dew Point

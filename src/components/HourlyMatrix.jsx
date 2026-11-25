@@ -576,7 +576,7 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
 
                 const prob = data.precipitationProbability;
                 const precip = data.precipitation;
-                const smartInfo = resolveSmartWeatherInfo(data.weatherCode, prob, precip);
+                const smartInfo = resolveSmartWeatherInfo(data.weatherCode, prob, precip, hour.isDay !== false, data.cloudCover);
 
                 return (
                   <td
@@ -661,7 +661,9 @@ const MemoizedMatrixTable = memo(function MemoizedMatrixTable({
             const smartActual = resolveSmartWeatherInfo(
               act.weatherCode,
               act.precipitation > 0 ? 95 : 0,
-              act.precipitation
+              act.precipitation,
+              hour.isDay !== false,
+              act.cloudCover
             );
 
             return (

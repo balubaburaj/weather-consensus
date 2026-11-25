@@ -118,7 +118,7 @@ export async function fetchMultiModelWeather(lat, lon, timezone = 'auto', forceR
   }
 
   const modelsParam = PROVIDER_KEYS.join(',');
-  const hourlyVariables = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m';
+  const hourlyVariables = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,cloud_cover';
   const currentVariables = 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,is_day';
 
   // 1. Multi-model call (past 2 days + next 10 days)
@@ -272,19 +272,21 @@ function parseWeatherData(modelsPayload, actualPayload, aqiPayload = null) {
     const uvIndex = actualHourly.uv_index ? Math.round(actualHourly.uv_index[idx] * 10) / 10 : 0;
 
     // Actual observed values for this hour
+    const rawActualCode = actualHourly.weather_code ? actualHourly.weather_code[idx] : null;
+    const rawActualCloud = actualHourly.cloud_cover ? actualHourly.cloud_cover[idx] : null;
     const actual = {
       temperature: actualTemp !== null ? Math.round(actualTemp * 10) / 10 : null,
       apparentTemperature: actualApparent !== null ? Math.round(actualApparent * 10) / 10 : null,
       precipitationProbability: actualHourly.precipitation_probability ? actualHourly.precipitation_probability[idx] : 0,
       precipitation: actualHourly.precipitation ? actualHourly.precipitation[idx] : 0,
-      weatherCode: actualHourly.weather_code ? actualHourly.weather_code[idx] : 0,
+      weatherCode: rawActualCode !== null && rawActualCode !== undefined ? rawActualCode : null,
       humidity: actualHumidity,
       windSpeed: actualWind,
       windDirection: actualHourly.wind_direction_10m ? actualHourly.wind_direction_10m[idx] : 160,
       windGusts: actualHourly.wind_gusts_10m ? actualHourly.wind_gusts_10m[idx] : Math.round((actualWind || 10) * 1.35 * 10) / 10,
       surfacePressure: actualHourly.surface_pressure ? Math.round(actualHourly.surface_pressure[idx]) : 1013,
       dewPoint: actualHourly.dew_point_2m !== undefined && actualHourly.dew_point_2m[idx] !== null ? Math.round(actualHourly.dew_point_2m[idx] * 10) / 10 : (actualTemp !== null && actualHumidity !== null ? Math.round((actualTemp - ((100 - actualHumidity) / 5)) * 10) / 10 : null),
-      cloudCover: actualHourly.cloud_cover ? actualHourly.cloud_cover[idx] : 0,
+      cloudCover: rawActualCloud !== null && rawActualCloud !== undefined ? Math.round(rawActualCloud) : null,
       visibility: actualHourly.visibility ? (actualHourly.visibility[idx] !== null ? Math.round(actualHourly.visibility[idx] / 1000) : 10) : 10,
       uvIndex,
     };
@@ -299,37 +301,41 @@ function parseWeatherData(modelsPayload, actualPayload, aqiPayload = null) {
       const codeKey = `weather_code_${key}`;
       const windKey = `wind_speed_10m_${key}`;
       const humKey = `relative_humidity_2m_${key}`;
+      const cloudKey = `cloud_cover_${key}`;
 
       const temp = modelsHourly[tempKey] ? modelsHourly[tempKey][idx] : null;
       let apparent = modelsHourly[apparentKey] ? modelsHourly[apparentKey][idx] : null;
       let prob = modelsHourly[precipProbKey] ? modelsHourly[precipProbKey][idx] : null;
-      const precip = modelsHourly[precipKey] ? modelsHourly[precipKey][idx] : 0;
-      const code = modelsHourly[codeKey] ? modelsHourly[codeKey][idx] : 0;
-      const wind = modelsHourly[windKey] ? modelsHourly[windKey][idx] : 0;
-      const hum = modelsHourly[humKey] ? modelsHourly[humKey][idx] : 80;
+      const precip = modelsHourly[precipKey] ? modelsHourly[precipKey][idx] : null;
+      const rawCode = modelsHourly[codeKey] ? modelsHourly[codeKey][idx] : null;
+      const rawWind = modelsHourly[windKey] ? modelsHourly[windKey][idx] : null;
+      const rawHum = modelsHourly[humKey] ? modelsHourly[humKey][idx] : null;
+      const rawCloud = modelsHourly[cloudKey] ? modelsHourly[cloudKey][idx] : null;
 
       // Fallback feels like if model didn't return apparent_temp directly
       if (apparent === null && temp !== null) {
-        apparent = calculateFeelsLike(temp, wind, hum);
+        apparent = calculateFeelsLike(temp, rawWind, rawHum);
       }
 
       // If model omitted probability, estimate from rain rate
+      const safePrecip = precip !== null && precip !== undefined ? Math.round(precip * 10) / 10 : 0;
       if (prob === null || prob === undefined) {
-        if (precip > 1.5) prob = 90;
-        else if (precip > 0.5) prob = 75;
-        else if (precip > 0.1) prob = 50;
-        else if (precip > 0) prob = 30;
+        if (safePrecip > 1.5) prob = 90;
+        else if (safePrecip > 0.5) prob = 75;
+        else if (safePrecip > 0.1) prob = 50;
+        else if (safePrecip > 0) prob = 30;
         else prob = 5;
       }
 
       providers[key] = {
-        temperature: temp !== null ? Math.round(temp * 10) / 10 : null,
-        apparentTemperature: apparent !== null ? Math.round(apparent * 10) / 10 : null,
+        temperature: temp !== null && temp !== undefined ? Math.round(temp * 10) / 10 : null,
+        apparentTemperature: apparent !== null && apparent !== undefined ? Math.round(apparent * 10) / 10 : null,
         precipitationProbability: Math.min(100, Math.max(0, Math.round(prob || 0))),
-        precipitation: precip !== null ? Math.round(precip * 10) / 10 : 0,
-        weatherCode: code || 0,
-        windSpeed: wind !== null ? Math.round(wind * 10) / 10 : 0,
-        humidity: hum,
+        precipitation: safePrecip,
+        weatherCode: rawCode !== null && rawCode !== undefined ? rawCode : null,
+        windSpeed: rawWind !== null && rawWind !== undefined ? Math.round(rawWind * 10) / 10 : null,
+        humidity: rawHum !== null && rawHum !== undefined ? Math.round(rawHum) : null,
+        cloudCover: rawCloud !== null && rawCloud !== undefined ? Math.round(rawCloud) : null,
       };
     }
 

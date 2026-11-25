@@ -43,10 +43,12 @@ export default function MobileHourlyForecast({
     let feelsVal = null;
     let feelsLabel = '';
 
-    const code = consensus.weatherCode !== undefined ? consensus.weatherCode : (actual.weatherCode || 0);
+    const code = consensus.weatherCode !== undefined && consensus.weatherCode !== null ? consensus.weatherCode : (actual.weatherCode ?? 2);
     const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
     const rainMm = consensus.precipitation !== undefined ? consensus.precipitation : (actual.precipitation || 0);
-    const smartInfo = resolveSmartWeatherInfo(code, rainMm > 0 || prob >= 40 ? prob : 0, rainMm);
+    const isDay = h.isDay !== undefined ? Boolean(h.isDay) : true;
+    const cloudCover = consensus.cloudCover ?? actual.cloudCover ?? null;
+    const smartInfo = resolveSmartWeatherInfo(code, rainMm > 0 || prob >= 40 ? prob : 0, rainMm, isDay, cloudCover);
     let icon = smartInfo.icon || 'Cloud';
 
     const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
@@ -67,7 +69,7 @@ export default function MobileHourlyForecast({
       }
     } else {
       // Wind
-      const w = consensus.windSpeed !== undefined ? consensus.windSpeed : (actual.windSpeed || 15);
+      const w = consensus.windSpeed !== undefined && consensus.windSpeed !== null ? consensus.windSpeed : (actual.windSpeed || 15);
       val = unit === 'F' ? Math.round(w * 0.621371) : Math.round(w);
       label = `${val}`;
       icon = 'Wind';
@@ -141,15 +143,17 @@ export default function MobileHourlyForecast({
   }
 
   // Wind speed & compass direction
-  const windKmh = aConsensus.windSpeed !== undefined ? aConsensus.windSpeed : (aActual.windSpeed || 13);
+  const windKmh = aConsensus.windSpeed !== undefined && aConsensus.windSpeed !== null ? aConsensus.windSpeed : (aActual.windSpeed || 13);
   const windDirDeg = aActual.windDirection !== undefined ? aActual.windDirection : (aConsensus.windDirection || 160);
   const windDir = getCardinalWindDirection(windDirDeg);
 
   // Inspector Weather Condition
-  const aCode = aConsensus.weatherCode !== undefined ? aConsensus.weatherCode : (aActual.weatherCode || 0);
+  const aCode = aConsensus.weatherCode !== undefined && aConsensus.weatherCode !== null ? aConsensus.weatherCode : (aActual.weatherCode ?? 2);
   const aPrecipProb = aConsensus.precipitationProbability !== undefined ? aConsensus.precipitationProbability : (aActual.precipitationProbability || 0);
   const aPrecipAmount = aConsensus.precipitation !== undefined ? aConsensus.precipitation : (aActual.precipitation || 0);
-  const aInfo = resolveSmartWeatherInfo(aCode, aPrecipProb, aPrecipAmount);
+  const aIsDay = activeRaw.isDay !== undefined ? Boolean(activeRaw.isDay) : true;
+  const aCloud = aConsensus.cloudCover ?? aActual.cloudCover ?? null;
+  const aInfo = resolveSmartWeatherInfo(aCode, aPrecipProb, aPrecipAmount, aIsDay, aCloud);
 
   // Daily high / low badge
   const dayMax = dailySummary?.maxTemp !== undefined ? Math.round(dailySummary.maxTemp) : Math.round(tRaw + 2);

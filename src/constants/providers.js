@@ -370,10 +370,14 @@ export function getRainHumanType(rainAmountMm = 0, rainProb = 0, weatherCode = 0
 }
 
 /**
- * Intelligent Weather Resolver: Selects specific icon and specific label for ANY weather condition
+ * Intelligent Weather Resolver: Selects specific icon and day/night-truthful label for ANY weather condition.
+ * Never reports "Sunny" at night or when cloud cover / rain probability contradicts clear sky.
  */
-export function resolveSmartWeatherInfo(code, rainProb = 0, rainAmount = 0) {
-  const rainInfo = getRainHumanType(rainAmount, rainProb, code);
+export function resolveSmartWeatherInfo(code, rainProb = 0, rainAmount = 0, isDay = true, cloudCover = null) {
+  let effectiveCode = code !== null && code !== undefined ? code : 2;
+  const prob = Number(rainProb) || 0;
+  const amount = Number(rainAmount) || 0;
+  const rainInfo = getRainHumanType(amount, prob, effectiveCode);
 
   // If there is rain/drizzle/snow/thunder, let the rain human classification dictate
   if (rainInfo.type !== 'dry') {
@@ -389,21 +393,53 @@ export function resolveSmartWeatherInfo(code, rainProb = 0, rainAmount = 0) {
     };
   }
 
-  // Otherwise, dry sky states:
-  const base = getWeatherInfo(code);
+  // Truthfulness guardrails for dry sky states: prevent claiming "Sunny" when cloudy or wet-leaning
+  if (effectiveCode <= 3) {
+    if (cloudCover !== null && cloudCover !== undefined && !Number.isNaN(Number(cloudCover))) {
+      const cc = Number(cloudCover);
+      if (cc >= 80 && effectiveCode < 3) {
+        effectiveCode = 3;
+      } else if (cc >= 50 && effectiveCode < 2) {
+        effectiveCode = 2;
+      } else if (cc >= 25 && effectiveCode === 0) {
+        effectiveCode = 1;
+      }
+    }
+    if (prob >= 30 && effectiveCode < 2) {
+      effectiveCode = 2;
+    }
+  }
 
+  const base = getWeatherInfo(effectiveCode);
+
+  let label = base.label;
   let shortLabel = 'Partly Cloudy';
-  if (code === 0) shortLabel = 'Sunny';
-  else if (code === 1) shortLabel = 'Mainly Clear';
-  else if (code === 2) shortLabel = 'Partly Cloudy';
-  else if (code === 3) shortLabel = 'Overcast';
-  else if (code === 45 || code === 48) shortLabel = 'Dense Fog';
+  let emoji = base.emoji;
+
+  if (effectiveCode === 0) {
+    label = isDay ? 'Sunny & Clear' : 'Clear night';
+    shortLabel = isDay ? 'Sunny' : 'Clear';
+    emoji = isDay ? '☀️' : '🌙';
+  } else if (effectiveCode === 1) {
+    label = isDay ? 'Mainly clear' : 'Mostly clear';
+    shortLabel = isDay ? 'Mostly Sunny' : 'Mainly Clear';
+    emoji = isDay ? '🌤️' : '🌙';
+  } else if (effectiveCode === 2) {
+    label = 'Partly cloudy';
+    shortLabel = 'Partly Cloudy';
+    emoji = isDay ? '⛅' : '☁️';
+  } else if (effectiveCode === 3) {
+    label = 'Overcast';
+    shortLabel = 'Overcast';
+  } else if (effectiveCode === 45 || effectiveCode === 48) {
+    shortLabel = effectiveCode === 48 ? 'Freezing Fog' : 'Dense Fog';
+  }
 
   return {
-    label: base.label,
+    label,
     shortLabel,
     icon: base.icon,
-    emoji: base.emoji,
+    emoji,
     color: 'text-slate-200',
     category: base.category,
     isRain: false,

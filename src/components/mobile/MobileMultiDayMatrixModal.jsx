@@ -314,12 +314,18 @@ function ProviderHourlyRowCard({
         : 0;
       const code = source.weatherCode !== undefined && source.weatherCode !== null
         ? source.weatherCode
-        : (h.consensus?.weatherCode ?? 0);
+        : (h.consensus?.weatherCode ?? 2);
+      const isDay = h.isDay !== undefined ? Boolean(h.isDay) : true;
+      const cloudCover = source.cloudCover !== undefined && source.cloudCover !== null
+        ? source.cloudCover
+        : (provider.isConsensus ? h.actual?.cloudCover ?? null : null);
 
       const smartInfo = resolveSmartWeatherInfo(
         code,
         rainMm > 0 || prob >= 40 ? prob : 0,
-        rainMm
+        rainMm,
+        isDay,
+        cloudCover
       );
 
       let val = 0;

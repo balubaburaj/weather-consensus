@@ -45,10 +45,12 @@ function getHourMetrics(h, unit) {
   const tempC = c.temperature !== undefined ? c.temperature : (a.temperature ?? 10);
   const precipProb = c.precipitationProbability !== undefined ? c.precipitationProbability : (a.precipitationProbability ?? 0);
   const precipMm = c.precipitation !== undefined ? c.precipitation : (a.precipitation ?? 0);
-  const windKmh = c.windSpeed !== undefined ? c.windSpeed : (a.windSpeed ?? 10);
-  const code = c.weatherCode !== undefined ? c.weatherCode : (a.weatherCode ?? 0);
+  const windKmh = c.windSpeed !== undefined && c.windSpeed !== null ? c.windSpeed : (a.windSpeed ?? 10);
+  const code = c.weatherCode !== undefined && c.weatherCode !== null ? c.weatherCode : (a.weatherCode ?? 2);
   const pressure = a.surfacePressure ?? 1013;
   const windDir = a.windDirection ?? 180;
+  const isDay = h.isDay !== undefined ? Boolean(h.isDay) : (getHourNumber(h) >= 7 && getHourNumber(h) < 18);
+  const cloudCover = c.cloudCover ?? a.cloudCover ?? null;
 
   // Max precipitation across providers for "Possible precipitation" envelope
   let maxModelPrecipMm = precipMm;
@@ -60,7 +62,7 @@ function getHourMetrics(h, unit) {
     });
   }
 
-  const smartInfo = resolveSmartWeatherInfo(code, precipMm > 0 || precipProb >= 40 ? precipProb : 0, precipMm);
+  const smartInfo = resolveSmartWeatherInfo(code, precipMm > 0 || precipProb >= 40 ? precipProb : 0, precipMm, isDay, cloudCover);
 
   return {
     temp: convertTemp(tempC, unit),
@@ -74,7 +76,7 @@ function getHourMetrics(h, unit) {
     pressure: Math.round(pressure),
     code,
     icon: smartInfo.icon || 'Cloud',
-    isDay: h.isDay !== undefined ? Boolean(h.isDay) : (getHourNumber(h) >= 7 && getHourNumber(h) < 18),
+    isDay,
   };
 }
 
