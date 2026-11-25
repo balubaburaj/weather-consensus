@@ -159,13 +159,15 @@ export default function MobileHourlyForecast({
   const dayMax = dailySummary?.maxTemp !== undefined ? Math.round(dailySummary.maxTemp) : Math.round(tRaw + 2);
   const dayMin = dailySummary?.minTemp !== undefined ? Math.round(dailySummary.minTemp) : Math.round(tRaw - 3);
 
-  // Horizontal scrub / scroll listener
+  // Horizontal scrub / scroll listener: glides selection from hour 0 (left) to last hour (right)
   const handleScroll = (e) => {
     if (isAutoScrolling.current) return;
-    const scrollLeft = e.currentTarget.scrollLeft;
+    const el = e.currentTarget;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const progress = maxScroll > 0 ? Math.min(1, Math.max(0, el.scrollLeft / maxScroll)) : 0;
     const newIdx = Math.min(
       displayHours.length - 1,
-      Math.max(0, Math.round(scrollLeft / itemWidth))
+      Math.max(0, Math.round(progress * (displayHours.length - 1)))
     );
     if (newIdx !== selectedHourIndex) {
       setSelectedHourIndex(newIdx);
@@ -174,13 +176,12 @@ export default function MobileHourlyForecast({
 
   const handleSelectHour = (i) => {
     setSelectedHourIndex(i);
-    if (scrollContainerRef.current) {
+    if (scrollContainerRef.current && displayHours.length > 1) {
       isAutoScrolling.current = true;
-      const targetScroll = Math.max(
-        0,
-        i * itemWidth - scrollContainerRef.current.clientWidth / 2 + itemWidth / 2
-      );
-      scrollContainerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      const el = scrollContainerRef.current;
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+      const targetScroll = (i / (displayHours.length - 1)) * maxScroll;
+      el.scrollTo({ left: targetScroll, behavior: 'smooth' });
       setTimeout(() => {
         isAutoScrolling.current = false;
       }, 450);
