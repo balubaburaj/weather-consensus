@@ -18,6 +18,7 @@ import { computeHourlyConsensus, generateDailySummary } from './services/consens
 import { calculateModelAccuracy, saveForecastSnapshot } from './services/accuracyTracker';
 import { PROVIDER_KEYS, WEATHER_PROVIDERS } from './constants/providers';
 import { getSystemTimeFormatPreference } from './utils/units';
+import { useHistorySync } from './hooks/useHistorySync';
 import { LayoutGrid, LineChart, Trophy, RefreshCw, AlertCircle, Compass } from 'lucide-react';
 
 export default function App() {
@@ -46,6 +47,14 @@ export default function App() {
   const [jumpNowTrigger, setJumpNowTrigger] = useState(0);
   const [showExplainer, setShowExplainer] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+
+  const closeSelectedHour = useCallback(() => setSelectedHour(null), []);
+  const closeExplainer = useCallback(() => setShowExplainer(false), []);
+  const closeApiKeyModal = useCallback(() => setShowApiKeyModal(false), []);
+
+  useHistorySync('desktop-hour-detail', Boolean(selectedHour), closeSelectedHour);
+  useHistorySync('desktop-explainer', showExplainer, closeExplainer);
+  useHistorySync('desktop-api-key', showApiKeyModal, closeApiKeyModal);
   const [weightingStrategy, setWeightingStrategy] = useState('accuracy'); // 'accuracy' | 'benchmark' | 'equal'
   const [activeTab, setActiveTab] = useState('matrix'); // 'matrix' | 'chart' | 'accuracy'
 

@@ -1,13 +1,18 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { ArrowLeft, ChevronRight, Layers, Clock } from 'lucide-react';
+import React, { useState, useRef, useMemo, useCallback, useEffect, memo } from 'react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import { WEATHER_PROVIDERS, PROVIDER_KEYS, resolveSmartWeatherInfo } from '../../constants/providers';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { formatTime } from '../../utils/units';
+
+const COL_WIDTH = 58;
+const CHUNK_COLS = 8;
+const OVERSCAN_COLS = 18;
 
 /**
  * Mobile Continuous Multi-Day Hourly Matrix
  * Displays TrueCast Consensus followed by every weather model in Weawow-style
  * horizontally scrollable 1-hour curve cards (Temperature + Feels Like, Precipitation, Wind).
+ * Uses a single native compositor scroll container + chunked horizontal windowing for 60/120fps scrolling.
  */
 export default function MobileMultiDayMatrixModal({
   hours = [],
@@ -17,9 +22,11 @@ export default function MobileMultiDayMatrixModal({
   onClose,
 }) {
   const [activeMetric, setActiveMetric] = useState('temperature'); // 'temperature' | 'precipitation' | 'wind'
-  const scrollRefs = useRef({});
-  const headerDateScrollRef = useRef(null);
-  const isSyncingScroll = useRef(false);
+  const scrollContainerRef = useRef(null);
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window !== 'undefined' ? Math.max(300, window.innerWidth - 20) : 370
+  );
+  const [scrollChunk, setScrollChunk] = useState(0);
 
   // Start from current hour onward for continuous multi-day forecast (1-hour intervals)
   const displayHours = useMemo(() => {
@@ -28,6 +35,18 @@ export default function MobileMultiDayMatrixModal({
     const startIdx = currentIdx !== -1 ? currentIdx : 0;
     return hours.slice(startIdx);
   }, [hours]);
+
+  // Track visible scroll container width for sticky card headers and column windowing
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return undefined;
+    const updateWidth = () => {
+      if (el.clientWidth > 0) setViewportWidth(el.clientWidth);
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   // Group hours by calendar date for the floating/sliding date header (matching Daily Graph)
   const dayGroups = useMemo(() => {
@@ -52,36 +71,26 @@ export default function MobileMultiDayMatrixModal({
     return groups;
   }, [displayHours]);
 
-  // Synchronize horizontal scroll across all provider cards AND the floating date bar
-  const handleCardScroll = useCallback((sourceId, e) => {
-    if (isSyncingScroll.current) return;
-    const left = e.currentTarget.scrollLeft;
-    isSyncingScroll.current = true;
-    if (headerDateScrollRef.current && Math.abs(headerDateScrollRef.current.scrollLeft - left) > 1) {
-      headerDateScrollRef.current.scrollLeft = left;
-    }
-    Object.entries(scrollRefs.current).forEach(([id, el]) => {
-      if (id !== sourceId && el && Math.abs(el.scrollLeft - left) > 1) {
-        el.scrollLeft = left;
-      }
-    });
-    requestAnimationFrame(() => {
-      isSyncingScroll.current = false;
-    });
+  // Only trigger a React state update when horizontal scroll crosses a CHUNK_COLS boundary (~348px)
+  const handleContainerScroll = useCallback((e) => {
+    const nextChunk = Math.floor(e.currentTarget.scrollLeft / (CHUNK_COLS * COL_WIDTH));
+    setScrollChunk((prev) => (prev === nextChunk ? prev : nextChunk));
   }, []);
 
   const handleJumpToNow = useCallback(() => {
-    isSyncingScroll.current = true;
-    if (headerDateScrollRef.current) {
-      headerDateScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-    Object.values(scrollRefs.current).forEach((el) => {
-      if (el) el.scrollTo({ left: 0, behavior: 'smooth' });
-    });
-    setTimeout(() => {
-      isSyncingScroll.current = false;
-    }, 350);
+    scrollContainerRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
   }, []);
+
+  // Visible window of hour columns + generous overscan so scrolling never clips
+  const { windowStart, windowEnd } = useMemo(() => {
+    const visibleCols = Math.ceil(viewportWidth / COL_WIDTH);
+    const start = Math.max(0, scrollChunk * CHUNK_COLS - OVERSCAN_COLS);
+    const end = Math.min(
+      Math.max(0, displayHours.length - 1),
+      (scrollChunk + 1) * CHUNK_COLS + visibleCols + OVERSCAN_COLS
+    );
+    return { windowStart: start, windowEnd: end };
+  }, [scrollChunk, viewportWidth, displayHours.length]);
 
   // Build ordered list: TrueCast Consensus first, then all configured NWP models
   const providerRows = useMemo(() => {
@@ -109,7 +118,7 @@ export default function MobileMultiDayMatrixModal({
     return rows;
   }, []);
 
-  const colWidth = 58;
+  const colWidth = COL_WIDTH;
   const svgWidth = Math.max(300, displayHours.length * colWidth);
   const svgHeight = 64;
   const topPadding = 22;
@@ -211,12 +220,17 @@ export default function MobileMultiDayMatrixModal({
           )}
         </div>
 
-        {/* Floating / Sliding Date Header (synced with provider timelines, matching Daily Graph) */}
-        <div
-          ref={headerDateScrollRef}
-          className="overflow-x-hidden mt-2 pt-1.5 border-t border-zinc-800/80 -mx-1 px-1"
-        >
-          <div style={{ width: `${svgWidth}px` }} className="flex">
+      </div>
+
+      {/* Single Unified Native Scroll Container (horizontal + vertical compositor scrolling) */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleContainerScroll}
+        className="flex-1 overflow-auto overscroll-contain px-2.5 pb-12"
+      >
+        <div style={{ width: `${svgWidth}px`, minWidth: '100%' }}>
+          {/* Sticky Top Floating / Sliding Date Header */}
+          <div className="sticky top-0 z-30 bg-black/95 border-b border-zinc-800/80 py-2 mb-2.5 flex">
             {dayGroups.map((g) => (
               <div
                 key={g.dateStr}
@@ -232,40 +246,38 @@ export default function MobileMultiDayMatrixModal({
               </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Scrollable Stack of Provider Curve Cards */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2.5 pb-12">
-        {providerRows.map((provider) => (
-          <ProviderHourlyRowCard
-            key={provider.id}
-            provider={provider}
-            hours={displayHours}
-            activeMetric={activeMetric}
-            unit={unit}
-            timeFormat={timeFormat}
-            colWidth={colWidth}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-            topPadding={topPadding}
-            usableHeight={usableHeight}
-            scrollRef={(el) => {
-              if (el) scrollRefs.current[provider.id] = el;
-              else delete scrollRefs.current[provider.id];
-            }}
-            onScroll={(e) => handleCardScroll(provider.id, e)}
-          />
-        ))}
+          {/* Stack of Provider Curve Cards */}
+          <div className="space-y-2.5">
+            {providerRows.map((provider) => (
+              <ProviderHourlyRowCard
+                key={provider.id}
+                provider={provider}
+                hours={displayHours}
+                activeMetric={activeMetric}
+                unit={unit}
+                timeFormat={timeFormat}
+                colWidth={colWidth}
+                svgWidth={svgWidth}
+                svgHeight={svgHeight}
+                topPadding={topPadding}
+                usableHeight={usableHeight}
+                headerWidth={viewportWidth}
+                windowStart={windowStart}
+                windowEnd={windowEnd}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 /**
- * Single Provider Card with synchronized 1-hour horizontal curve + icons + day markers
+ * Single Provider Card with sticky header + windowed 1-hour horizontal curve + icons
  */
-function ProviderHourlyRowCard({
+const ProviderHourlyRowCard = memo(function ProviderHourlyRowCard({
   provider,
   hours,
   activeMetric,
@@ -276,8 +288,9 @@ function ProviderHourlyRowCard({
   svgHeight,
   topPadding,
   usableHeight,
-  scrollRef,
-  onScroll,
+  headerWidth,
+  windowStart,
+  windowEnd,
 }) {
   const dataPoints = useMemo(() => {
     return hours.map((h, i) => {
@@ -375,7 +388,7 @@ function ProviderHourlyRowCard({
     });
   }, [hours, provider.id, provider.isConsensus, activeMetric, unit, timeFormat]);
 
-  const { points, pathD, fillD } = useMemo(() => {
+  const allPoints = useMemo(() => {
     const vals = dataPoints.map((d) => d.val);
     const minVal = activeMetric === 'precipitation' ? 0 : Math.min(...vals);
     const maxVal = activeMetric === 'precipitation'
@@ -383,28 +396,48 @@ function ProviderHourlyRowCard({
       : Math.max(...vals);
     const span = Math.max(1, maxVal - minVal);
 
-    const pts = dataPoints.map((d, i) => {
+    return dataPoints.map((d, i) => {
       const x = i * colWidth + colWidth / 2;
       const y = topPadding + usableHeight - ((d.val - minVal) / span) * usableHeight;
       return { ...d, x, y };
     });
+  }, [dataPoints, activeMetric, colWidth, topPadding, usableHeight]);
+
+  // Slice points and build local SVG path only for the visible window + overscan
+  const { visiblePoints, offsetX, visibleSvgWidth, pathD, fillD } = useMemo(() => {
+    if (allPoints.length === 0) {
+      return { visiblePoints: [], offsetX: 0, visibleSvgWidth: 300, pathD: '', fillD: '' };
+    }
+    const start = Math.max(0, Math.min(windowStart, allPoints.length - 1));
+    const end = Math.max(start, Math.min(windowEnd, allPoints.length - 1));
+    const slice = allPoints.slice(start, end + 1);
+    const xShift = start * colWidth;
+    const width = Math.max(colWidth, slice.length * colWidth);
 
     let line = '';
-    if (pts.length > 0) {
-      line = `M ${pts[0].x} ${pts[0].y}`;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const curr = pts[i];
-        const next = pts[i + 1];
-        const cpX = curr.x + (next.x - curr.x) / 2;
-        line += ` C ${cpX} ${curr.y}, ${cpX} ${next.y}, ${next.x} ${next.y}`;
+    if (slice.length > 0) {
+      line = `M ${slice[0].x - xShift} ${slice[0].y}`;
+      for (let i = 0; i < slice.length - 1; i++) {
+        const curr = slice[i];
+        const next = slice[i + 1];
+        const cx1 = curr.x - xShift;
+        const cx2 = next.x - xShift;
+        const cpX = cx1 + (cx2 - cx1) / 2;
+        line += ` C ${cpX} ${curr.y}, ${cpX} ${next.y}, ${cx2} ${next.y}`;
       }
     }
-    const fill = pts.length > 0
-      ? `${line} L ${pts[pts.length - 1].x} ${svgHeight} L ${pts[0].x} ${svgHeight} Z`
+    const fill = slice.length > 0
+      ? `${line} L ${slice[slice.length - 1].x - xShift} ${svgHeight} L ${slice[0].x - xShift} ${svgHeight} Z`
       : '';
 
-    return { points: pts, pathD: line, fillD: fill };
-  }, [dataPoints, activeMetric, colWidth, topPadding, usableHeight, svgHeight]);
+    return {
+      visiblePoints: slice,
+      offsetX: xShift,
+      visibleSvgWidth: width,
+      pathD: line,
+      fillD: fill,
+    };
+  }, [allPoints, windowStart, windowEnd, colWidth, svgHeight]);
 
   const strokeColor = activeMetric === 'temperature'
     ? '#f59e0b'
@@ -416,17 +449,20 @@ function ProviderHourlyRowCard({
 
   return (
     <div
-      className={`rounded-2xl border overflow-hidden shadow-lg ${
+      className={`rounded-2xl border ${
         provider.isConsensus
           ? 'bg-[#151518] border-amber-500/45'
           : 'bg-[#111113] border-zinc-800/90'
       }`}
     >
-      {/* Provider Card Header */}
-      <div className="px-3.5 pt-2.5 pb-1.5 flex items-center justify-between gap-2">
+      {/* Sticky Provider Card Header (pinned to left edge of scroll viewport) */}
+      <div
+        style={{ width: `${headerWidth}px` }}
+        className="sticky left-0 z-20 px-3.5 pt-2.5 pb-1.5 flex items-center justify-between gap-2"
+      >
         <div className="flex items-center gap-2 min-w-0">
           <span
-            className="w-3 h-3 rounded-full shrink-0 shadow-sm"
+            className="w-3 h-3 rounded-full shrink-0"
             style={{ backgroundColor: provider.color }}
           />
           <span className="text-sm font-extrabold text-white truncate">
@@ -445,15 +481,11 @@ function ProviderHourlyRowCard({
         )}
       </div>
 
-      {/* Synchronized Horizontal Scroll Strip (1-hour intervals) */}
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className="overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-800 pb-2 px-1"
-      >
-        <div style={{ width: `${svgWidth}px` }} className="relative">
+      {/* Windowed 1-Hour Curve + Icons Strip */}
+      <div style={{ width: `${svgWidth}px` }} className="relative pb-2">
+        <div style={{ marginLeft: `${offsetX}px`, width: `${visibleSvgWidth}px` }}>
           {/* Curve SVG */}
-          <svg width={svgWidth} height={svgHeight} className="overflow-visible block">
+          <svg width={visibleSvgWidth} height={svgHeight} className="overflow-visible block">
             <defs>
               <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor={strokeColor} stopOpacity="0.32" />
@@ -473,67 +505,70 @@ function ProviderHourlyRowCard({
               />
             )}
 
-            {points.map((p, i) => (
-              <g key={i}>
-                {/* Midnight Day Separator Line */}
-                {p.dayBadge && i > 0 && (
-                  <line
-                    x1={i * colWidth}
-                    y1={0}
-                    x2={i * colWidth}
-                    y2={svgHeight}
-                    stroke="#3f3f46"
+            {visiblePoints.map((p) => {
+              const localX = p.x - offsetX;
+              return (
+                <g key={p.index}>
+                  {/* Midnight Day Separator Line */}
+                  {p.dayBadge && p.index > 0 && (
+                    <line
+                      x1={p.index * colWidth - offsetX}
+                      y1={0}
+                      x2={p.index * colWidth - offsetX}
+                      y2={svgHeight}
+                      stroke="#3f3f46"
+                      strokeWidth="1"
+                      strokeDasharray="2 2"
+                    />
+                  )}
+
+                  <circle
+                    cx={localX}
+                    cy={p.y}
+                    r={p.isNow ? '3.5' : '2.2'}
+                    fill={p.isNow ? '#ffffff' : strokeColor}
+                    stroke="#000000"
                     strokeWidth="1"
-                    strokeDasharray="2 2"
                   />
-                )}
 
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={p.isNow ? '3.5' : '2.2'}
-                  fill={p.isNow ? '#ffffff' : strokeColor}
-                  stroke="#000000"
-                  strokeWidth="1"
-                />
-
-                {activeMetric === 'temperature' ? (
-                  <text
-                    x={p.x}
-                    y={p.y - 7}
-                    textAnchor="middle"
-                    className="font-mono select-none"
-                  >
-                    <tspan className="text-[13px] font-black" fill="#f4f4f5">
+                  {activeMetric === 'temperature' ? (
+                    <text
+                      x={localX}
+                      y={p.y - 7}
+                      textAnchor="middle"
+                      className="font-mono select-none"
+                    >
+                      <tspan className="text-[13px] font-black" fill="#f4f4f5">
+                        {p.label}
+                      </tspan>
+                      <tspan dx="3" className="text-[11px] font-extrabold" fill="#fbbf24">
+                        {p.feelsLabel}
+                      </tspan>
+                    </text>
+                  ) : (
+                    <text
+                      x={localX}
+                      y={p.y - 7}
+                      textAnchor="middle"
+                      className="text-[12px] font-mono font-bold select-none"
+                      fill={activeMetric === 'precipitation' && p.rainMm >= 0.1 ? '#38bdf8' : '#e4e4e7'}
+                    >
                       {p.label}
-                    </tspan>
-                    <tspan dx="3" className="text-[11px] font-extrabold" fill="#fbbf24">
-                      {p.feelsLabel}
-                    </tspan>
-                  </text>
-                ) : (
-                  <text
-                    x={p.x}
-                    y={p.y - 7}
-                    textAnchor="middle"
-                    className="text-[12px] font-mono font-bold select-none"
-                    fill={activeMetric === 'precipitation' && p.rainMm >= 0.1 ? '#38bdf8' : '#e4e4e7'}
-                  >
-                    {p.label}
-                  </text>
-                )}
-              </g>
-            ))}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
           </svg>
 
           {/* Weather Icons + Hour Labels + Day Badges Row */}
           <div className="flex items-start pt-0.5">
-            {points.map((p, i) => (
+            {visiblePoints.map((p) => (
               <div
-                key={i}
+                key={p.index}
                 style={{ width: `${colWidth}px` }}
                 className={`shrink-0 flex flex-col items-center ${
-                  p.dayBadge && i > 0 ? 'border-l border-zinc-800' : ''
+                  p.dayBadge && p.index > 0 ? 'border-l border-zinc-800' : ''
                 }`}
               >
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -541,6 +576,8 @@ function ProviderHourlyRowCard({
                     iconName={p.icon}
                     isNight={!p.isDay}
                     className="w-8 h-8"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <span
@@ -562,4 +599,4 @@ function ProviderHourlyRowCard({
       </div>
     </div>
   );
-}
+});

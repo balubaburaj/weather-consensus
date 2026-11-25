@@ -20,6 +20,7 @@ import MobileAirQualityCard from './MobileAirQualityCard';
 import MobileSunMoonCard from './MobileSunMoonCard';
 import WeatherNarrativeCard from '../WeatherNarrativeCard';
 import { DEFAULT_CITIES, searchLocations } from '../../services/weatherApi';
+import { useHistorySync } from '../../hooks/useHistorySync';
 
 // Code-split heavy full-screen detail modals so mobile initial mount stays fast
 const MobileDetailedHourlyModal = lazy(() => import('./MobileDetailedHourlyModal'));
@@ -88,9 +89,18 @@ export default function MobileWeatherView({
   const openDetailedHourly = useCallback(() => setIsDetailedHourlyOpen(true), []);
   const openDetailedDaily = useCallback(() => setIsDetailedDailyOpen(true), []);
   const openMultiDayMatrix = useCallback(() => setIsMultiDayMatrixOpen(true), []);
+  const closeCitySearch = useCallback(() => setIsCitySearchOpen(false), []);
+  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
   const closeDetailedHourly = useCallback(() => setIsDetailedHourlyOpen(false), []);
   const closeDetailedDaily = useCallback(() => setIsDetailedDailyOpen(false), []);
   const closeMultiDayMatrix = useCallback(() => setIsMultiDayMatrixOpen(false), []);
+
+  // Push history entries so browser/OS Back button closes expanded views instead of leaving the site
+  useHistorySync('mobile-city-search', isCitySearchOpen, closeCitySearch);
+  useHistorySync('mobile-settings', isSettingsOpen, closeSettings);
+  useHistorySync('mobile-hourly-detail', isDetailedHourlyOpen, closeDetailedHourly);
+  useHistorySync('mobile-daily-detail', isDetailedDailyOpen, closeDetailedDaily);
+  useHistorySync('mobile-multiday-matrix', isMultiDayMatrixOpen, closeMultiDayMatrix);
 
   if (!weatherData || !current) return null;
 
