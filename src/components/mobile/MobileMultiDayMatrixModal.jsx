@@ -18,6 +18,7 @@ export default function MobileMultiDayMatrixModal({
 }) {
   const [activeMetric, setActiveMetric] = useState('temperature'); // 'temperature' | 'precipitation' | 'wind'
   const scrollRefs = useRef({});
+  const headerDateScrollRef = useRef(null);
   const isSyncingScroll = useRef(false);
 
   // Start from current hour onward for continuous multi-day forecast (1-hour intervals)
@@ -28,11 +29,37 @@ export default function MobileMultiDayMatrixModal({
     return hours.slice(startIdx);
   }, [hours]);
 
-  // Synchronize horizontal scroll across all provider cards so hours stay aligned
+  // Group hours by calendar date for the floating/sliding date header (matching Daily Graph)
+  const dayGroups = useMemo(() => {
+    const groups = [];
+    displayHours.forEach((h) => {
+      const dateStr = h.date || (h.timeIso ? h.timeIso.split('T')[0] : 'unknown');
+      let last = groups[groups.length - 1];
+      if (!last || last.dateStr !== dateStr) {
+        const d = dateStr !== 'unknown' ? new Date(`${dateStr}T12:00:00`) : new Date();
+        const weekday = d.toLocaleDateString('en-IE', { weekday: 'short' });
+        const dayNum = d.getDate();
+        const monthShort = d.toLocaleDateString('en-IE', { month: 'short' });
+        last = {
+          dateStr,
+          count: 0,
+          pill: { weekday, rest: `${dayNum}. ${monthShort}.` },
+        };
+        groups.push(last);
+      }
+      last.count += 1;
+    });
+    return groups;
+  }, [displayHours]);
+
+  // Synchronize horizontal scroll across all provider cards AND the floating date bar
   const handleCardScroll = useCallback((sourceId, e) => {
     if (isSyncingScroll.current) return;
     const left = e.currentTarget.scrollLeft;
     isSyncingScroll.current = true;
+    if (headerDateScrollRef.current && Math.abs(headerDateScrollRef.current.scrollLeft - left) > 1) {
+      headerDateScrollRef.current.scrollLeft = left;
+    }
     Object.entries(scrollRefs.current).forEach(([id, el]) => {
       if (id !== sourceId && el && Math.abs(el.scrollLeft - left) > 1) {
         el.scrollLeft = left;
@@ -45,6 +72,9 @@ export default function MobileMultiDayMatrixModal({
 
   const handleJumpToNow = useCallback(() => {
     isSyncingScroll.current = true;
+    if (headerDateScrollRef.current) {
+      headerDateScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
     Object.values(scrollRefs.current).forEach((el) => {
       if (el) el.scrollTo({ left: 0, behavior: 'smooth' });
     });
@@ -179,6 +209,29 @@ export default function MobileMultiDayMatrixModal({
               </span>
             </div>
           )}
+        </div>
+
+        {/* Floating / Sliding Date Header (synced with provider timelines, matching Daily Graph) */}
+        <div
+          ref={headerDateScrollRef}
+          className="overflow-x-hidden mt-2 pt-1.5 border-t border-zinc-800/80 -mx-1 px-1"
+        >
+          <div style={{ width: `${svgWidth}px` }} className="flex">
+            {dayGroups.map((g) => (
+              <div
+                key={g.dateStr}
+                style={{ width: `${g.count * colWidth}px`, overflowX: 'clip' }}
+                className="shrink-0 border-l border-zinc-800 first:border-l-0 px-2"
+              >
+                {g.count >= 2 ? (
+                  <div className="sticky left-2 inline-flex items-baseline gap-1.5 whitespace-nowrap text-xs">
+                    <span className="font-extrabold text-white">{g.pill.weekday}</span>
+                    <span className="font-semibold text-zinc-400">{g.pill.rest}</span>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
