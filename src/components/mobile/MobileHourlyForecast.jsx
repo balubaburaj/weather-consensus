@@ -199,6 +199,24 @@ function MobileHourlyForecast({
   const aCloud = aConsensus.cloudCover ?? aActual.cloudCover ?? null;
   const aInfo = resolveSmartWeatherInfo(aCode, aPrecipProb, aPrecipAmount, aIsDay, aCloud);
 
+  // Additional hourly atmospheric metrics matching Hourly Detailed Graph
+  const gustKmh = aActual.windGusts !== undefined ? aActual.windGusts : Math.round(windKmh * 1.35);
+  const gustDisp = unit === 'F' ? Math.round(gustKmh * 0.621371) : Math.round(gustKmh);
+  const windUnitLabel = unit === 'F' ? 'mph' : 'km/h';
+  const pressureDisp = Math.round(aActual.surfacePressure ?? aConsensus.surfacePressure ?? 1013);
+  const cloudDisp = aCloud !== null ? Math.round(aCloud) : 85;
+  const humRaw = aConsensus.humidity !== undefined && aConsensus.humidity !== null ? aConsensus.humidity : (aActual.humidity ?? 85);
+  const humDisp = Math.round(humRaw);
+  const dewRaw =
+    aActual.dewPoint !== undefined && aActual.dewPoint !== null
+      ? aActual.dewPoint
+      : Math.round((tRaw - (100 - humDisp) / 5) * 10) / 10;
+  const dewDisp = unit === 'F' ? Math.round((dewRaw * 9) / 5 + 32) : Math.round(dewRaw);
+  const uvDisp = aActual.uvIndex !== undefined ? Math.round(aActual.uvIndex) : 0;
+  const visKm = aActual.visibility !== undefined ? aActual.visibility : 10;
+  const visDisp = unit === 'F' ? Math.round(visKm * 0.621371) : Math.round(visKm);
+  const visUnitLabel = unit === 'F' ? 'mi' : 'km';
+
   // Horizontal scrub / scroll listener: glides selection from hour 0 (left) to last hour (right)
   const handleScroll = (e) => {
     if (isAutoScrolling.current) return;
@@ -351,6 +369,49 @@ function MobileHourlyForecast({
           <span className="text-xs text-zinc-300 font-mono font-semibold whitespace-nowrap shrink-0">
             {activePoint.isNow ? 'Now' : activePoint.hourLabel}
           </span>
+        </div>
+
+        {/* Row 4: Extended Hourly Atmospheric Metrics (ordered by outdoor usefulness) */}
+        <div className="mt-2 pt-2 border-t border-zinc-800/80 space-y-1.5">
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { label: 'Gust', value: `${gustDisp} ${windUnitLabel}` },
+              { label: 'UV Index', value: `${uvDisp}/11` },
+              { label: 'Humidity', value: `${humDisp}%` },
+              { label: 'Visibility', value: `${visDisp} ${visUnitLabel}` },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-lg bg-zinc-900/90 border border-zinc-800/80 px-1.5 py-1 text-center"
+              >
+                <div className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold leading-tight">
+                  {item.label}
+                </div>
+                <div className="text-[11px] font-mono font-bold text-zinc-100 whitespace-nowrap leading-tight mt-0.5">
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              { label: 'Cloud', value: `${cloudDisp}%` },
+              { label: 'Dew Point', value: `${dewDisp}${tempUnit}` },
+              { label: 'Pressure', value: `${pressureDisp} hPa` },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-lg bg-zinc-900/90 border border-zinc-800/80 px-1.5 py-1 text-center"
+              >
+                <div className="text-[9px] uppercase tracking-wider text-zinc-400 font-semibold leading-tight">
+                  {item.label}
+                </div>
+                <div className="text-[11px] font-mono font-bold text-zinc-100 whitespace-nowrap leading-tight mt-0.5">
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
