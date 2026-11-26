@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { getCardinalWindDirection } from '../../utils/units';
 import { resolveDailySkySummary } from '../../services/consensusEngine';
-import downArrowIcon from '../../../user_references/down-arrows.png';
+import downArrowIcon from '../../assets/down-arrows.png';
 
 function MobileDailyForecast({
   dates = [],

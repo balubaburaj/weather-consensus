@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { formatTime, formatWind, getCardinalWindDirection } from '../../utils/units';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo } from '../../constants/providers';
-import downArrowIcon from '../../../user_references/down-arrows.png';
+import downArrowIcon from '../../assets/down-arrows.png';
 
 function MobileHourlyForecast({
   hours = [],
