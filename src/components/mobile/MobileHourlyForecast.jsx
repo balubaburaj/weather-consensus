@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { formatTime, formatWind, getCardinalWindDirection } from '../../utils/units';
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo } from '../../constants/providers';
+import downArrowIcon from '../../../user_references/down-arrows.png';
 
 function MobileHourlyForecast({
   hours = [],
@@ -25,15 +26,15 @@ function MobileHourlyForecast({
 
   const itemWidth = 64;
   const svgWidth = displayHours.length * itemWidth;
-  const svgHeight = 88;
-  const topPadding = 26;
+  const svgHeight = 104;
+  const topPadding = activeMetric === 'precipitation' ? 46 : 38;
   const bottomPadding = 16;
   const usableHeight = svgHeight - topPadding - bottomPadding;
 
   // Memoize 24h point data & SVG bezier paths so horizontal scroll selection ticks do zero geometry recompute
-  const { points, pathD, fillD } = useMemo(() => {
+  const { points, pathD, fillD, maxPrecipDisplay } = useMemo(() => {
     if (displayHours.length === 0) {
-      return { points: [], pathD: '', fillD: '' };
+      return { points: [], pathD: '', fillD: '', maxPrecipDisplay: '' };
     }
 
     const dataPoints = displayHours.map((h, i) => {
@@ -45,6 +46,7 @@ function MobileHourlyForecast({
       let label = '';
       let feelsVal = null;
       let feelsLabel = '';
+      let probLabel = '';
 
       const code = consensus.weatherCode !== undefined && consensus.weatherCode !== null ? consensus.weatherCode : (actual.weatherCode ?? 2);
       const prob = consensus.precipitationProbability !== undefined ? consensus.precipitationProbability : (actual.precipitationProbability || 0);
@@ -56,6 +58,18 @@ function MobileHourlyForecast({
 
       const tRaw = consensus.temperature !== undefined ? consensus.temperature : (actual.temperature || 10);
       const fRaw = consensus.apparentTemperature !== undefined ? consensus.apparentTemperature : (actual.apparentTemperature !== undefined ? actual.apparentTemperature : tRaw);
+      const windDirDeg = actual.windDirection !== undefined ? actual.windDirection : (consensus.windDirection ?? 160);
+      const prevHour = i > 0 ? displayHours[i - 1] : null;
+      const isMidnightBoundary =
+        i > 0 &&
+        ((h.date && prevHour?.date && h.date !== prevHour.date) ||
+          (h.timeIso && h.timeIso.includes('T00:')));
+      const nextDayLabel =
+        isMidnightBoundary && h.date
+          ? new Date(`${h.date}T12:00:00`).toLocaleDateString('en-IE', { weekday: 'short' }).toUpperCase()
+          : isMidnightBoundary
+          ? 'NEXT'
+          : null;
 
       if (activeMetric === 'temperature') {
         val = unit === 'F' ? Math.round((tRaw * 9) / 5 + 32) : Math.round(tRaw);
@@ -63,18 +77,32 @@ function MobileHourlyForecast({
         feelsVal = unit === 'F' ? Math.round((fRaw * 9) / 5 + 32) : Math.round(fRaw);
         feelsLabel = `${feelsVal}°`;
       } else if (activeMetric === 'precipitation') {
-        val = Math.round(prob);
-        label = `${val}%`;
+        const probPct = Math.round(prob);
+        probLabel = `${probPct}%`;
+        if (unit === 'F') {
+          const rainIn = rainMm * 0.03937;
+          val = rainIn;
+          label = rainIn >= 0.01 ? `${rainIn.toFixed(2)}in` : '0in';
+        } else {
+          val = rainMm;
+          label = rainMm >= 0.05 ? `${rainMm.toFixed(1)}mm` : '0mm';
+        }
         if (smartInfo.category === 'rain' || smartInfo.category === 'storm' || smartInfo.category === 'snow') {
           icon = smartInfo.icon;
         } else {
-          icon = val > 60 ? 'moderate_rain' : (val > 40 ? 'drizzle' : (smartInfo.icon || 'Cloud'));
+          icon = probPct > 60 ? 'moderate_rain' : (probPct > 40 ? 'drizzle' : (smartInfo.icon || 'Cloud'));
         }
-      } else {
+      } else if (activeMetric === 'wind') {
         const w = consensus.windSpeed !== undefined && consensus.windSpeed !== null ? consensus.windSpeed : (actual.windSpeed || 15);
         val = unit === 'F' ? Math.round(w * 0.621371) : Math.round(w);
         label = `${val}`;
         icon = 'Wind';
+      } else {
+        const pRaw = actual.surfacePressure !== undefined && actual.surfacePressure !== null
+          ? actual.surfacePressure
+          : (consensus.surfacePressure ?? 1013);
+        val = Math.round(pRaw);
+        label = `${val}`;
       }
 
       return {
@@ -84,6 +112,10 @@ function MobileHourlyForecast({
         label,
         feelsVal,
         feelsLabel,
+        probLabel,
+        windDirDeg,
+        isMidnightBoundary,
+        nextDayLabel,
         icon,
         isDay,
         isNow: i === 0 && h.isCurrent,
@@ -92,9 +124,14 @@ function MobileHourlyForecast({
     });
 
     const values = dataPoints.map((d) => d.val);
-    const minVal = Math.min(...values);
-    const maxVal = Math.max(...values);
+    const minVal = activeMetric === 'precipitation' ? 0 : Math.min(...values);
+    const maxVal = activeMetric === 'precipitation'
+      ? Math.max(unit === 'F' ? 0.05 : 1, ...values)
+      : Math.max(...values);
     const range = maxVal - minVal || 1;
+    const maxDisp = activeMetric === 'precipitation'
+      ? (unit === 'F' ? `${maxVal.toFixed(2)} in` : `${maxVal.toFixed(1)} mm`)
+      : '';
 
     const pts = dataPoints.map((d, i) => {
       const x = i * itemWidth + itemWidth / 2;
@@ -116,7 +153,7 @@ function MobileHourlyForecast({
       fill = `${line} L ${pts[pts.length - 1].x} ${svgHeight} L ${pts[0].x} ${svgHeight} Z`;
     }
 
-    return { points: pts, pathD: line, fillD: fill };
+    return { points: pts, pathD: line, fillD: fill, maxPrecipDisplay: maxDisp };
   }, [displayHours, activeMetric, unit, timeFormat, itemWidth, svgHeight, topPadding, usableHeight]);
 
   if (points.length === 0) return null;
@@ -154,13 +191,13 @@ function MobileHourlyForecast({
   const aCode = aConsensus.weatherCode !== undefined && aConsensus.weatherCode !== null ? aConsensus.weatherCode : (aActual.weatherCode ?? 2);
   const aPrecipProb = aConsensus.precipitationProbability !== undefined ? aConsensus.precipitationProbability : (aActual.precipitationProbability || 0);
   const aPrecipAmount = aConsensus.precipitation !== undefined ? aConsensus.precipitation : (aActual.precipitation || 0);
+  const aPrecipPct = Math.round(aPrecipProb);
+  const aPrecipAmountLabel = unit === 'F'
+    ? `${aPrecipAmount >= 0.1 ? (aPrecipAmount * 0.03937).toFixed(2) : '0'} in`
+    : `${aPrecipAmount >= 0.05 ? aPrecipAmount.toFixed(1) : '0'} mm`;
   const aIsDay = activeRaw.isDay !== undefined ? Boolean(activeRaw.isDay) : true;
   const aCloud = aConsensus.cloudCover ?? aActual.cloudCover ?? null;
   const aInfo = resolveSmartWeatherInfo(aCode, aPrecipProb, aPrecipAmount, aIsDay, aCloud);
-
-  // Daily high / low badge
-  const dayMax = dailySummary?.maxTemp !== undefined ? Math.round(dailySummary.maxTemp) : Math.round(tRaw + 2);
-  const dayMin = dailySummary?.minTemp !== undefined ? Math.round(dailySummary.minTemp) : Math.round(tRaw - 3);
 
   // Horizontal scrub / scroll listener: glides selection from hour 0 (left) to last hour (right)
   const handleScroll = (e) => {
@@ -191,19 +228,13 @@ function MobileHourlyForecast({
     }
   };
 
-  const strokeColor =
-    activeMetric === 'temperature'
-      ? '#fbbf24'
-      : activeMetric === 'precipitation'
-      ? '#38bdf8'
-      : '#c084fc';
-
-  const gradColor =
-    activeMetric === 'temperature'
-      ? '#f59e0b'
-      : activeMetric === 'precipitation'
-      ? '#0284c7'
-      : '#9333ea';
+  const METRIC_COLORS = {
+    temperature: { stroke: '#fbbf24', grad: '#f59e0b' },
+    precipitation: { stroke: '#38bdf8', grad: '#0284c7' },
+    wind: { stroke: '#c084fc', grad: '#9333ea' },
+    pressure: { stroke: '#10b981', grad: '#059669' },
+  };
+  const { stroke: strokeColor, grad: gradColor } = METRIC_COLORS[activeMetric] || METRIC_COLORS.temperature;
 
   return (
     <div className="rounded-3xl border border-zinc-800/90 bg-[#111113] p-3.5 sm:p-4 shadow-xl">
@@ -223,6 +254,28 @@ function MobileHourlyForecast({
               <span>Temp</span>
               <span className="w-2 h-2 rounded-full bg-amber-400 ml-0.5" />
               <span className="text-amber-400">Feels</span>
+            </span>
+          )}
+          {activeMetric === 'precipitation' && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 ml-1">
+              <span className="w-2 h-2 rounded-full bg-sky-400" />
+              <span>{unit === 'F' ? 'in' : 'mm'}</span>
+              <span className="text-zinc-500">/</span>
+              <span className="text-sky-300">% chance</span>
+            </span>
+          )}
+          {activeMetric === 'wind' && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 ml-1">
+              <span className="w-2 h-2 rounded-full bg-purple-400" />
+              <span>{unit === 'F' ? 'mph' : 'km/h'}</span>
+              <span className="text-zinc-500">/</span>
+              <span className="text-purple-300">direction</span>
+            </span>
+          )}
+          {activeMetric === 'pressure' && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 ml-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-emerald-300">hPa</span>
             </span>
           )}
         </div>
@@ -246,16 +299,26 @@ function MobileHourlyForecast({
               {aInfo.shortLabel || aInfo.label || 'Overcast'}
             </span>
 
-            {/* Wind badge */}
-            <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-zinc-900 text-zinc-200 border border-zinc-800 inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
-              <span>💨</span>
-              <span>{formatWind(windKmh, unit)} {windDir}</span>
+            {/* Precipitation Chance & Amount Badge */}
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-mono font-bold border inline-flex items-center gap-1 whitespace-nowrap shrink-0 ${
+                aPrecipPct >= 50 || aPrecipAmount >= 0.2
+                  ? 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+                  : 'bg-zinc-900 text-zinc-300 border-zinc-800'
+              }`}
+              title="Precipitation chance and amount"
+            >
+              <span>💧</span>
+              <span>{aPrecipPct}%</span>
+              <span className="text-zinc-500">&bull;</span>
+              <span>{aPrecipAmountLabel}</span>
             </span>
           </div>
 
-          {/* High / Low Day Badge */}
-          <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-zinc-900 text-zinc-200 border border-zinc-800 font-mono shrink-0 whitespace-nowrap">
-            {dayMax}° / {dayMin}°
+          {/* Wind badge */}
+          <span className="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-zinc-900 text-zinc-200 border border-zinc-800 inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
+            <span>💨</span>
+            <span>{formatWind(windKmh, unit)} {windDir}</span>
           </span>
         </div>
 
@@ -278,7 +341,7 @@ function MobileHourlyForecast({
           )}
         </div>
 
-        {/* Row 3: Condition Subtitle (strict single line) */}
+        {/* Row 3: Condition Subtitle (full width, single line) */}
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-800/80 min-w-0">
           <WeatherIcon iconName={aInfo.icon} isNight={activeRaw.isDay === false} className="w-8 h-8 shrink-0" />
           <span className="text-sm font-bold text-zinc-100 truncate">
@@ -286,7 +349,7 @@ function MobileHourlyForecast({
           </span>
           <span className="text-zinc-500 text-xs shrink-0">&bull;</span>
           <span className="text-xs text-zinc-300 font-mono font-semibold whitespace-nowrap shrink-0">
-            {activePoint.isNow ? 'Right Now' : activePoint.hourLabel}
+            {activePoint.isNow ? 'Now' : activePoint.hourLabel}
           </span>
         </div>
       </div>
@@ -327,6 +390,31 @@ function MobileHourlyForecast({
               const isSelected = i === selectedHourIndex;
               return (
                 <g key={i}>
+                  {/* Midnight / Next-Day Divider centered on 12 AM mark */}
+                  {p.isMidnightBoundary && (
+                    <g>
+                      <line
+                        x1={p.x}
+                        y1={13}
+                        x2={p.x}
+                        y2={svgHeight}
+                        stroke="#22d3ee"
+                        strokeWidth="1"
+                        strokeDasharray="3 3"
+                        strokeOpacity="0.45"
+                      />
+                      <text
+                        x={p.x}
+                        y={9}
+                        textAnchor="middle"
+                        className="text-[9px] font-mono font-extrabold select-none"
+                        fill="#67e8f9"
+                      >
+                        {p.nextDayLabel}
+                      </text>
+                    </g>
+                  )}
+
                   {/* Subtle active vertical column guide line */}
                   {isSelected && (
                     <line
@@ -383,6 +471,32 @@ function MobileHourlyForecast({
                         {p.feelsLabel}
                       </tspan>
                     </text>
+                  ) : activeMetric === 'precipitation' ? (
+                    <text
+                      x={p.x}
+                      y={p.y - 7}
+                      textAnchor="middle"
+                      className="font-mono select-none"
+                    >
+                      <tspan
+                        x={p.x}
+                        dy="-11"
+                        className={`text-[12px] font-black tracking-tight ${
+                          isSelected ? 'fill-white' : 'fill-zinc-100'
+                        }`}
+                        fill={isSelected ? '#ffffff' : '#f4f4f5'}
+                      >
+                        {p.label}
+                      </tspan>
+                      <tspan
+                        x={p.x}
+                        dy="11"
+                        className="text-[10px] font-bold"
+                        fill={isSelected ? '#7dd3fc' : '#38bdf8'}
+                      >
+                        {p.probLabel}
+                      </tspan>
+                    </text>
                   ) : (
                     <text
                       x={p.x}
@@ -427,19 +541,34 @@ function MobileHourlyForecast({
                   className={`flex flex-col items-center justify-center shrink-0 py-1.5 px-1 rounded-2xl transition-all ${
                     isSelected
                       ? 'bg-zinc-800/90 border border-amber-400/50 shadow-lg scale-105'
+                      : p.isMidnightBoundary
+                      ? 'bg-cyan-950/30 hover:bg-cyan-900/35 border border-cyan-500/35'
                       : 'hover:bg-zinc-800/40 border border-transparent'
                   }`}
                 >
                   <div className="w-10 h-10 flex items-center justify-center">
-                    <WeatherIcon
-                      iconName={p.icon}
-                      isNight={!p.isDay}
-                      className="w-10 h-10 transition-colors"
-                    />
+                    {activeMetric === 'wind' ? (
+                      <img
+                        src={downArrowIcon}
+                        alt={`${getCardinalWindDirection(p.windDirDeg)} wind`}
+                        className={`w-6 h-6 object-contain brightness-0 invert transition-transform ${
+                          isSelected ? 'opacity-100' : 'opacity-85'
+                        }`}
+                        style={{ transform: `rotate(${p.windDirDeg}deg)` }}
+                      />
+                    ) : (
+                      <WeatherIcon
+                        iconName={p.icon}
+                        isNight={!p.isDay}
+                        className="w-10 h-10 transition-colors"
+                      />
+                    )}
                   </div>
                   <span
                     className={`text-xs font-bold mt-1 truncate ${
-                      isSelected
+                      p.isMidnightBoundary
+                        ? 'px-1.5 rounded bg-cyan-500/20 text-cyan-300'
+                        : isSelected
                         ? 'text-amber-300'
                         : p.isNow
                         ? 'text-white'
@@ -455,41 +584,27 @@ function MobileHourlyForecast({
         </div>
       </div>
 
-      {/* Metric Filter Pills (Matching Section 4 of Reference Design) */}
-      <div className="flex items-center gap-2 pt-3 mt-1 border-t border-zinc-800/80">
-        <button
-          type="button"
-          onClick={() => setActiveMetric('temperature')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-            activeMetric === 'temperature'
-              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
-              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
-          }`}
-        >
-          Temperature
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveMetric('precipitation')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-            activeMetric === 'precipitation'
-              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
-              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
-          }`}
-        >
-          Precipitation
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveMetric('wind')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-            activeMetric === 'wind'
-              ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
-              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
-          }`}
-        >
-          Wind
-        </button>
+      {/* Metric Filter Pills */}
+      <div className="flex items-center justify-between gap-1.5 pt-3 mt-1 border-t border-zinc-800/80 overflow-x-auto scrollbar-none">
+        {[
+          { id: 'temperature', label: 'Temperature' },
+          { id: 'precipitation', label: 'Precipitation' },
+          { id: 'wind', label: 'Wind' },
+          { id: 'pressure', label: 'Pressure' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveMetric(tab.id)}
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition cursor-pointer shrink-0 ${
+              activeMetric === tab.id
+                ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
+                : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
     </div>
   );

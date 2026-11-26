@@ -85,6 +85,29 @@ export default function MobileDetailedHourlyModal({
   const colWidth = 58;
   const totalWidth = displayHours.length * colWidth;
 
+  // Group 24h timeline by calendar date for the floating/sliding date header (matching Daily Graph)
+  const dayGroups = useMemo(() => {
+    const groups = [];
+    displayHours.forEach((h) => {
+      const dateStr = h.date || (h.timeIso ? h.timeIso.split('T')[0] : 'unknown');
+      let last = groups[groups.length - 1];
+      if (!last || last.dateStr !== dateStr) {
+        const d = dateStr !== 'unknown' ? new Date(`${dateStr}T12:00:00`) : new Date();
+        const weekday = d.toLocaleDateString('en-IE', { weekday: 'short' });
+        const dayNum = d.getDate();
+        const monthShort = d.toLocaleDateString('en-IE', { month: 'short' });
+        last = {
+          dateStr,
+          count: 0,
+          pill: { weekday, rest: `${dayNum}. ${monthShort}.` },
+        };
+        groups.push(last);
+      }
+      last.count += 1;
+    });
+    return groups;
+  }, [displayHours]);
+
   // Process data for all 12 metrics
   const processed = useMemo(() => {
     return displayHours.map((h, i) => {
@@ -244,20 +267,23 @@ export default function MobileDetailedHourlyModal({
           </div>
 
           {/* STICKY TIME & CLOUD ROW (Pins to top when scrolling vertically; scrolls horizontally with metrics) */}
-          <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-zinc-800/90 pt-1 pb-1.5 shadow-lg">
-            {/* Day Header Row */}
-            <div className="relative h-4 mb-0.5">
-              {processed.map((p, i) =>
-                p.dayLabel ? (
-                  <div
-                    key={`day-${i}`}
-                    style={{ left: `${i * colWidth + 4}px` }}
-                    className="absolute top-0 text-xs font-extrabold text-zinc-100 tracking-tight"
-                  >
-                    {p.dayLabel}
-                  </div>
-                ) : null
-              )}
+          <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-zinc-800/90 pt-1.5 pb-1.5 shadow-lg">
+            {/* Floating / Sliding Day Header Row (matches Daily Graph) */}
+            <div className="flex mb-1">
+              {dayGroups.map((g) => (
+                <div
+                  key={g.dateStr}
+                  style={{ width: `${g.count * colWidth}px`, overflowX: 'clip' }}
+                  className="shrink-0 border-l border-zinc-700/80 first:border-l-0 px-2"
+                >
+                  {g.count >= 2 ? (
+                    <div className="sticky left-2 inline-flex items-baseline gap-1.5 whitespace-nowrap text-xs">
+                      <span className="font-extrabold text-white">{g.pill.weekday}</span>
+                      <span className="font-semibold text-zinc-400">{g.pill.rest}</span>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
 
             {/* Weather Icons Row */}
