@@ -50,6 +50,7 @@ export default function MobileWeatherView({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailedHourlyOpen, setIsDetailedHourlyOpen] = useState(false);
   const [isDetailedDailyOpen, setIsDetailedDailyOpen] = useState(false);
+  const [selectedDailyDate, setSelectedDailyDate] = useState(null);
   const [isMultiDayMatrixOpen, setIsMultiDayMatrixOpen] = useState(false);
 
   // Pull-to-refresh state
@@ -87,7 +88,10 @@ export default function MobileWeatherView({
   const openCitySearch = useCallback(() => setIsCitySearchOpen(true), []);
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const openDetailedHourly = useCallback(() => setIsDetailedHourlyOpen(true), []);
-  const openDetailedDaily = useCallback(() => setIsDetailedDailyOpen(true), []);
+  const openDetailedDaily = useCallback((dateStr = null) => {
+    setSelectedDailyDate(typeof dateStr === 'string' ? dateStr : null);
+    setIsDetailedDailyOpen(true);
+  }, []);
   const openMultiDayMatrix = useCallback(() => setIsMultiDayMatrixOpen(true), []);
   const closeCitySearch = useCallback(() => setIsCitySearchOpen(false), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
@@ -104,7 +108,12 @@ export default function MobileWeatherView({
 
   if (!weatherData || !current) return null;
 
-  const isCurrentlyRaining = current.precipitation > 0 || current.weatherCode >= 50;
+  const cNow = currentHour?.consensus;
+  const effectiveNowPrecip = cNow?.precipitation ?? current.precipitation ?? 0;
+  const effectiveNowCode = cNow?.weatherCode ?? current.weatherCode ?? 0;
+  const effectiveNowProb = cNow?.precipitationProbability ?? 0;
+  const isCurrentlyRaining =
+    effectiveNowPrecip >= 0.05 || effectiveNowProb >= 45 || effectiveNowCode >= 50;
 
   const handleSearch = async (q) => {
     setSearchQuery(q);
@@ -525,6 +534,7 @@ export default function MobileWeatherView({
               selectedCity={selectedCity}
               unit={unit}
               timeFormat={timeFormat}
+              initialSelectedDate={selectedDailyDate}
               onClose={closeDetailedDaily}
             />
           )}

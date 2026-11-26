@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   ArrowLeft,
   ChevronDown,
@@ -11,6 +11,7 @@ import {
 import { WeatherIcon } from '../../utils/weatherIcons';
 import { resolveSmartWeatherInfo } from '../../constants/providers';
 import { formatTime } from '../../utils/units';
+import MobileHourlyTimelineView from './MobileHourlyTimelineView';
 
 function convertTemp(tempC, unit) {
   if (tempC === null || tempC === undefined) return null;
@@ -43,14 +44,25 @@ function getHourMetrics(h, unit) {
   const a = h.actual || {};
 
   const tempC = c.temperature !== undefined ? c.temperature : (a.temperature ?? 10);
+  const feelsC = c.apparentTemperature !== undefined ? c.apparentTemperature : (a.apparentTemperature ?? tempC);
   const precipProb = c.precipitationProbability !== undefined ? c.precipitationProbability : (a.precipitationProbability ?? 0);
   const precipMm = c.precipitation !== undefined ? c.precipitation : (a.precipitation ?? 0);
   const windKmh = c.windSpeed !== undefined && c.windSpeed !== null ? c.windSpeed : (a.windSpeed ?? 10);
+  const gustKmh = a.windGusts !== undefined ? a.windGusts : Math.round(windKmh * 1.35);
   const code = c.weatherCode !== undefined && c.weatherCode !== null ? c.weatherCode : (a.weatherCode ?? 2);
-  const pressure = a.surfacePressure ?? 1013;
-  const windDir = a.windDirection ?? 180;
+  const pressure = a.surfacePressure ?? c.surfacePressure ?? 1013;
+  const windDir = a.windDirection ?? c.windDirection ?? 180;
   const isDay = h.isDay !== undefined ? Boolean(h.isDay) : (getHourNumber(h) >= 7 && getHourNumber(h) < 18);
-  const cloudCover = c.cloudCover ?? a.cloudCover ?? null;
+  const cloudCoverRaw = c.cloudCover ?? a.cloudCover ?? null;
+  const cloudCover = cloudCoverRaw !== null ? Math.round(cloudCoverRaw) : 85;
+  const humRaw = c.humidity !== undefined && c.humidity !== null ? c.humidity : (a.humidity ?? 85);
+  const humidity = Math.round(humRaw);
+  const dewRaw = a.dewPoint !== undefined && a.dewPoint !== null
+    ? a.dewPoint
+    : Math.round((tempC - ((100 - humidity) / 5)) * 10) / 10;
+  const uvIndex = a.uvIndex !== undefined ? Math.round(a.uvIndex) : 0;
+  const visKm = a.visibility !== undefined ? a.visibility : 10;
+  const visibility = unit === 'F' ? Math.round(visKm * 0.621371) : Math.round(visKm);
 
   // Max precipitation across providers for "Possible precipitation" envelope
   let maxModelPrecipMm = precipMm;
@@ -62,18 +74,25 @@ function getHourMetrics(h, unit) {
     });
   }
 
-  const smartInfo = resolveSmartWeatherInfo(code, precipMm > 0 || precipProb >= 40 ? precipProb : 0, precipMm, isDay, cloudCover);
+  const smartInfo = resolveSmartWeatherInfo(code, precipMm > 0 || precipProb >= 40 ? precipProb : 0, precipMm, isDay, cloudCoverRaw);
 
   return {
     temp: convertTemp(tempC, unit),
     tempC,
+    feels: convertTemp(feelsC, unit),
     precipProb: Math.round(precipProb),
     precip: convertPrecip(precipMm, unit),
     precipMm,
     possiblePrecip: convertPrecip(maxModelPrecipMm, unit),
     wind: convertWind(windKmh, unit),
+    gust: convertWind(gustKmh, unit),
     windDir,
     pressure: Math.round(pressure),
+    cloudCover,
+    humidity,
+    dewPoint: convertTemp(dewRaw, unit),
+    uvIndex,
+    visibility,
     code,
     icon: smartInfo.icon || 'Cloud',
     isDay,
@@ -115,10 +134,41 @@ export default function MobileDetailedDailyModal({
   selectedCity,
   unit = 'C',
   timeFormat = '24h',
+  initialSelectedDate = null,
   onClose,
 }) {
   const [viewTab, setViewTab] = useState('table'); // 'table' | 'graph'
-  const [expandedDates, setExpandedDates] = useState({});
+  const [expandedDates, setExpandedDates] = useState(() =>
+    initialSelectedDate ? { [initialSelectedDate]: true } : {}
+  );
+  const [graphTargetDate, setGraphTargetDate] = useState(initialSelectedDate);
+  const tableScrollRef = useRef(null);
+  const activeDateRef = useRef(initialSelectedDate);
+  const pendingTableScrollDateRef = useRef(null);
+
+  useEffect(() => {
+    if (!initialSelectedDate) return;
+    activeDateRef.current = initialSelectedDate;
+    setViewTab('table');
+    setExpandedDates((prev) => ({ ...prev, [initialSelectedDate]: true }));
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-daily-date="${initialSelectedDate}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [initialSelectedDate]);
+
+  // Scroll back to the exact day card when returning from Graph -> Table
+  useEffect(() => {
+    if (viewTab !== 'table' || !pendingTableScrollDateRef.current) return;
+    const target = pendingTableScrollDateRef.current;
+    pendingTableScrollDateRef.current = null;
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-daily-date="${target}"]`);
+      el?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }, 30);
+    return () => clearTimeout(timer);
+  }, [viewTab]);
 
   // Build up to 10 days starting from today
   const tenDaysData = useMemo(() => {
@@ -161,6 +211,7 @@ export default function MobileDetailedDailyModal({
 
           const metricsList = slotHours.map((h) => getHourMetrics(h, unit));
           const maxTemp = Math.max(...metricsList.map((m) => m.temp ?? 0));
+          const maxFeels = Math.max(...metricsList.map((m) => m.feels ?? m.temp ?? 0));
           const totalPrecip = Math.round(metricsList.reduce((sum, m) => sum + (m.precip || 0), 0) * 10) / 10;
           const maxHourlyPrecipMm = Math.max(...metricsList.map((m) => m.precipMm || 0));
           const maxProb = Math.max(...metricsList.map((m) => m.precipProb || 0));
@@ -192,6 +243,8 @@ export default function MobileDetailedDailyModal({
             icon: repIcon,
             isNight: periodIsNight,
             temp: maxTemp,
+            feels: maxFeels,
+            prob: maxProb,
             precip: totalPrecip,
             wind: maxWind,
           };
@@ -219,11 +272,48 @@ export default function MobileDetailedDailyModal({
   }, [dates, hoursByDate, dailySunByDate, unit, timeFormat]);
 
   const toggleDayExpand = (dateStr) => {
-    setExpandedDates((prev) => ({
-      ...prev,
-      [dateStr]: !prev[dateStr],
-    }));
+    setExpandedDates((prev) => {
+      const nextOpen = !prev[dateStr];
+      if (nextOpen) {
+        activeDateRef.current = dateStr;
+      }
+      return {
+        ...prev,
+        [dateStr]: nextOpen,
+      };
+    });
   };
+
+  // Switch Table -> Graph: jump to the expanded day (or topmost visible day card)
+  const handleSwitchToGraph = () => {
+    let target = tenDaysData.find((d) => expandedDates[d.dateStr])?.dateStr || null;
+    if (!target && tableScrollRef.current) {
+      const containerTop = tableScrollRef.current.getBoundingClientRect().top;
+      const cards = tableScrollRef.current.querySelectorAll('[data-daily-date]');
+      for (const card of cards) {
+        if (card.getBoundingClientRect().bottom > containerTop + 40) {
+          target = card.getAttribute('data-daily-date');
+          break;
+        }
+      }
+    }
+    target = target || activeDateRef.current || tenDaysData[0]?.dateStr || null;
+    activeDateRef.current = target;
+    setGraphTargetDate(target);
+    setViewTab('graph');
+  };
+
+  // Switch Graph -> Table: return to the day card the user was viewing on the graph
+  const handleSwitchToTable = () => {
+    if (activeDateRef.current) {
+      pendingTableScrollDateRef.current = activeDateRef.current;
+    }
+    setViewTab('table');
+  };
+
+  const handleGraphActiveDateChange = useCallback((dateStr) => {
+    if (dateStr) activeDateRef.current = dateStr;
+  }, []);
 
   const windUnitLabel = unit === 'F' ? 'mph' : 'km/h';
   const precipUnitLabel = unit === 'F' ? 'in' : 'mm';
@@ -261,7 +351,7 @@ export default function MobileDetailedDailyModal({
         <div className="inline-flex items-center gap-1 p-0.5 rounded-full bg-[#111113] border border-zinc-800">
           <button
             type="button"
-            onClick={() => setViewTab('table')}
+            onClick={handleSwitchToTable}
             className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               viewTab === 'table'
                 ? 'bg-zinc-100 text-zinc-950 shadow-sm'
@@ -273,7 +363,7 @@ export default function MobileDetailedDailyModal({
           </button>
           <button
             type="button"
-            onClick={() => setViewTab('graph')}
+            onClick={handleSwitchToGraph}
             className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               viewTab === 'graph'
                 ? 'bg-zinc-100 text-zinc-950 shadow-sm'
@@ -288,7 +378,7 @@ export default function MobileDetailedDailyModal({
 
       {/* BODY: Table View OR Graph View */}
       {viewTab === 'table' ? (
-        <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2.5 pb-10">
+        <div ref={tableScrollRef} className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2.5 pb-10">
           {tenDaysData.map((day) => {
             const isExpanded = Boolean(expandedDates[day.dateStr]);
             const showColumnHeaders = isExpanded || day.isToday;
@@ -296,6 +386,7 @@ export default function MobileDetailedDailyModal({
             return (
               <div
                 key={day.dateStr}
+                data-daily-date={day.dateStr}
                 className="rounded-2xl bg-[#111113] border border-zinc-800/90 overflow-hidden shadow-lg"
               >
                 {/* Day Header */}
@@ -315,8 +406,8 @@ export default function MobileDetailedDailyModal({
                   <div className="grid grid-cols-[72px_54px_1fr_1fr_1fr] items-center px-3.5 pb-1.5 text-[11px] font-bold text-zinc-400 border-b border-zinc-800/80">
                     <span>Time</span>
                     <span />
-                    <span className="text-center">Temp. °{unit}</span>
-                    <span className="text-center">Precip. {precipUnitLabel}</span>
+                    <span className="text-center">Temp / Feels</span>
+                    <span className="text-center">Precip / %</span>
                     <span className="text-right">Wind {windUnitLabel}</span>
                   </div>
                 )}
@@ -335,18 +426,28 @@ export default function MobileDetailedDailyModal({
                           <div className="flex items-center justify-center">
                             <WeatherIcon iconName={hr.icon} isNight={!hr.isDay} className="w-10 h-10" />
                           </div>
-                          <span
-                            className={`text-center font-black font-mono text-[15px] ${
-                              hr.temp <= (unit === 'F' ? 32 : 0)
-                                ? 'text-sky-300'
-                                : 'text-amber-400'
-                            }`}
-                          >
-                            {hr.temp}°
-                          </span>
-                          <span className="text-center font-mono font-bold text-sm text-sky-400">
-                            {hr.precip > 0 ? hr.precip.toFixed(1) : ''}
-                          </span>
+                          <div className="flex flex-col items-center leading-tight">
+                            <span
+                              className={`font-black font-mono text-[15px] ${
+                                hr.temp <= (unit === 'F' ? 32 : 0)
+                                  ? 'text-sky-300'
+                                  : 'text-amber-400'
+                              }`}
+                            >
+                              {hr.temp}°
+                            </span>
+                            <span className="text-[10px] font-mono text-amber-300/75">
+                              Feels {hr.feels}°
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-center leading-tight">
+                            <span className="font-mono font-bold text-sm text-sky-400">
+                              {hr.precip > 0 ? hr.precip.toFixed(1) : '0'} {precipUnitLabel}
+                            </span>
+                            <span className={`text-[10px] font-mono ${hr.precipProb >= 50 ? 'text-cyan-300' : 'text-zinc-400'}`}>
+                              {hr.precipProb}%
+                            </span>
+                          </div>
                           <div className="flex items-center justify-end gap-1.5 text-zinc-100 font-mono font-bold text-sm">
                             <span>{hr.wind}</span>
                             <svg
@@ -376,18 +477,28 @@ export default function MobileDetailedDailyModal({
                           <div className="flex items-center justify-center">
                             <WeatherIcon iconName={p.icon} isNight={p.isNight} className="w-10 h-10" />
                           </div>
-                          <span
-                            className={`text-center font-black font-mono text-[15px] ${
-                              p.temp <= (unit === 'F' ? 32 : 0)
-                                ? 'text-sky-300'
-                                : 'text-amber-400'
-                            }`}
-                          >
-                            {p.temp}°
-                          </span>
-                          <span className="text-center font-mono font-bold text-sm text-sky-400">
-                            {p.precip >= 0.1 ? p.precip.toFixed(1) : ''}
-                          </span>
+                          <div className="flex flex-col items-center leading-tight">
+                            <span
+                              className={`font-black font-mono text-[15px] ${
+                                p.temp <= (unit === 'F' ? 32 : 0)
+                                  ? 'text-sky-300'
+                                  : 'text-amber-400'
+                              }`}
+                            >
+                              {p.temp}°
+                            </span>
+                            <span className="text-[10px] font-mono text-amber-300/75">
+                              Feels {p.feels}°
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-center leading-tight">
+                            <span className="font-mono font-bold text-sm text-sky-400">
+                              {p.precip >= 0.1 ? p.precip.toFixed(1) : '0'} {precipUnitLabel}
+                            </span>
+                            <span className={`text-[10px] font-mono ${p.prob >= 50 ? 'text-cyan-300' : 'text-zinc-400'}`}>
+                              {p.prob}%
+                            </span>
+                          </div>
                           <span className="text-right font-mono font-bold text-sm text-zinc-100">
                             {p.wind}
                           </span>
@@ -433,8 +544,8 @@ export default function MobileDetailedDailyModal({
           hours={hours}
           unit={unit}
           timeFormat={timeFormat}
-          windUnitLabel={windUnitLabel}
-          precipUnitLabel={precipUnitLabel}
+          targetDate={graphTargetDate}
+          onActiveDateChange={handleGraphActiveDateChange}
         />
       )}
     </div>
@@ -442,18 +553,16 @@ export default function MobileDetailedDailyModal({
 }
 
 /**
- * 10-Day Interactive Graph View (Yr Reference Style)
- * - Sticky top header with moving Day Pill + Time ticks + Weather Icons
- * - Sticky left Y-axis scales on all 4 charts
+ * 10-Day Interactive Graph View using the exact same MobileHourlyTimelineView
+ * look & feel as Hourly Expanded for 100% visual consistency.
  */
 function DailyGraphView({
   hours = [],
   unit = 'C',
   timeFormat = '24h',
-  windUnitLabel = 'km/h',
-  precipUnitLabel = 'mm',
+  targetDate = null,
+  onActiveDateChange,
 }) {
-  // Upcoming hourly sequence across the 10-day window
   const timelineHours = useMemo(() => {
     if (!hours || hours.length === 0) return [];
     const currentIdx = hours.findIndex((h) => h.isCurrent);
@@ -461,36 +570,7 @@ function DailyGraphView({
     return hours.slice(startIdx, startIdx + 240);
   }, [hours]);
 
-  const colWidth = 44; // Wide columns for crisp 36px icons and bold time ticks
-  const yAxisWidth = 48;
-  const chartWidth = timelineHours.length * colWidth;
-
-  // Compute day groups for the moving sticky date bar
-  const dayGroups = useMemo(() => {
-    const groups = [];
-    timelineHours.forEach((h, idx) => {
-      const m = getHourMetrics(h, unit);
-      const tick = formatGraphHourTick(h, timeFormat);
-      const hourNum = getHourNumber(h);
-
-      const lastGroup = groups[groups.length - 1];
-      if (!lastGroup || lastGroup.dateStr !== h.date) {
-        groups.push({
-          dateStr: h.date,
-          pill: formatGraphDayPill(h.date),
-          startIdx: idx,
-          items: [{ idx, hourNum, tick, ...m }],
-        });
-      } else {
-        lastGroup.items.push({ idx, hourNum, tick, ...m });
-      }
-    });
-    return groups;
-  }, [timelineHours, unit, timeFormat]);
-
-  const flatItems = useMemo(() => dayGroups.flatMap((g) => g.items), [dayGroups]);
-
-  if (flatItems.length === 0) {
+  if (timelineHours.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
         No multi-day hourly data available for graph view.
@@ -498,183 +578,14 @@ function DailyGraphView({
     );
   }
 
-  // Scales for the 4 charts
-  const temps = flatItems.map((d) => d.temp);
-  const rawTempMin = Math.min(...temps);
-  const rawTempMax = Math.max(...temps);
-  const tempMin = Math.floor((rawTempMin - 2) / 2) * 2;
-  const tempMax = Math.ceil((rawTempMax + 2) / 2) * 2;
-
-  const precips = flatItems.map((d) => Math.max(d.precip, d.possiblePrecip));
-  const rawPrecipMax = Math.max(4, ...precips);
-  const precipMax = unit === 'F' ? Math.ceil(rawPrecipMax * 4) / 4 : Math.ceil(rawPrecipMax);
-
-  const winds = flatItems.map((d) => d.wind);
-  const rawWindMax = Math.max(12, ...winds);
-  const windMax = Math.ceil(rawWindMax / 10) * 10;
-
-  const pressures = flatItems.map((d) => d.pressure);
-  const rawPresMin = Math.min(1003, ...pressures);
-  const rawPresMax = Math.max(1031, ...pressures);
-  const presMin = Math.floor(rawPresMin / 7) * 7;
-  const presMax = Math.ceil(rawPresMax / 7) * 7;
-
   return (
-    <div className="flex-1 overflow-x-auto overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-      <div style={{ width: `${yAxisWidth + chartWidth}px` }} className="relative min-h-full pb-12">
-        
-        {/* STICKY TOP BAR: Moving Date Header + Time Ticks + Cloud/Weather Icons */}
-        <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-zinc-800 shadow-lg">
-          {/* Row 1: Moving / Sticky Date Header Row */}
-          <div className="flex items-center pt-1.5 pb-0.5">
-            {/* Y-axis corner spacer */}
-            <div style={{ width: `${yAxisWidth}px` }} className="sticky left-0 z-40 shrink-0 bg-black" />
-
-            {/* Day segments with overflow-x: clip so sticky date labels glide smoothly & push previous day off */}
-            <div className="flex">
-              {dayGroups.map((g) => (
-                <div
-                  key={g.dateStr}
-                  style={{ width: `${g.items.length * colWidth}px`, overflowX: 'clip' }}
-                  className="shrink-0 border-l border-zinc-800 first:border-l-0 px-1.5"
-                >
-                  {g.items.length >= 3 ? (
-                    <div
-                      style={{ left: `${yAxisWidth + 6}px` }}
-                      className="sticky inline-flex items-baseline gap-1.5 whitespace-nowrap text-sm"
-                    >
-                      <span className="font-extrabold text-white">{g.pill.weekday}</span>
-                      <span className="text-zinc-400 font-semibold">{g.pill.rest}</span>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Row 2: Hour Labels (every 2 hours for readability) */}
-          <div className="flex items-center py-0.5">
-            <div style={{ width: `${yAxisWidth}px` }} className="sticky left-0 z-40 shrink-0 bg-black" />
-            <div className="flex">
-              {flatItems.map((item) => {
-                const showTick = item.hourNum % 2 === 1 || item.idx === 0;
-                return (
-                  <div
-                    key={`t-${item.idx}`}
-                    style={{ width: `${colWidth}px` }}
-                    className="shrink-0 flex flex-col items-center leading-tight text-xs font-mono text-zinc-200"
-                  >
-                    {showTick ? (
-                      <>
-                        <span className="font-bold">{item.tick.main}</span>
-                        <span className="text-[10px] font-semibold text-zinc-400">{item.tick.sub}</span>
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Row 3: Weather Icons */}
-          <div className="flex items-center pb-1.5 pt-0.5">
-            <div style={{ width: `${yAxisWidth}px` }} className="sticky left-0 z-40 shrink-0 bg-black" />
-            <div className="flex">
-              {flatItems.map((item) => (
-                <div
-                  key={`ic-${item.idx}`}
-                  style={{ width: `${colWidth}px` }}
-                  className="shrink-0 flex items-center justify-center h-9"
-                >
-                  <WeatherIcon iconName={item.icon} isNight={!item.isDay} className="w-9 h-9" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 4 GRAPH PANELS */}
-        <div className="space-y-2.5 pt-2">
-          
-          {/* 1. Temperature Graph */}
-          <YrGridChartPanel
-            items={flatItems}
-            valueKey="temp"
-            yAxisWidth={yAxisWidth}
-            colWidth={colWidth}
-            chartWidth={chartWidth}
-            height={98}
-            minVal={tempMin}
-            maxVal={tempMax}
-            tickCount={5}
-            tickSuffix="°"
-            strokeColor="#fb7185"
-            fillFrom="rgba(249, 115, 22, 0.35)"
-            legendContent={
-              <div className="flex items-center gap-2 text-[13px] text-slate-100 font-bold">
-                <span className="w-3.5 h-1 rounded-full bg-orange-500 inline-block" />
-                <span>Temperature, °{unit}</span>
-              </div>
-            }
-          />
-
-          {/* 2. Precipitation Graph (Expected + Possible Bars) */}
-          <YrPrecipBarPanel
-            items={flatItems}
-            yAxisWidth={yAxisWidth}
-            colWidth={colWidth}
-            chartWidth={chartWidth}
-            height={78}
-            maxVal={precipMax}
-            precipUnitLabel={precipUnitLabel}
-          />
-
-          {/* 3. Wind Graph + Wind Direction Arrows */}
-          <YrGridChartPanel
-            items={flatItems}
-            valueKey="wind"
-            yAxisWidth={yAxisWidth}
-            colWidth={colWidth}
-            chartWidth={chartWidth}
-            height={92}
-            minVal={0}
-            maxVal={windMax}
-            tickCount={5}
-            strokeColor="#c084fc"
-            fillFrom="rgba(168, 85, 247, 0.32)"
-            showWindArrows={true}
-            legendContent={
-              <div className="flex items-center gap-2 text-[13px] text-slate-100 font-bold">
-                <span className="w-3.5 h-1 rounded-full bg-purple-400 inline-block" />
-                <span>Wind, {windUnitLabel}</span>
-              </div>
-            }
-          />
-
-          {/* 4. Air Pressure Graph */}
-          <YrGridChartPanel
-            items={flatItems}
-            valueKey="pressure"
-            yAxisWidth={yAxisWidth}
-            colWidth={colWidth}
-            chartWidth={chartWidth}
-            height={92}
-            minVal={presMin}
-            maxVal={presMax}
-            tickCount={5}
-            strokeColor="#4ade80"
-            fillFrom="rgba(34, 197, 94, 0.30)"
-            legendContent={
-              <div className="flex items-center gap-2 text-[13px] text-slate-100 font-bold">
-                <span className="w-3.5 h-1 rounded-full bg-emerald-400 inline-block" />
-                <span>Air pressure, hPa</span>
-              </div>
-            }
-          />
-
-        </div>
-      </div>
-    </div>
+    <MobileHourlyTimelineView
+      hours={timelineHours}
+      unit={unit}
+      timeFormat={timeFormat}
+      targetDate={targetDate}
+      onActiveDateChange={onActiveDateChange}
+    />
   );
 }
 

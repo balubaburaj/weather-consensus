@@ -103,18 +103,41 @@ const MobileHeroCard = memo(function MobileHeroCard({
 
   if (!currentWeather) return null;
 
-  const temp = currentWeather.temperature !== null ? Math.round(currentWeather.temperature) : '--';
-  const feels = currentWeather.apparentTemperature !== null ? Math.round(currentWeather.apparentTemperature) : temp;
-  const weatherCode = currentWeather.weatherCode ?? currentHourConsensus?.weatherCode ?? 2;
-  const precip = currentWeather.precipitation || 0;
-  const isDay = currentWeather.isDay !== false && currentWeather.isDay !== 0;
-  const effectiveCloud = currentWeather.cloudCover ?? currentHourConsensus?.cloudCover ?? null;
-  const effectiveProb = isCurrentlyRaining ? 85 : (currentHourConsensus?.precipitationProbability ?? 10);
-  const weatherInfo = resolveSmartWeatherInfo(weatherCode, effectiveProb, precip, isDay, effectiveCloud);
-  const rainInfo = getRainHumanType(precip, isCurrentlyRaining ? 85 : 0, weatherCode);
+  const c = currentHourConsensus || {};
+  const tempRaw = c.temperature !== undefined && c.temperature !== null ? c.temperature : currentWeather.temperature;
+  const feelsRaw =
+    c.apparentTemperature !== undefined && c.apparentTemperature !== null
+      ? c.apparentTemperature
+      : (currentWeather.apparentTemperature ?? tempRaw);
+  const toDisplayTemp = (valC) =>
+    valC !== null && valC !== undefined
+      ? Math.round(unit === 'F' ? (valC * 9) / 5 + 32 : valC)
+      : '--';
 
-  const minTemp = dailySummary?.minTemp !== undefined ? Math.round(dailySummary.minTemp) : temp - 2;
-  const maxTemp = dailySummary?.maxTemp !== undefined ? Math.round(dailySummary.maxTemp) : temp + 4;
+  const temp = toDisplayTemp(tempRaw);
+  const feels = feelsRaw !== null && feelsRaw !== undefined ? toDisplayTemp(feelsRaw) : temp;
+  const weatherCode = c.weatherCode !== undefined && c.weatherCode !== null ? c.weatherCode : (currentWeather.weatherCode ?? 2);
+  const precip = c.precipitation !== undefined && c.precipitation !== null ? c.precipitation : (currentWeather.precipitation || 0);
+  const isDay = currentWeather.isDay !== false && currentWeather.isDay !== 0;
+  const effectiveCloud = c.cloudCover ?? currentWeather.cloudCover ?? null;
+  const effectiveProb = c.precipitationProbability ?? (isCurrentlyRaining ? 85 : 10);
+  const weatherInfo = resolveSmartWeatherInfo(weatherCode, effectiveProb, precip, isDay, effectiveCloud);
+  const consensusWeatherFor3D = {
+    ...currentWeather,
+    temperature: tempRaw,
+    apparentTemperature: feelsRaw,
+    weatherCode,
+    precipitation: precip,
+    precipitationProbability: effectiveProb,
+    cloudCover: effectiveCloud,
+  };
+  const consensusIsRaining = precip >= 0.05 || effectiveProb >= 45 || weatherCode >= 50;
+
+  const minTemp = dailySummary?.minTemp !== undefined ? toDisplayTemp(dailySummary.minTemp) : (typeof temp === 'number' ? temp - 2 : '--');
+  const maxTemp = dailySummary?.maxTemp !== undefined ? toDisplayTemp(dailySummary.maxTemp) : (typeof temp === 'number' ? temp + 4 : '--');
+  const daySummaryIcon = dailySummary?.dailyIcon || weatherInfo.icon;
+  const rawDayLabel = dailySummary?.dailyCondition || weatherInfo.label || '';
+  const daySummaryLabel = rawDayLabel.replace(/\s*\([^)]*\)/g, '').trim();
 
   const todayDateStr = new Date().toLocaleDateString(undefined, {
     weekday: 'short',
@@ -130,8 +153,8 @@ const MobileHeroCard = memo(function MobileHeroCard({
         className="relative w-full overflow-hidden transition-[height] duration-200"
       >
         <WeatherHouse3D
-          currentWeather={currentWeather}
-          isCurrentlyRaining={isCurrentlyRaining}
+          currentWeather={consensusWeatherFor3D}
+          isCurrentlyRaining={consensusIsRaining}
           selectedCity={selectedCity}
           showControls={false}
           initialCamera="front"
@@ -581,29 +604,29 @@ const MobileHeroCard = memo(function MobileHeroCard({
       )}
 
       {/* High/Low Bar & Daily Status Strip */}
-      <div className="px-4 py-3 bg-[#111113] border-t border-zinc-800/90 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1 font-mono font-bold text-zinc-100">
+      <div className="px-4 py-3 bg-[#111113] border-t border-zinc-800/90 flex items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-1 font-mono font-bold text-zinc-100 shrink-0 whitespace-nowrap">
             <span className="text-amber-400">&uarr;</span>
             <span>{maxTemp}°</span>
             <span className="text-zinc-600 font-normal">/</span>
             <span className="text-zinc-400">&darr;</span>
             <span>{minTemp}°</span>
           </div>
-          <span className="text-zinc-700">&bull;</span>
-          <div className="flex items-center gap-1.5 text-zinc-200 font-medium">
+          <span className="text-zinc-700 shrink-0">&bull;</span>
+          <div className="flex items-center gap-1.5 text-zinc-200 font-medium min-w-0 flex-1">
             <WeatherIcon
-              iconName={rainInfo.icon}
-              isNight={currentWeather?.isDay === false || currentWeather?.isDay === 0}
-              className="w-6 h-6"
+              iconName={daySummaryIcon}
+              isNight={!isDay}
+              className="w-6 h-6 shrink-0"
             />
-            <span className="truncate max-w-[130px] sm:max-w-none">
-              {isCurrentlyRaining ? rainInfo.label : 'Dry Roads'}
+            <span className="truncate" title={rawDayLabel}>
+              {daySummaryLabel}
             </span>
           </div>
         </div>
 
-        <div className="text-[11px] text-zinc-400 font-medium">
+        <div className="text-[11px] text-zinc-400 font-medium whitespace-nowrap shrink-0">
           {todayDateStr}
         </div>
       </div>

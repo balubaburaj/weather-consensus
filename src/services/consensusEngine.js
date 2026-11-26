@@ -263,6 +263,146 @@ export function computeHourlyConsensus(hours, customWeights = null) {
 }
 
 /**
+ * Determine true dominant daily sky/rain classification anchored on daytime hours
+ * (falling back to all hours only when no daytime hours remain, e.g. late tonight).
+ * Trace overnight drizzle (< 1 mm with dry daytime) will not override a sunny/cloudy day icon.
+ */
+export function resolveDailySkySummary(dayHours) {
+  if (!dayHours || dayHours.length === 0) {
+    return {
+      icon: 'CloudSun',
+      lucideIcon: 'CloudSun',
+      emoji: '⛅',
+      condition: 'Partly Cloudy',
+      isAllNight: false,
+    };
+  }
+
+  const daytimeHours = dayHours.filter((h) => h.isDay !== false);
+  const skySample = daytimeHours.length > 0 ? daytimeHours : dayHours;
+  const isAllNight = daytimeHours.length === 0;
+
+  const getVal = (h, field, fallback) => {
+    const cVal = h.consensus?.[field];
+    if (cVal !== undefined && cVal !== null) return cVal;
+    const aVal = h.actual?.[field];
+    if (aVal !== undefined && aVal !== null) return aVal;
+    return fallback;
+  };
+
+  // Dry-sky majority across skySample (daytime when available)
+  const fogCount = skySample.filter((h) => [45, 48].includes(getVal(h, 'weatherCode', 2))).length;
+  const overcastCount = skySample.filter(
+    (h) => getVal(h, 'weatherCode', 2) === 3 || getVal(h, 'cloudCover', 0) >= 78
+  ).length;
+  const partlyCount = skySample.filter(
+    (h) => getVal(h, 'weatherCode', 2) === 2 || getVal(h, 'cloudCover', 0) >= 40
+  ).length;
+
+  const refHour = skySample[Math.floor(skySample.length / 2)] || dayHours[0];
+  const refCode = getVal(refHour, 'weatherCode', 2);
+  const refCloud = getVal(refHour, 'cloudCover', null);
+
+  let icon = resolveSmartWeatherInfo(refCode, 0, 0, !isAllNight, refCloud).icon || 'CloudSun';
+  let lucideIcon = 'CloudSun';
+  let emoji = '⛅';
+  let condition = 'Partly Cloudy';
+
+  if (fogCount >= Math.max(2, Math.ceil(skySample.length * 0.35))) {
+    icon = 'fog';
+    lucideIcon = 'fog';
+    emoji = '🌫️';
+    condition = 'Foggy / Misty';
+  } else if (overcastCount >= Math.ceil(skySample.length * 0.5)) {
+    icon = 'overcast';
+    lucideIcon = 'Cloud';
+    emoji = '☁️';
+    condition = 'Overcast / Grey Sky';
+  } else if (partlyCount >= Math.ceil(skySample.length * 0.4) || icon === 'CloudSun') {
+    icon = 'CloudSun';
+    lucideIcon = 'CloudSun';
+    emoji = '⛅';
+    condition = 'Partly Cloudy';
+  } else if (isAllNight) {
+    icon = 'Sun';
+    lucideIcon = 'Sun';
+    emoji = '🌙';
+    condition = 'Clear Night Sky';
+  } else {
+    icon = 'Sun';
+    lucideIcon = 'Sun';
+    emoji = '☀️';
+    condition = 'Mainly Clear & Sunny';
+  }
+
+  // Daytime precipitation intensity (prevent 0.1-0.2mm overnight trace from masking a dry/sunny day)
+  const samplePrecips = skySample.map((h) => getVal(h, 'precipitation', 0));
+  const sampleProbs = skySample.map((h) => getVal(h, 'precipitationProbability', 0));
+  const sampleTotalRain = Math.round(samplePrecips.reduce((s, v) => s + v, 0) * 10) / 10;
+  const sampleMaxHourly = Math.max(...samplePrecips);
+  const sampleMaxProb = Math.max(...sampleProbs);
+
+  const allPrecips = dayHours.map((h) => getVal(h, 'precipitation', 0));
+  const allTotalRain = Math.round(allPrecips.reduce((s, v) => s + v, 0) * 10) / 10;
+  const allMaxHourly = Math.max(...allPrecips);
+
+  // Check severe thunder/snow/hail inside daytime sample first (or significant 24h event)
+  const severeHour = skySample.find((h) =>
+    [71, 73, 75, 77, 85, 86, 95, 96, 99].includes(getVal(h, 'weatherCode', 0))
+  );
+
+  if (severeHour) {
+    const sc = getVal(severeHour, 'weatherCode', 0);
+    const info = resolveSmartWeatherInfo(sc, sampleMaxProb, sampleMaxHourly, !isAllNight);
+    icon = info.icon;
+    lucideIcon = [95, 96, 99].includes(sc) ? 'CloudRainWind' : 'CloudRain';
+    emoji = info.emoji || '⛈️';
+    condition = info.label;
+  } else if (sampleMaxHourly >= 6.0 || allMaxHourly >= 8.0) {
+    icon = 'torrential';
+    lucideIcon = 'CloudRainWind';
+    emoji = '⛈️';
+    condition = 'Heavy Downpours ("Lashing Rain")';
+  } else if (sampleMaxHourly >= 2.5 || sampleTotalRain >= 6.0 || allTotalRain >= 10.0) {
+    icon = 'heavy_rain';
+    lucideIcon = 'CloudRainWind';
+    emoji = '⛈️';
+    condition = 'Heavy Downpours ("Lashing Rain")';
+  } else if (
+    sampleMaxHourly >= 0.7 ||
+    sampleTotalRain >= 2.0 ||
+    (sampleMaxProb >= 70 && sampleTotalRain >= 0.5)
+  ) {
+    icon = 'moderate_rain';
+    lucideIcon = 'CloudRain';
+    emoji = '🌧️';
+    condition = 'Moderate Rain Showers';
+  } else if (
+    sampleMaxHourly >= 0.3 ||
+    sampleTotalRain >= 0.6 ||
+    (sampleMaxProb >= 60 && sampleTotalRain >= 0.3)
+  ) {
+    icon = 'light_rain';
+    lucideIcon = 'CloudRain';
+    emoji = '🌧️';
+    condition = 'Steady Light Rain';
+  } else if (sampleMaxHourly >= 0.15 || sampleTotalRain >= 0.3) {
+    icon = 'drizzle';
+    lucideIcon = 'CloudDrizzle';
+    emoji = '🌦️';
+    condition = 'Fine Misting Drizzle ("Soft Day")';
+  }
+
+  return {
+    icon,
+    lucideIcon,
+    emoji,
+    condition,
+    isAllNight,
+  };
+}
+
+/**
  * Generate a smart high-level daily synthesis summary
  */
 export function generateDailySummary(dayHours, dateStr, timeFormat = '24h') {
@@ -296,56 +436,12 @@ export function generateDailySummary(dayHours, dateStr, timeFormat = '24h') {
   // Peak rain human classification
   const peakRainType = getRainHumanType(maxHourlyRain, maxRainProb, 0);
 
-  // Daytime hours for dry-sky classification (fallback to all valid hours if nighttime-only)
-  const dayWindow = validHours.filter((h) => h.isDay !== false);
-  const skySample = dayWindow.length > 0 ? dayWindow : validHours;
-  const fogCount = skySample.filter((h) => h.consensus.weatherCode === 45 || h.consensus.weatherCode === 48).length;
-  const overcastCount = skySample.filter((h) => h.consensus.weatherCode === 3 || (h.consensus.cloudCover !== null && h.consensus.cloudCover >= 75)).length;
-  const partlyCloudyCount = skySample.filter((h) => h.consensus.weatherCode === 2 || (h.consensus.cloudCover !== null && h.consensus.cloudCover >= 35)).length;
-  const isAllNight = dayWindow.length === 0;
-
-  // Determine true dominant daily icon & condition that tells the story
-  let dailyCondition = 'Partly Cloudy';
-  let dailyIcon = 'CloudSun';
-  let dailyEmoji = '⛅';
-
-  if (maxHourlyRain >= 2.5 || totalRain >= 6.0) {
-    dailyCondition = 'Heavy Downpours ("Lashing Rain")';
-    dailyIcon = 'CloudRainWind';
-    dailyEmoji = '⛈️';
-  } else if (maxHourlyRain >= 0.7 || totalRain >= 2.0 || maxRainProb >= 70) {
-    dailyCondition = 'Moderate Rain Showers';
-    dailyIcon = 'CloudRain';
-    dailyEmoji = '🌧️';
-  } else if (maxRainProb >= 40 || totalRain >= 0.3) {
-    dailyCondition = 'Steady Light Rain';
-    dailyIcon = 'CloudRain';
-    dailyEmoji = '🌧️';
-  } else if (maxRainProb >= 25 || totalRain >= 0.1) {
-    dailyCondition = 'Fine Misting Drizzle ("Soft Day")';
-    dailyIcon = 'CloudDrizzle';
-    dailyEmoji = '🌦️';
-  } else if (fogCount >= Math.max(2, Math.ceil(skySample.length * 0.35))) {
-    dailyCondition = 'Foggy / Misty';
-    dailyIcon = 'fog';
-    dailyEmoji = '🌫️';
-  } else if (overcastCount >= Math.ceil(skySample.length * 0.5)) {
-    dailyCondition = 'Overcast / Grey Sky';
-    dailyIcon = 'Cloud';
-    dailyEmoji = '☁️';
-  } else if (partlyCloudyCount >= Math.ceil(skySample.length * 0.4)) {
-    dailyCondition = 'Partly Cloudy';
-    dailyIcon = 'CloudSun';
-    dailyEmoji = '⛅';
-  } else if (isAllNight) {
-    dailyCondition = 'Clear Night Sky';
-    dailyIcon = 'Sun';
-    dailyEmoji = '🌙';
-  } else {
-    dailyCondition = 'Mainly Clear & Sunny';
-    dailyIcon = 'Sun';
-    dailyEmoji = '☀️';
-  }
+  // Determine daytime-anchored dominant daily icon & condition
+  const {
+    lucideIcon: dailyIcon,
+    emoji: dailyEmoji,
+    condition: dailyCondition,
+  } = resolveDailySkySummary(validHours);
 
   // Natural language human description
   let description = '';
